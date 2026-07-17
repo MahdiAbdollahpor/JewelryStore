@@ -1,0 +1,6 @@
+<Solution>
+  <Project Path="JewelryStore.Data/JewelryStore.Data.csproj" />
+  <Project Path="JewelryStore.Domain/JewelryStore.Domain.csproj" />
+  <Project Path="JewelryStore.Services/JewelryStore.Services.csproj" />
+  <Project Path="JewelryStore.Web/JewelryStore.Web.csproj" />
+</Solution>
