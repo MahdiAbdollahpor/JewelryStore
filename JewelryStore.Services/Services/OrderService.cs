@@ -18,6 +18,7 @@ namespace JewelryStore.Services.Services
         private readonly IShippingService _shippingService;
         private readonly ITaxService _taxService;
         private readonly IDiscountService _discountService;
+        private readonly ISmsSender _smsSender;
 
         public OrderService(
             ApplicationDbContext context,
@@ -25,7 +26,8 @@ namespace JewelryStore.Services.Services
             ICartService cartService,
             IShippingService shippingService,
             ITaxService taxService,
-            IDiscountService discountService)
+            IDiscountService discountService,
+            ISmsSender smsSender)
         {
             _context = context;
             _mapper = mapper;
@@ -33,6 +35,7 @@ namespace JewelryStore.Services.Services
             _shippingService = shippingService;
             _taxService = taxService;
             _discountService = discountService;
+            _smsSender = smsSender;
         }
 
         // 1️⃣ ایجاد سفارش جدید از سبد خرید
@@ -162,6 +165,41 @@ namespace JewelryStore.Services.Services
             // TODO: اتصال به درگاه پرداخت و دریافت لینک پرداخت
             // var paymentUrl = await _paymentGateway.InitiatePaymentAsync(order);
             var paymentUrl = "/Payment/Pay/" + order.Id; // موقت
+
+
+
+
+            // ارسال پیامک به کاربر
+            var user = await _context.Users.FindAsync(createDto.UserId);
+            if (user != null && !string.IsNullOrEmpty(user.PhoneNumber))
+            {
+                // ✅ درست: استفاده از آرایه
+                _smsSender.SendSms(
+                    type: 3,
+                    phoneNumber: user.PhoneNumber,
+                    parameters: new string[]
+                    {
+            user.FullName ?? user.Username,
+            order.TotalAmount.ToString("N0"),
+            order.OrderNumber
+                    }
+                );
+            }
+
+            // ارسال پیامک به ادمین
+            var admin = await _context.Users
+                .FirstOrDefaultAsync(u => u.Role == Domain.Enums.UserRole.Admin && u.IsActive);
+            if (admin != null)
+            {
+                string adminMessage = $"💰 پرداخت جدید! سفارش {order.OrderNumber} به مبلغ {order.TotalAmount:N0} توسط {user?.FullName ?? user?.Username}";
+
+                // ✅ اینجا هم فقط یک پارامتر داریم، پس یک آرایه تک‌عنصری می‌سازیم
+                _smsSender.SendSms(
+                    type: 0,
+                    phoneNumber: admin.PhoneNumber,
+                    parameters: new string[] { adminMessage }
+                );
+            }
 
             return new OrderResultDto
             {

@@ -1,7 +1,10 @@
 using JewelryStore.Data.Context;
+using JewelryStore.Infrastructure.Services;
+
 using JewelryStore.Services.Interfaces;
 using JewelryStore.Services.Services;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Options;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -10,12 +13,21 @@ builder.Services.AddDbContext<ApplicationDbContext>(options =>
     options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection"))
 );
 
-builder.Services.AddAutoMapper(typeof(Program));
 
+
+
+
+
+
+
+
+builder.Services.AddAutoMapper(typeof(Program));
+builder.Services.AddScoped<INotificationService, NotificationService>();
 builder.Services.AddScoped<IUserService, UserService>();
 builder.Services.AddScoped<ICategoryService, CategoryService>();
 builder.Services.AddScoped<IProductService, ProductService>();
 builder.Services.AddScoped<ICartService, CartService>();
+builder.Services.AddScoped<ISmsSender, SmsSender>();
 
 
 // Add services to the container.

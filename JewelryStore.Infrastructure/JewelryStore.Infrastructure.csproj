@@ -6,4 +6,13 @@
     <Nullable>enable</Nullable>
   </PropertyGroup>
 
+  <ItemGroup>
+    <Folder Include="Extensions\" />
+    <Folder Include="Settings\" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\JewelryStore.Services\JewelryStore.Services.csproj" />
+  </ItemGroup>
+
 </Project>
