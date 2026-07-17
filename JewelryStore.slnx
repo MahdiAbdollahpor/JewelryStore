@@ -1,6 +1,7 @@
 <Solution>
   <Project Path="JewelryStore.Data/JewelryStore.Data.csproj" />
   <Project Path="JewelryStore.Domain/JewelryStore.Domain.csproj" />
+  <Project Path="JewelryStore.Infrastructure/JewelryStore.Infrastructure.csproj" Id="16f5e680-b427-4b93-9a8d-84761367d294" />
   <Project Path="JewelryStore.Services/JewelryStore.Services.csproj" />
   <Project Path="JewelryStore.Web/JewelryStore.Web.csproj" />
 </Solution>

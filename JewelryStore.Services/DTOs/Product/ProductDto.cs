@@ -21,6 +21,9 @@ namespace JewelryStore.Services.DTOs.Product
         public decimal DiscountPercentage { get; set; }
         public decimal FinalPrice { get; set; }
         public decimal Weight { get; set; }
+
+        public int MinOrderQuantity { get; set; }  
+        public int MaxOrderQuantity { get; set; }
         public Purity Purity { get; set; }
         public decimal GoldPriceReference { get; set; }
         public decimal CraftsmanshipFee { get; set; }

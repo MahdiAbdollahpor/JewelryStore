@@ -1,0 +1,273 @@
+﻿@using JewelryStore.Services.DTOs.Product
+@model ProductDto
+@{
+    ViewData["Title"] = Model.Name;
+}
+
+<div class="container my-4">
+    <nav aria-label="breadcrumb">
+        <ol class="breadcrumb">
+            <li class="breadcrumb-item"><a asp-action="Index">محصولات</a></li>
+            <li class="breadcrumb-item active">@Model.Name</li>
+        </ol>
+    </nav>
+
+    <div class="row">
+        <!-- گالری تصاویر -->
+        <div class="col-md-6">
+            <div class="product-gallery">
+                <div class="main-image mb-3">
+                    <img src="@(Model.MainImageUrl ?? "/images/no-image.png")"
+                         class="img-fluid rounded shadow-sm" alt="@Model.Name"
+                         id="mainProductImage" />
+                </div>
+                @if (Model.ImageUrls.Any())
+                {
+                    <div class="thumbnail-images d-flex flex-wrap gap-2">
+                        @foreach (var img in Model.ImageUrls)
+                        {
+                            <img src="@img" class="img-thumbnail" style="width: 80px; height: 80px; object-fit: cover; cursor: pointer;"
+                                 onclick="document.getElementById('mainProductImage').src = this.src" />
+                        }
+                    </div>
+                }
+            </div>
+        </div>
+
+        <!-- اطلاعات محصول -->
+        <div class="col-md-6">
+            <h2 class="mb-3">@Model.Name</h2>
+
+            @if (!string.IsNullOrEmpty(Model.Brand))
+            {
+                <p class="text-muted"><i class="bi bi-tag"></i> برند: @Model.Brand</p>
+            }
+
+            <div class="d-flex align-items-center mb-3">
+                <div class="text-warning me-2">
+                    @for (int i = 1; i <= 5; i++)
+                    {
+                        <i class="bi bi-star@(i <= Math.Floor(Model.AverageRating) ? "-fill" : "")"></i>
+                    }
+                </div>
+                <span class="text-muted">(@Model.ReviewCount نظر)</span>
+            </div>
+
+            <div class="price-section mb-4">
+                @if (Model.DiscountPercentage > 0)
+                {
+                    <span class="h3 text-danger">@Model.FinalPrice.ToString("N0") تومان</span>
+                    <span class="h5 text-muted text-decoration-line-through">@Model.BasePrice.ToString("N0")</span>
+                    <span class="badge bg-danger ms-2">@Model.DiscountPercentage% تخفیف</span>
+                }
+                else
+                {
+                    <span class="h3 text-primary">@Model.FinalPrice.ToString("N0") تومان</span>
+                }
+            </div>
+
+            <div class="product-info mb-4">
+                <div class="row g-3">
+                    <div class="col-6">
+                        <div class="info-item border rounded p-2">
+                            <small class="text-muted d-block">وزن</small>
+                            <span class="fw-bold">@Model.Weight گرم</span>
+                        </div>
+                    </div>
+                    <div class="col-6">
+                        <div class="info-item border rounded p-2">
+                            <small class="text-muted d-block">عیار</small>
+                            <span class="fw-bold">@Model.Purity</span>
+                        </div>
+                    </div>
+                    @if (Model.StoneType.HasValue)
+                    {
+                        <div class="col-6">
+                            <div class="info-item border rounded p-2">
+                                <small class="text-muted d-block">نوع سنگ</small>
+                                <span class="fw-bold">@Model.StoneType</span>
+                            </div>
+                        </div>
+                        <div class="col-6">
+                            <div class="info-item border rounded p-2">
+                                <small class="text-muted d-block">وزن سنگ</small>
+                                <span class="fw-bold">@Model.StoneWeight قیراط</span>
+                            </div>
+                        </div>
+                    }
+                </div>
+            </div>
+
+            @if (!Model.IsInStock)
+            {
+                <div class="alert alert-warning">این محصول در حال حاضر موجود نیست.</div>
+            }
+
+            <!-- افزودن به سبد خرید -->
+            <form id="addToCartForm" class="mb-4">
+                <input type="hidden" name="ProductId" value="@Model.Id" />
+                <div class="row g-3 align-items-end">
+                    @if (Model.Variants.Any())
+                    {
+                        <div class="col-12">
+                            <label class="form-label">انتخاب تنوع</label>
+                            <select name="VariantId" class="form-select">
+                                <option value="">انتخاب کنید...</option>
+                                @foreach (var variant in Model.Variants)
+                                {
+                                    <option value="@variant.Id">
+                                        @variant.VariantName (موجودی: @variant.Quantity)
+                                    </option>
+                                }
+                            </select>
+                        </div>
+                    }
+                    <div class="col-4">
+                        <label class="form-label">تعداد</label>
+                        <input type="number" name="Quantity" class="form-control" value="1"
+                               min="1" max="@Model.MaxOrderQuantity" />
+                    </div>
+                    <div class="col-8">
+                        <button type="button" class="btn btn-primary btn-lg w-100" id="addToCartBtn">
+                            <i class="bi bi-cart-plus"></i> افزودن به سبد خرید
+                        </button>
+                    </div>
+                </div>
+            </form>
+
+            <div class="product-tags mt-3">
+                @foreach (var tag in Model.Tags)
+                {
+                    <span class="badge bg-secondary me-1">#@tag</span>
+                }
+            </div>
+        </div>
+    </div>
+
+    <!-- توضیحات کامل -->
+    <div class="row mt-5">
+        <div class="col-12">
+            <ul class="nav nav-tabs" id="productTabs" role="tablist">
+                <li class="nav-item" role="presentation">
+                    <button class="nav-link active" id="description-tab" data-bs-toggle="tab"
+                            data-bs-target="#description" type="button" role="tab">
+                        توضیحات
+                    </button>
+                </li>
+                <li class="nav-item" role="presentation">
+                    <button class="nav-link" id="specs-tab" data-bs-toggle="tab"
+                            data-bs-target="#specs" type="button" role="tab">
+                        مشخصات فنی
+                    </button>
+                </li>
+            </ul>
+            <div class="tab-content p-3 border border-top-0 rounded-bottom" id="productTabsContent">
+                <div class="tab-pane fade show active" id="description" role="tabpanel">
+                    @Html.Raw(Model.Description)
+                </div>
+                <div class="tab-pane fade" id="specs" role="tabpanel">
+                    <table class="table table-striped">
+                        <tbody>
+                            <tr><td>وزن</td><td>@Model.Weight گرم</td></tr>
+                            <tr><td>عیار</td><td>@Model.Purity</td></tr>
+                            <tr><td>اجرت ساخت</td><td>@Model.CraftsmanshipFee.ToString("N0") تومان</td></tr>
+                            <tr><td>قیمت مرجع طلا</td><td>@Model.GoldPriceReference.ToString("N0") تومان</td></tr>
+                            @if (Model.StoneType.HasValue)
+                            {
+                                <tr><td>نوع سنگ</td><td>@Model.StoneType</td></tr>
+                                <tr><td>وزن سنگ</td><td>@Model.StoneWeight قیراط</td></tr>
+                                <tr><td>کیفیت سنگ</td><td>@Model.StoneQuality</td></tr>
+                            }
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- محصولات مرتبط -->
+    @if (ViewBag.RelatedProducts != null && ((IEnumerable<ProductListDto>)ViewBag.RelatedProducts).Any())
+    {
+        <div class="row mt-5">
+            <div class="col-12">
+                <h4>محصولات مرتبط</h4>
+                <div class="row">
+                    @foreach (var product in ViewBag.RelatedProducts)
+                    {
+                        <div class="col-md-3 mb-3">
+                            <div class="card h-100 shadow-sm">
+                                <img src="@(product.MainImageUrl ?? "/images/no-image.png")"
+                                     class="card-img-top" alt="@product.Name"
+                                     style="height: 150px; object-fit: cover;" />
+                                <div class="card-body">
+                                    <h6 class="card-title">@product.Name</h6>
+                                    <p class="card-text text-primary">@product.FinalPrice.ToString("N0") تومان</p>
+                                    <a asp-action="Details" asp-route-slug="@product.Slug"
+                                       class="btn btn-outline-primary btn-sm w-100">مشاهده</a>
+                                </div>
+                            </div>
+                        </div>
+                    }
+                </div>
+            </div>
+        </div>
+    }
+</div>
+
+@section Scripts {
+    <script>
+        document.getElementById('addToCartBtn').addEventListener('click', async function() {
+            const form = document.getElementById('addToCartForm');
+            const formData = new FormData(form);
+            const data = {
+                productId: parseInt(formData.get('ProductId')),
+                variantId: formData.get('VariantId') ? parseInt(formData.get('VariantId')) : null,
+                quantity: parseInt(formData.get('Quantity'))
+            };
+
+            this.innerHTML = '<span class="spinner-border spinner-border-sm"></span>';
+            this.disabled = true;
+
+            try {
+                const response = await fetch('/Cart/AddToCart', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'RequestVerificationToken': document.querySelector('input[name="__RequestVerificationToken"]').value
+                    },
+                    body: JSON.stringify(data)
+                });
+
+                const result = await response.json();
+                if (result.success) {
+                    updateCartWidget();
+                    this.innerHTML = '✅ افزوده شد';
+                    setTimeout(() => {
+                        this.innerHTML = '<i class="bi bi-cart-plus"></i> افزودن به سبد خرید';
+                        this.disabled = false;
+                    }, 2000);
+                } else {
+                    alert(result.message);
+                    this.innerHTML = '<i class="bi bi-cart-plus"></i> افزودن به سبد خرید';
+                    this.disabled = false;
+                }
+            } catch (error) {
+                alert('خطا در ارتباط با سرور');
+                this.innerHTML = '<i class="bi bi-cart-plus"></i> افزودن به سبد خرید';
+                this.disabled = false;
+            }
+        });
+
+        // به‌روزرسانی ویجت سبد خرید
+        async function updateCartWidget() {
+            try {
+                const response = await fetch('/Cart/CartWidget');
+                const data = await response.json();
+                document.querySelector('#cart-item-count').textContent = data.itemCount;
+                document.querySelector('#cart-total').textContent = data.total;
+            } catch (error) {
+                console.error('Error updating cart widget:', error);
+            }
+        }
+    </script>
+}

@@ -1,0 +1,219 @@
+﻿@using JewelryStore.Services.DTOs.Product
+@model IEnumerable<ProductListDto>
+@{
+    ViewData["Title"] = "محصولات";
+    var filter = ViewBag.CurrentFilter as ProductFilterDto;
+}
+
+<div class="container my-4">
+    <div class="row">
+        <!-- سایدبار فیلتر -->
+        <div class="col-md-3">
+            <div class="card shadow-sm">
+                <div class="card-header bg-primary text-white">
+                    <h5 class="mb-0">فیلتر محصولات</h5>
+                </div>
+                <div class="card-body">
+                    <form asp-action="Index" method="get" id="filterForm">
+                        <!-- جستجو -->
+                        <div class="mb-3">
+                            <label class="form-label">جستجو</label>
+                            <input type="text" name="SearchTerm" class="form-control"
+                                   value="@filter?.SearchTerm" placeholder="نام محصول یا برند..." />
+                        </div>
+
+                        <!-- دسته‌بندی -->
+                        <div class="mb-3">
+                            <label class="form-label">دسته‌بندی</label>
+                            <select name="CategoryId" class="form-select">
+                                <option value="">همه دسته‌ها</option>
+                                @foreach (var cat in ViewBag.Categories)
+                                {
+                                    <option value="@cat.Id" selected="@(filter?.CategoryId == cat.Id)">
+                                        @cat.Name
+                                    </option>
+                                }
+                            </select>
+                        </div>
+
+                        <!-- محدوده قیمت -->
+                        <div class="mb-3">
+                            <label class="form-label">محدوده قیمت</label>
+                            <div class="row">
+                                <div class="col-6">
+                                    <input type="number" name="MinPrice" class="form-control"
+                                           placeholder="از" value="@filter?.MinPrice" />
+                                </div>
+                                <div class="col-6">
+                                    <input type="number" name="MaxPrice" class="form-control"
+                                           placeholder="تا" value="@filter?.MaxPrice" />
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- موجودی -->
+                        <div class="mb-3 form-check">
+                            <input type="checkbox" name="OnlyInStock" class="form-check-input"
+                                   id="InStock" value="true" checked="@filter?.OnlyInStock" />
+                            <label class="form-check-label" for="InStock">فقط محصولات موجود</label>
+                        </div>
+
+                        <!-- تخفیف‌دار -->
+                        <div class="mb-3 form-check">
+                            <input type="checkbox" name="OnlyDiscounted" class="form-check-input"
+                                   id="Discounted" value="true" checked="@filter?.OnlyDiscounted" />
+                            <label class="form-check-label" for="Discounted">فقط تخفیف‌دار</label>
+                        </div>
+
+                        <!-- مرتب‌سازی -->
+                        <div class="mb-3">
+                            <label class="form-label">مرتب‌سازی</label>
+                            <select name="SortBy" class="form-select">
+                                <option value="Newest" selected="@(filter?.SortBy == "Newest")">جدیدترین</option>
+                                <option value="PriceLowToHigh" selected="@(filter?.SortBy == "PriceLowToHigh")">ارزان‌ترین</option>
+                                <option value="PriceHighToLow" selected="@(filter?.SortBy == "PriceHighToLow")">گران‌ترین</option>
+                                <option value="Popularity" selected="@(filter?.SortBy == "Popularity")">پرفروش‌ترین</option>
+                                <option value="Rating" selected="@(filter?.SortBy == "Rating")">محبوب‌ترین</option>
+                            </select>
+                        </div>
+
+                        <button type="submit" class="btn btn-primary w-100">اعمال فیلتر</button>
+                    </form>
+                </div>
+            </div>
+        </div>
+
+        <!-- لیست محصولات -->
+        <div class="col-md-9">
+            <div class="d-flex justify-content-between align-items-center mb-3">
+                <h4>@ViewBag.TotalCount محصول</h4>
+                <span class="text-muted">صفحه @filter?.Page</span>
+            </div>
+
+            @if (!Model.Any())
+            {
+                <div class="alert alert-info">
+                    <i class="bi bi-info-circle"></i> هیچ محصولی با این فیلترها یافت نشد.
+                </div>
+            }
+            else
+            {
+                <div class="row">
+                    @foreach (var product in Model)
+                    {
+                        <div class="col-md-4 mb-4">
+                            <div class="card h-100 shadow-sm product-card">
+                                <div class="position-relative">
+                                    <img src="@(product.MainImageUrl ?? "/images/no-image.png")"
+                                         class="card-img-top" alt="@product.Name"
+                                         style="height: 200px; object-fit: cover;" />
+                                    @if (product.DiscountPercentage > 0)
+                                    {
+                                        <span class="badge bg-danger position-absolute top-0 end-0 m-2">
+                                            @product.DiscountPercentage% تخفیف
+                                        </span>
+                                    }
+                                    @if (product.IsNew)
+                                    {
+                                        <span class="badge bg-success position-absolute top-0 start-0 m-2">
+                                            جدید
+                                        </span>
+                                    }
+                                </div>
+                                <div class="card-body">
+                                    <h6 class="card-title">@product.Name</h6>
+                                    <div class="d-flex justify-content-between align-items-center">
+                                        <div>
+                                            <span class="fw-bold text-primary">@(product.FinalPrice.ToString("N0") ?? "۰") تومان</span>
+                                            @if (product.DiscountPercentage > 0)
+                                            {
+                                                <!-- ✅ اصلاح: محاسبه قیمت اصلی -->
+                                                var originalPrice = product.FinalPrice / (1 - product.DiscountPercentage / 100);
+                                                <small class="text-muted text-decoration-line-through d-block">
+                                                    @(originalPrice?.ToString("N0") ?? "۰")
+                                                </small>
+                                            }
+                                        </div>
+                                        <div class="text-warning">
+                                            @for (int i = 1; i <= 5; i++)
+                                            {
+                                                <i class="bi bi-star@(i <= Math.Floor(product.AverageRating) ? "-fill" : "")"></i>
+                                            }
+                                            <small class="text-muted">(@product.ReviewCount)</small>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="card-footer bg-white border-0">
+                                    <div class="d-grid gap-2">
+                                        <a asp-action="Details" asp-route-slug="@product.Slug"
+                                           class="btn btn-outline-primary btn-sm">مشاهده جزئیات</a>
+                                        <button class="btn btn-primary btn-sm add-to-cart-btn"
+                                                data-product-id="@product.Id">
+                                            <i class="bi bi-cart-plus"></i> افزودن به سبد خرید
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    }
+                </div>
+            }
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        // افزودن به سبد خرید با AJAX
+        document.querySelectorAll('.add-to-cart-btn').forEach(btn => {
+            btn.addEventListener('click', async function() {
+                const productId = this.dataset.productId;
+                const originalText = this.innerHTML;
+                this.innerHTML = '<span class="spinner-border spinner-border-sm"></span>';
+                this.disabled = true;
+
+                try {
+                    const response = await fetch('/Cart/AddToCart', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'RequestVerificationToken': document.querySelector('input[name="__RequestVerificationToken"]').value
+                        },
+                        body: JSON.stringify({ productId: productId, quantity: 1 })
+                    });
+
+                    const result = await response.json();
+                    if (result.success) {
+                        // به‌روزرسانی ویجت سبد خرید
+                        updateCartWidget();
+                        this.innerHTML = '✅ افزوده شد';
+                        setTimeout(() => {
+                            this.innerHTML = originalText;
+                            this.disabled = false;
+                        }, 2000);
+                    } else {
+                        alert(result.message);
+                        this.innerHTML = originalText;
+                        this.disabled = false;
+                    }
+                } catch (error) {
+                    alert('خطا در ارتباط با سرور');
+                    this.innerHTML = originalText;
+                    this.disabled = false;
+                }
+            });
+        });
+
+        // به‌روزرسانی ویجت سبد خرید
+        async function updateCartWidget() {
+            try {
+                const response = await fetch('/Cart/CartWidget');
+                const data = await response.json();
+                document.querySelector('#cart-item-count').textContent = data.itemCount;
+                document.querySelector('#cart-total').textContent = data.total;
+            } catch (error) {
+                console.error('Error updating cart widget:', error);
+            }
+        }
+    </script>
+}
