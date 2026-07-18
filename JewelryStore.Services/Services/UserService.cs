@@ -4,6 +4,7 @@ using JewelryStore.Domain.Entities;
 using JewelryStore.Domain.Enums;
 using JewelryStore.Services.DTOs.User;
 using JewelryStore.Services.Interfaces;
+using Microsoft.AspNetCore.Http;
 using Microsoft.EntityFrameworkCore;
 using System.Security.Cryptography;
 using System.Text;
@@ -15,12 +16,14 @@ namespace JewelryStore.Services.Services
         private readonly ApplicationDbContext _context;
         private readonly IMapper _mapper;
         private readonly ISmsSender _smsSender;
+        private readonly IFileStorageService _fileStorageService;
 
-        public UserService(ApplicationDbContext context, IMapper mapper, ISmsSender smsSender)
+        public UserService(ApplicationDbContext context, IMapper mapper, ISmsSender smsSender, IFileStorageService fileStorageService)
         {
             _context = context;
             _mapper = mapper;
             _smsSender = smsSender;
+            _fileStorageService = fileStorageService;
         }
 
         public async Task<RegisterResultDto> RegisterAsync(RegisterDto registerDto)
@@ -346,6 +349,32 @@ namespace JewelryStore.Services.Services
             user.UpdatedAt = DateTime.Now;
             await _context.SaveChangesAsync();
 
+            return true;
+        }
+
+        public async Task<bool> UpdateUserAvatarAsync(int userId, IFormFile avatarFile)
+        {
+            var user = await _context.Users.FindAsync(userId);
+            if (user == null)
+                throw new KeyNotFoundException("کاربر یافت نشد.");
+
+            // حذف آواتار قدیمی (اگر وجود داشته باشد)
+            if (!string.IsNullOrEmpty(user.Avatar))
+            {
+                await _fileStorageService.DeleteFileAsync(user.Avatar);
+            }
+
+            // آپلود آواتار جدید
+            var avatarPath = await _fileStorageService.UploadFileAsync(
+                avatarFile,
+                "users/avatars",
+                $"user-{userId}-{DateTime.Now:yyyyMMdd}"
+            );
+
+            user.Avatar = _fileStorageService.GetFileUrl(avatarPath);
+            user.UpdatedAt = DateTime.Now;
+
+            await _context.SaveChangesAsync();
             return true;
         }
 

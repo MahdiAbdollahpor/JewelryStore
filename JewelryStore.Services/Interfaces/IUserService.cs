@@ -1,5 +1,6 @@
 ﻿using JewelryStore.Domain.Enums;
 using JewelryStore.Services.DTOs.User;
+using Microsoft.AspNetCore.Http;
 
 namespace JewelryStore.Services.Interfaces
 {
@@ -15,6 +16,7 @@ namespace JewelryStore.Services.Interfaces
         Task<VerifyResultDto> VerifyPhoneAsync(VerifyPhoneDto verifyDto);
         Task<bool> ResendVerificationCodeAsync(string phoneNumber);
         Task<LoginResultDto> LoginWithCodeAsync(string phoneNumber, string code);
+        Task<bool> UpdateUserAvatarAsync(int userId, IFormFile avatarFile);
 
         // عملیات ادمین
         Task<IEnumerable<UserListDto>> GetAllUsersAsync(UserFilterDto filter);

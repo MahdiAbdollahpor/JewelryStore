@@ -3,6 +3,7 @@ using JewelryStore.Data.Context;
 using JewelryStore.Domain.Entities;
 using JewelryStore.Services.DTOs.Product;
 using JewelryStore.Services.Interfaces;
+using Microsoft.AspNetCore.Http;
 using Microsoft.EntityFrameworkCore;
 
 namespace JewelryStore.Services.Services
@@ -11,11 +12,13 @@ namespace JewelryStore.Services.Services
     {
         private readonly ApplicationDbContext _context;
         private readonly IMapper _mapper;
+        private readonly IFileStorageService _fileStorageService;
 
-        public ProductService(ApplicationDbContext context, IMapper mapper)
+        public ProductService(ApplicationDbContext context, IMapper mapper, IFileStorageService fileStorageService)
         {
             _context = context;
             _mapper = mapper;
+            _fileStorageService = fileStorageService;
         }
 
         // 1️⃣ دریافت محصولات با فیلتر
@@ -225,7 +228,7 @@ namespace JewelryStore.Services.Services
         }
 
         // 8️⃣ ایجاد محصول جدید (ادمین)
-        public async Task<ProductDto> CreateProductAsync(CreateProductDto createDto)
+        public async Task<ProductDto> CreateProductAsync(CreateProductDto createDto, List<IFormFile>? imageFiles = null)
         {
             using var transaction = await _context.Database.BeginTransactionAsync();
             try
@@ -269,18 +272,29 @@ namespace JewelryStore.Services.Services
                 await _context.Products.AddAsync(product);
                 await _context.SaveChangesAsync();
 
-                // افزودن تصاویر
-                if (createDto.ImageUrls != null && createDto.ImageUrls.Any())
+                // ✅ آپلود تصاویر
+                if (imageFiles != null && imageFiles.Any())
                 {
-                    var images = createDto.ImageUrls.Select((url, index) => new ProductImage
+                    for (int i = 0; i < imageFiles.Count; i++)
                     {
-                        ProductId = product.Id,
-                        ImageUrl = url,
-                        IsMain = index == 0,
-                        DisplayOrder = index,
-                        CreatedAt = DateTime.Now
-                    });
-                    await _context.ProductImages.AddRangeAsync(images);
+                        var imagePath = await _fileStorageService.UploadFileAsync(
+                            imageFiles[i],
+                            $"products/{product.Id}",
+                            $"{Guid.NewGuid():N}"
+                        );
+
+                        var imageUrl = _fileStorageService.GetFileUrl(imagePath);
+
+                        var image = new ProductImage
+                        {
+                            ProductId = product.Id,
+                            ImageUrl = imageUrl,
+                            IsMain = i == 0, // اولین تصویر به عنوان اصلی
+                            DisplayOrder = i,
+                            CreatedAt = DateTime.Now
+                        };
+                        await _context.ProductImages.AddAsync(image);
+                    }
                 }
 
                 // افزودن تگ‌ها
@@ -512,14 +526,22 @@ namespace JewelryStore.Services.Services
         }
 
         // 1️⃣3️⃣ افزودن تصویر به محصول
-        public async Task<ProductImage> AddProductImageAsync(int productId, string imageUrl, bool isMain = false)
+        public async Task<ProductImage> AddProductImageAsync(int productId, IFormFile imageFile, bool isMain = false)
         {
-            var product = await _context.Products
-                .FirstOrDefaultAsync(p => p.Id == productId);
-
+            var product = await _context.Products.FindAsync(productId);
             if (product == null)
                 throw new KeyNotFoundException("محصول یافت نشد.");
 
+            // آپلود فایل
+            var imagePath = await _fileStorageService.UploadFileAsync(
+                imageFile,
+                $"products/{productId}",
+                $"{Guid.NewGuid():N}"
+            );
+
+            var imageUrl = _fileStorageService.GetFileUrl(imagePath);
+
+            // ایجاد رکورد در دیتابیس
             var image = new ProductImage
             {
                 ProductId = productId,
@@ -544,7 +566,6 @@ namespace JewelryStore.Services.Services
             return image;
         }
 
-        // 1️⃣4️⃣ حذف تصویر از محصول
         public async Task<bool> RemoveProductImageAsync(int imageId)
         {
             var image = await _context.ProductImages
@@ -553,6 +574,10 @@ namespace JewelryStore.Services.Services
             if (image == null)
                 return false;
 
+            // حذف فایل از سرور
+            await _fileStorageService.DeleteFileAsync(image.ImageUrl);
+
+            // حذف رکورد از دیتابیس
             _context.ProductImages.Remove(image);
             await _context.SaveChangesAsync();
 

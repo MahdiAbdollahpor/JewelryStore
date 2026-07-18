@@ -1,5 +1,6 @@
 ﻿using JewelryStore.Domain.Entities;
 using JewelryStore.Services.DTOs.Product;
+using Microsoft.AspNetCore.Http;
 
 namespace JewelryStore.Services.Interfaces
 {
@@ -15,12 +16,12 @@ namespace JewelryStore.Services.Interfaces
         Task<IEnumerable<ProductListDto>> SearchProductsAsync(string searchTerm);
 
         // عملیات ادمین
-        Task<ProductDto> CreateProductAsync(CreateProductDto createDto);
+        Task<ProductDto> CreateProductAsync(CreateProductDto createDto, List<IFormFile>? imageFiles = null);
         Task<ProductDto> UpdateProductAsync(int id, UpdateProductDto updateDto);
         Task<bool> DeleteProductAsync(int id);
         Task<bool> ToggleProductStatusAsync(int id);
         Task<bool> UpdateStockAsync(int productId, int quantity);
-        Task<ProductImage> AddProductImageAsync(int productId, string imageUrl, bool isMain = false);
+        Task<ProductImage> AddProductImageAsync(int productId, IFormFile imageFile, bool isMain = false);
         Task<bool> RemoveProductImageAsync(int imageId);
         Task<bool> ReorderImagesAsync(int productId, List<int> imageIdsInOrder);
     }

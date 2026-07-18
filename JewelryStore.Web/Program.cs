@@ -15,7 +15,7 @@ builder.Services.AddDbContext<ApplicationDbContext>(options =>
 
 builder.Services.AddHttpClient<ZarinPalService>((client) =>
 {
-    // ??????? ???? HttpClient ???? ZarinPalService
+   
     var isSandbox = builder.Configuration.GetValue<bool>("ZarinPal:IsSandbox", true);
     var baseUrl = isSandbox
         ? "https://sandbox.zarinpal.com/"
@@ -52,6 +52,10 @@ builder.Services.AddScoped<IProductService, ProductService>();
 builder.Services.AddScoped<ICartService, CartService>();
 builder.Services.AddScoped<ISmsSender, SmsSender>();
 builder.Services.AddScoped<IReportService, ReportService>();
+builder.Services.AddScoped<IAdminService, AdminService>();
+builder.Services.AddScoped<IWishlistService, WishlistService>();
+
+builder.Services.AddScoped<IFileStorageService, LocalFileStorageService>();
 
 
 // Add services to the container.
