@@ -35,6 +35,10 @@ namespace JewelryStore.Domain.Entities
 
         public string? Address { get; set; }
 
+        public string? VerificationCode { get; set; } // کد تایید فعلی
+        public DateTime? VerificationCodeExpiry { get; set; } // زمان انقضای کد (مثلاً ۵ دقیقه)
+       
+
         public DateTime? LastLoginAt { get; set; }
 
         public virtual ICollection<Order> Orders { get; set; } = new List<Order>();

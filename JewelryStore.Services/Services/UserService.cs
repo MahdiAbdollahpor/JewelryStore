@@ -12,24 +12,53 @@ namespace JewelryStore.Services.Services
 {
     public class UserService : IUserService
     {
-
         private readonly ApplicationDbContext _context;
         private readonly IMapper _mapper;
+        private readonly ISmsSender _smsSender;
 
-        public UserService(ApplicationDbContext context, IMapper mapper)
+        public UserService(ApplicationDbContext context, IMapper mapper, ISmsSender smsSender)
         {
             _context = context;
             _mapper = mapper;
+            _smsSender = smsSender;
         }
 
-        public async Task<UserProfileDto> RegisterAsync(RegisterDto registerDto)
+        public async Task<RegisterResultDto> RegisterAsync(RegisterDto registerDto)
         {
-            // بررسی یکتا بودن نام کاربری و شماره تماس
-            var existingUser = await _context.Users.AnyAsync(u => u.Username == registerDto.Username || u.PhoneNumber == registerDto.PhoneNumber);
+            // بررسی یکتا بودن شماره
+            var existingUser = await _context.Users
+                .FirstOrDefaultAsync(u => u.PhoneNumber == registerDto.PhoneNumber);
 
-            if (existingUser)
-                throw new InvalidOperationException("نام کاربری یا شماره تماس قبلاً ثبت شده است.");
+            if (existingUser != null)
+            {
+                // اگر کاربر قبلاً ثبت‌نام کرده ولی تایید نکرده، کد جدید بفرست
+                if (!existingUser.IsPhoneVerified)
+                {
+                    existingUser.VerificationCode = GenerateVerificationCode();
+                    existingUser.VerificationCodeExpiry = DateTime.Now.AddMinutes(5);
+                    await _context.SaveChangesAsync();
 
+                    // ارسال پیامک
+                    SendVerificationSms(existingUser.PhoneNumber, existingUser.VerificationCode, existingUser.FullName);
+
+                    return new RegisterResultDto
+                    {
+                        IsSuccess = true,
+                        Message = "کد تایید مجدداً به شماره شما ارسال شد.",
+                        RequiresVerification = true,
+                        PhoneNumber = registerDto.PhoneNumber
+                    };
+                }
+
+                return new RegisterResultDto
+                {
+                    IsSuccess = false,
+                    Message = "شماره موبایل قبلاً ثبت شده است.",
+                    RequiresVerification = false
+                };
+            }
+
+            // ایجاد کاربر جدید
             var user = new User
             {
                 Username = registerDto.Username,
@@ -39,13 +68,120 @@ namespace JewelryStore.Services.Services
                 Role = UserRole.User,
                 IsPhoneVerified = false,
                 IsActive = true,
+                VerificationCode = GenerateVerificationCode(),
+                VerificationCodeExpiry = DateTime.Now.AddMinutes(5),
                 CreatedAt = DateTime.Now
             };
 
             await _context.Users.AddAsync(user);
             await _context.SaveChangesAsync();
 
-            return _mapper.Map<UserProfileDto>(user);
+            // ارسال کد تایید
+            SendVerificationSms(user.PhoneNumber, user.VerificationCode, user.FullName);
+
+            return new RegisterResultDto
+            {
+                IsSuccess = true,
+                Message = "کد تایید به شماره موبایل شما ارسال شد.",
+                RequiresVerification = true,
+                PhoneNumber = user.PhoneNumber
+            };
+        }
+
+        public async Task<VerifyResultDto> VerifyPhoneAsync(VerifyPhoneDto verifyDto)
+        {
+            var user = await _context.Users
+                .FirstOrDefaultAsync(u => u.PhoneNumber == verifyDto.PhoneNumber);
+
+            if (user == null)
+            {
+                return new VerifyResultDto
+                {
+                    IsSuccess = false,
+                    Message = "کاربری با این شماره یافت نشد."
+                };
+            }
+
+            // بررسی انقضای کد
+            if (user.VerificationCodeExpiry < DateTime.Now)
+            {
+                return new VerifyResultDto
+                {
+                    IsSuccess = false,
+                    Message = "کد تایید منقضی شده است. لطفاً کد جدید درخواست کنید.",
+                    CodeExpired = true
+                };
+            }
+
+            // بررسی صحت کد
+            if (user.VerificationCode != verifyDto.Code)
+            {
+                return new VerifyResultDto
+                {
+                    IsSuccess = false,
+                    Message = "کد تایید اشتباه است."
+                };
+            }
+
+            // تایید نهایی
+            user.IsPhoneVerified = true;
+            user.VerificationCode = null;
+            user.VerificationCodeExpiry = null;
+            user.UpdatedAt = DateTime.Now;
+
+            await _context.SaveChangesAsync();
+
+            return new VerifyResultDto
+            {
+                IsSuccess = true,
+                Message = "شماره موبایل با موفقیت تایید شد.",
+                User = _mapper.Map<UserProfileDto>(user)
+            };
+        }
+
+        public async Task<bool> ResendVerificationCodeAsync(string phoneNumber)
+        {
+            var user = await _context.Users
+                .FirstOrDefaultAsync(u => u.PhoneNumber == phoneNumber);
+
+            if (user == null || user.IsPhoneVerified)
+                return false;
+
+            user.VerificationCode = GenerateVerificationCode();
+            user.VerificationCodeExpiry = DateTime.Now.AddMinutes(5);
+            await _context.SaveChangesAsync();
+
+            SendVerificationSms(user.PhoneNumber, user.VerificationCode, user.FullName);
+            return true;
+        }
+
+        public async Task<LoginResultDto> LoginWithCodeAsync(string phoneNumber, string code)
+        {
+            var user = await _context.Users
+                .FirstOrDefaultAsync(u => u.PhoneNumber == phoneNumber);
+
+            if (user == null)
+                return new LoginResultDto { IsSuccess = false, Message = "کاربری با این شماره یافت نشد." };
+
+            if (!user.IsPhoneVerified)
+                return new LoginResultDto { IsSuccess = false, Message = "شماره موبایل تایید نشده است." };
+
+            if (user.VerificationCode != code || user.VerificationCodeExpiry < DateTime.Now)
+                return new LoginResultDto { IsSuccess = false, Message = "کد اشتباه یا منقضی شده است." };
+
+            // پاک کردن کد بعد از ورود
+            user.VerificationCode = null;
+            user.VerificationCodeExpiry = null;
+            user.LastLoginAt = DateTime.Now;
+            await _context.SaveChangesAsync();
+
+            // TODO: تولید توکن JWT (در آینده)
+            return new LoginResultDto
+            {
+                IsSuccess = true,
+                Message = "ورود موفقیت‌آمیز بود.",
+                User = _mapper.Map<UserProfileDto>(user)
+            };
         }
 
         public async Task<LoginResultDto> LoginAsync(LoginDto loginDto)
@@ -241,6 +377,21 @@ namespace JewelryStore.Services.Services
             return hashOfInput == hash;
         }
 
+        private string GenerateVerificationCode()
+        {
+            Random random = new Random();
+            return random.Next(10000, 99999).ToString();
+        }
+
+        private void SendVerificationSms(string phoneNumber, string code, string? fullName)
+        {
+            // ارسال کد تایید با الگوی ثبت‌نام (type: 1)
+            _smsSender.SendSms(
+                type: 1,
+                phoneNumber: phoneNumber,
+                parameters: new[] { fullName ?? "کاربر", code }
+            );
+        }
 
     }
 }

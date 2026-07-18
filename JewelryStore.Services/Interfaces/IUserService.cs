@@ -6,12 +6,15 @@ namespace JewelryStore.Services.Interfaces
     public interface IUserService
     {
         // عملیات عمومی
-        Task<UserProfileDto> RegisterAsync(RegisterDto registerDto);
+        Task<RegisterResultDto> RegisterAsync(RegisterDto registerDto);
         Task<LoginResultDto> LoginAsync(LoginDto loginDto);
         Task<UserProfileDto> GetProfileAsync(int userId);
         Task<UserProfileDto> UpdateProfileAsync(int userId, UpdateProfileDto updateDto);
         Task<bool> ChangePasswordAsync(int userId, ChangePasswordDto changePasswordDto);
         Task<bool> VerifyPhoneAsync(int userId, string verificationCode);
+        Task<VerifyResultDto> VerifyPhoneAsync(VerifyPhoneDto verifyDto);
+        Task<bool> ResendVerificationCodeAsync(string phoneNumber);
+        Task<LoginResultDto> LoginWithCodeAsync(string phoneNumber, string code);
 
         // عملیات ادمین
         Task<IEnumerable<UserListDto>> GetAllUsersAsync(UserFilterDto filter);
