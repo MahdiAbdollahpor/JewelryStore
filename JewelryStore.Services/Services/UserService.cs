@@ -16,32 +16,28 @@ namespace JewelryStore.Services.Services
         private readonly ApplicationDbContext _context;
         private readonly IMapper _mapper;
         private readonly ISmsSender _smsSender;
-        private readonly IFileStorageService _fileStorageService;
 
-        public UserService(ApplicationDbContext context, IMapper mapper, ISmsSender smsSender, IFileStorageService fileStorageService)
+        public UserService(ApplicationDbContext context, IMapper mapper, ISmsSender smsSender)
         {
             _context = context;
             _mapper = mapper;
             _smsSender = smsSender;
-            _fileStorageService = fileStorageService;
         }
 
+        // ثبت‌نام
         public async Task<RegisterResultDto> RegisterAsync(RegisterDto registerDto)
         {
-            // بررسی یکتا بودن شماره
             var existingUser = await _context.Users
                 .FirstOrDefaultAsync(u => u.PhoneNumber == registerDto.PhoneNumber);
 
             if (existingUser != null)
             {
-                // اگر کاربر قبلاً ثبت‌نام کرده ولی تایید نکرده، کد جدید بفرست
                 if (!existingUser.IsPhoneVerified)
                 {
                     existingUser.VerificationCode = GenerateVerificationCode();
                     existingUser.VerificationCodeExpiry = DateTime.Now.AddMinutes(5);
                     await _context.SaveChangesAsync();
 
-                    // ارسال پیامک
                     SendVerificationSms(existingUser.PhoneNumber, existingUser.VerificationCode, existingUser.FullName);
 
                     return new RegisterResultDto
@@ -61,7 +57,6 @@ namespace JewelryStore.Services.Services
                 };
             }
 
-            // ایجاد کاربر جدید
             var user = new User
             {
                 Username = registerDto.Username,
@@ -79,7 +74,6 @@ namespace JewelryStore.Services.Services
             await _context.Users.AddAsync(user);
             await _context.SaveChangesAsync();
 
-            // ارسال کد تایید
             SendVerificationSms(user.PhoneNumber, user.VerificationCode, user.FullName);
 
             return new RegisterResultDto
@@ -91,6 +85,7 @@ namespace JewelryStore.Services.Services
             };
         }
 
+        // تایید شماره موبایل
         public async Task<VerifyResultDto> VerifyPhoneAsync(VerifyPhoneDto verifyDto)
         {
             var user = await _context.Users
@@ -105,7 +100,6 @@ namespace JewelryStore.Services.Services
                 };
             }
 
-            // بررسی انقضای کد
             if (user.VerificationCodeExpiry < DateTime.Now)
             {
                 return new VerifyResultDto
@@ -116,7 +110,6 @@ namespace JewelryStore.Services.Services
                 };
             }
 
-            // بررسی صحت کد
             if (user.VerificationCode != verifyDto.Code)
             {
                 return new VerifyResultDto
@@ -126,7 +119,6 @@ namespace JewelryStore.Services.Services
                 };
             }
 
-            // تایید نهایی
             user.IsPhoneVerified = true;
             user.VerificationCode = null;
             user.VerificationCodeExpiry = null;
@@ -142,6 +134,7 @@ namespace JewelryStore.Services.Services
             };
         }
 
+        // ارسال مجدد کد تایید
         public async Task<bool> ResendVerificationCodeAsync(string phoneNumber)
         {
             var user = await _context.Users
@@ -158,6 +151,7 @@ namespace JewelryStore.Services.Services
             return true;
         }
 
+        // ورود با کد یکبارمصرف
         public async Task<LoginResultDto> LoginWithCodeAsync(string phoneNumber, string code)
         {
             var user = await _context.Users
@@ -172,13 +166,11 @@ namespace JewelryStore.Services.Services
             if (user.VerificationCode != code || user.VerificationCodeExpiry < DateTime.Now)
                 return new LoginResultDto { IsSuccess = false, Message = "کد اشتباه یا منقضی شده است." };
 
-            // پاک کردن کد بعد از ورود
             user.VerificationCode = null;
             user.VerificationCodeExpiry = null;
             user.LastLoginAt = DateTime.Now;
             await _context.SaveChangesAsync();
 
-            // TODO: تولید توکن JWT (در آینده)
             return new LoginResultDto
             {
                 IsSuccess = true,
@@ -187,9 +179,11 @@ namespace JewelryStore.Services.Services
             };
         }
 
+        // ورود با رمز عبور
         public async Task<LoginResultDto> LoginAsync(LoginDto loginDto)
         {
-            var user = await _context.Users.FirstOrDefaultAsync(u => u.PhoneNumber == loginDto.PhoneNumber);
+            var user = await _context.Users
+                .FirstOrDefaultAsync(u => u.PhoneNumber == loginDto.PhoneNumber);
 
             if (user == null)
                 return new LoginResultDto { IsSuccess = false, Message = "کاربری با این شماره تماس یافت نشد." };
@@ -200,25 +194,22 @@ namespace JewelryStore.Services.Services
             if (!user.IsActive)
                 return new LoginResultDto { IsSuccess = false, Message = "حساب کاربری شما غیرفعال است." };
 
-            // به‌روزرسانی تاریخ آخرین ورود
             user.LastLoginAt = DateTime.Now;
             await _context.SaveChangesAsync();
-
-            // TODO: تولید توکن JWT در آینده
-            // var token = GenerateJwtToken(user);
 
             return new LoginResultDto
             {
                 IsSuccess = true,
                 Message = "ورود موفقیت‌آمیز بود.",
-                // Token = token,
                 User = _mapper.Map<UserProfileDto>(user)
             };
         }
 
+        // دریافت پروفایل
         public async Task<UserProfileDto> GetProfileAsync(int userId)
         {
-            var user = await _context.Users.FirstOrDefaultAsync(u => u.Id == userId);
+            var user = await _context.Users
+                .FirstOrDefaultAsync(u => u.Id == userId);
 
             if (user == null)
                 throw new KeyNotFoundException("کاربر یافت نشد.");
@@ -226,9 +217,11 @@ namespace JewelryStore.Services.Services
             return _mapper.Map<UserProfileDto>(user);
         }
 
+        // به‌روزرسانی پروفایل
         public async Task<UserProfileDto> UpdateProfileAsync(int userId, UpdateProfileDto updateDto)
         {
-            var user = await _context.Users.FirstOrDefaultAsync(u => u.Id == userId);
+            var user = await _context.Users
+                .FirstOrDefaultAsync(u => u.Id == userId);
 
             if (user == null)
                 throw new KeyNotFoundException("کاربر یافت نشد.");
@@ -245,10 +238,11 @@ namespace JewelryStore.Services.Services
             return _mapper.Map<UserProfileDto>(user);
         }
 
-
+        // تغییر رمز عبور
         public async Task<bool> ChangePasswordAsync(int userId, ChangePasswordDto changePasswordDto)
         {
-            var user = await _context.Users.FirstOrDefaultAsync(u => u.Id == userId);
+            var user = await _context.Users
+                .FirstOrDefaultAsync(u => u.Id == userId);
 
             if (user == null)
                 throw new KeyNotFoundException("کاربر یافت نشد.");
@@ -263,14 +257,14 @@ namespace JewelryStore.Services.Services
             return true;
         }
 
+        // تایید شماره (قدیمی - برای سازگاری)
         public async Task<bool> VerifyPhoneAsync(int userId, string verificationCode)
         {
-            // در واقعیت باید کد تولید شده را با کد ارسال شده به شماره کاربر بررسی کرد
-            // فعلاً یک کد ثابت برای آزمایش در نظر می‌گیریم
             if (verificationCode != "1234")
                 return false;
 
-            var user = await _context.Users.FirstOrDefaultAsync(u => u.Id == userId);
+            var user = await _context.Users
+                .FirstOrDefaultAsync(u => u.Id == userId);
 
             if (user == null)
                 return false;
@@ -282,11 +276,11 @@ namespace JewelryStore.Services.Services
             return true;
         }
 
+        // دریافت لیست کاربران (ادمین)
         public async Task<IEnumerable<UserListDto>> GetAllUsersAsync(UserFilterDto filter)
         {
             var query = _context.Users.AsQueryable();
 
-            // اعمال فیلترها
             if (!string.IsNullOrWhiteSpace(filter.SearchTerm))
             {
                 var search = filter.SearchTerm.Trim();
@@ -313,7 +307,6 @@ namespace JewelryStore.Services.Services
             if (filter.RegisteredTo.HasValue)
                 query = query.Where(u => u.CreatedAt <= filter.RegisteredTo.Value);
 
-            // مرتب‌سازی
             query = filter.SortBy?.ToLower() switch
             {
                 "username" => filter.SortDescending ? query.OrderByDescending(u => u.Username) : query.OrderBy(u => u.Username),
@@ -321,11 +314,9 @@ namespace JewelryStore.Services.Services
                 _ => filter.SortDescending ? query.OrderByDescending(u => u.CreatedAt) : query.OrderBy(u => u.CreatedAt)
             };
 
-            // صفحه‌بندی
             var skip = (filter.Page - 1) * filter.PageSize;
             var users = await query.Skip(skip).Take(filter.PageSize).ToListAsync();
 
-            // محاسبه تعداد سفارشات برای هر کاربر
             var userListDtos = new List<UserListDto>();
             foreach (var user in users)
             {
@@ -338,9 +329,11 @@ namespace JewelryStore.Services.Services
             return userListDtos;
         }
 
+        // تغییر نقش کاربر (ادمین)
         public async Task<bool> ChangeUserRoleAsync(int userId, UserRole newRole)
         {
-            var user = await _context.Users.FirstOrDefaultAsync(u => u.Id == userId);
+            var user = await _context.Users
+                .FirstOrDefaultAsync(u => u.Id == userId);
 
             if (user == null)
                 throw new KeyNotFoundException("کاربر یافت نشد.");
@@ -352,36 +345,11 @@ namespace JewelryStore.Services.Services
             return true;
         }
 
-        public async Task<bool> UpdateUserAvatarAsync(int userId, IFormFile avatarFile)
-        {
-            var user = await _context.Users.FindAsync(userId);
-            if (user == null)
-                throw new KeyNotFoundException("کاربر یافت نشد.");
-
-            // حذف آواتار قدیمی (اگر وجود داشته باشد)
-            if (!string.IsNullOrEmpty(user.Avatar))
-            {
-                await _fileStorageService.DeleteFileAsync(user.Avatar);
-            }
-
-            // آپلود آواتار جدید
-            var avatarPath = await _fileStorageService.UploadFileAsync(
-                avatarFile,
-                "users/avatars",
-                $"user-{userId}-{DateTime.Now:yyyyMMdd}"
-            );
-
-            user.Avatar = _fileStorageService.GetFileUrl(avatarPath);
-            user.UpdatedAt = DateTime.Now;
-
-            await _context.SaveChangesAsync();
-            return true;
-        }
-
-
+        // فعال/غیرفعال کردن کاربر (ادمین)
         public async Task<bool> ToggleUserStatusAsync(int userId)
         {
-            var user = await _context.Users.FirstOrDefaultAsync(u => u.Id == userId);
+            var user = await _context.Users
+                .FirstOrDefaultAsync(u => u.Id == userId);
 
             if (user == null)
                 throw new KeyNotFoundException("کاربر یافت نشد.");
@@ -393,6 +361,7 @@ namespace JewelryStore.Services.Services
             return user.IsActive;
         }
 
+        // 🔧 متدهای کمکی
         private static string HashPassword(string password)
         {
             using var sha256 = SHA256.Create();
@@ -414,13 +383,11 @@ namespace JewelryStore.Services.Services
 
         private void SendVerificationSms(string phoneNumber, string code, string? fullName)
         {
-            // ارسال کد تایید با الگوی ثبت‌نام (type: 1)
             _smsSender.SendSms(
                 type: 1,
                 phoneNumber: phoneNumber,
                 parameters: new[] { fullName ?? "کاربر", code }
             );
         }
-
     }
 }

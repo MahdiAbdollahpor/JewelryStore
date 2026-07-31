@@ -55,7 +55,6 @@ builder.Services.AddScoped<IReportService, ReportService>();
 builder.Services.AddScoped<IAdminService, AdminService>();
 builder.Services.AddScoped<IWishlistService, WishlistService>();
 
-builder.Services.AddScoped<IFileStorageService, LocalFileStorageService>();
 
 
 // Add services to the container.

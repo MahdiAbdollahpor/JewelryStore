@@ -16,7 +16,7 @@ namespace JewelryStore.Services.Interfaces
         Task<VerifyResultDto> VerifyPhoneAsync(VerifyPhoneDto verifyDto);
         Task<bool> ResendVerificationCodeAsync(string phoneNumber);
         Task<LoginResultDto> LoginWithCodeAsync(string phoneNumber, string code);
-        Task<bool> UpdateUserAvatarAsync(int userId, IFormFile avatarFile);
+        
 
         // عملیات ادمین
         Task<IEnumerable<UserListDto>> GetAllUsersAsync(UserFilterDto filter);

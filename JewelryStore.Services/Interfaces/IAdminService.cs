@@ -55,8 +55,6 @@ namespace JewelryStore.Services.Interfaces
 
 
         // 📁 مدیریت فایل‌ها
-        Task<string> UploadSiteLogoAsync(IFormFile logoFile);
-        Task<bool> DeleteSiteLogoAsync(string logoPath);
-        Task<string> UploadBannerImageAsync(IFormFile bannerFile, string bannerName);
+       
     }
 }

@@ -27,7 +27,7 @@ namespace JewelryStore.Services.Services
         private readonly IOrderService _orderService;
         private readonly IDiscountService _discountService;
         private readonly IReportService _reportService;
-        private readonly IFileStorageService _fileStorageService;
+        
 
         public AdminService(
             ApplicationDbContext context,
@@ -36,8 +36,7 @@ namespace JewelryStore.Services.Services
             IProductService productService,
             IOrderService orderService,
             IDiscountService discountService,
-            IReportService reportService,
-            IFileStorageService fileStorageService)
+            IReportService reportService)
         {
             _context = context;
             _mapper = mapper;
@@ -46,7 +45,7 @@ namespace JewelryStore.Services.Services
             _orderService = orderService;
             _discountService = discountService;
             _reportService = reportService;
-            _fileStorageService = fileStorageService;
+          
         }
 
         // ==================== 📊 داشبورد ====================
@@ -480,37 +479,6 @@ namespace JewelryStore.Services.Services
 
 
 
-        public async Task<string> UploadSiteLogoAsync(IFormFile logoFile)
-        {
-            var logoPath = await _fileStorageService.UploadFileAsync(
-                logoFile,
-                "site",
-                $"logo-{DateTime.Now:yyyyMMdd}"
-            );
-
-            return _fileStorageService.GetFileUrl(logoPath);
-        }
-
-        /// <summary>
-        /// حذف لوگوی سایت
-        /// </summary>
-        public async Task<bool> DeleteSiteLogoAsync(string logoPath)
-        {
-            return await _fileStorageService.DeleteFileAsync(logoPath);
-        }
-
-        /// <summary>
-        /// آپلود تصویر بنر
-        /// </summary>
-        public async Task<string> UploadBannerImageAsync(IFormFile bannerFile, string bannerName)
-        {
-            var bannerPath = await _fileStorageService.UploadFileAsync(
-                bannerFile,
-                "banners",
-                $"{bannerName}-{DateTime.Now:yyyyMMdd}"
-            );
-
-            return _fileStorageService.GetFileUrl(bannerPath);
-        }
+       
     }
 }

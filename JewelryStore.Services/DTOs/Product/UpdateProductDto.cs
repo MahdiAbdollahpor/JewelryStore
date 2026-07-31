@@ -1,4 +1,5 @@
 ﻿using JewelryStore.Domain.Enums;
+using Microsoft.AspNetCore.Http;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -29,6 +30,7 @@ namespace JewelryStore.Services.DTOs.Product
         public bool? IsFeatured { get; set; }
         public bool? IsNew { get; set; }
         public List<string>? Tags { get; set; } // تگ‌های جدید
+        public List<IFormFile>? ImageFiles { get; set; }
         public List<UpdateProductVariantDto>? Variants { get; set; }
         public Dictionary<int, string>? Attributes { get; set; } // AttributeId -> Value
     }
