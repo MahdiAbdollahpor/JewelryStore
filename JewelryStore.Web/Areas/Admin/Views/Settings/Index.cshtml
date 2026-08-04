@@ -1,0 +1,167 @@
+﻿@using JewelryStore.Web.Areas.Admin.Controllers
+@model SettingsViewModel
+@{
+    ViewData["Title"] = "تنظیمات سایت";
+}
+
+<style>
+    :root {
+        --es-primary: #C2410C;
+        --es-surface: #F5F5F4;
+        --es-border: #D6D3D1;
+    }
+
+    .form-group {
+        margin-bottom: 20px;
+    }
+
+    .form-label {
+        display: block;
+        font-size: 13px;
+        font-weight: 600;
+        color: #57534E;
+        margin-bottom: 4px;
+    }
+
+    .form-control {
+        width: 100%;
+        padding: 10px 12px;
+        border: 1px solid var(--es-border);
+        border-radius: 8px;
+        background: #FFFFFF;
+        font-size: 14px;
+        transition: all 150ms ease;
+    }
+
+        .form-control:focus {
+            outline: none;
+            border-color: var(--es-primary);
+            box-shadow: 0 0 0 3px rgba(194, 65, 12, 0.12);
+        }
+</style>
+
+<div class="space-y-6">
+    <!-- هدر -->
+    <div>
+        <h1 class="font-['Playfair_Display'] text-3xl font-bold text-[#1C1917]">تنظیمات سایت</h1>
+        <p class="text-[#57534E] mt-1">مدیریت تنظیمات عمومی فروشگاه</p>
+    </div>
+
+    <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        <!-- تنظیمات ارسال -->
+        <div class="bg-[#F5F5F4] border border-[#D6D3D1] rounded-xl p-6">
+            <h3 class="font-['Playfair_Display'] text-xl font-semibold text-[#1C1917] mb-4">
+                <i class="fas fa-truck text-[#C2410C] ml-2"></i> تنظیمات ارسال
+            </h3>
+
+            <form asp-action="UpdateShipping" method="post">
+                @Html.AntiForgeryToken()
+
+                <div class="form-group">
+                    <label class="form-label">هزینه ارسال (تومان)</label>
+                    <input type="number" name="ShippingCost" class="form-control"
+                           value="@Model.ShippingSettings.ShippingCost" />
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label">حداقل مبلغ برای ارسال رایگان</label>
+                    <input type="number" name="FreeShippingThreshold" class="form-control"
+                           value="@(Model.ShippingSettings.FreeShippingThreshold ?? 0)" />
+                    <p class="text-xs text-[#57534E] mt-1">اگر مبلغ سفارش از این مقدار بیشتر شود، ارسال رایگان است</p>
+                </div>
+
+                <div class="flex items-center gap-2">
+                    <input type="checkbox" name="IsActive" class="w-4 h-4 rounded border-[#D6D3D1] accent-[#C2410C]"
+                           checked="@Model.ShippingSettings.IsActive" />
+                    <label class="text-sm">فعال بودن تنظیمات ارسال</label>
+                </div>
+
+                <div class="mt-4">
+                    <button type="submit" class="px-4 py-2 bg-[#C2410C] text-white rounded-lg text-sm font-semibold hover:bg-[#9A3412] transition">
+                        <i class="fas fa-save ml-1"></i> ذخیره تنظیمات ارسال
+                    </button>
+                </div>
+            </form>
+        </div>
+
+        <!-- تنظیمات مالیات -->
+        <div class="bg-[#F5F5F4] border border-[#D6D3D1] rounded-xl p-6">
+            <h3 class="font-['Playfair_Display'] text-xl font-semibold text-[#1C1917] mb-4">
+                <i class="fas fa-percentage text-[#C2410C] ml-2"></i> تنظیمات مالیات
+            </h3>
+
+            <form asp-action="UpdateTax" method="post">
+                @Html.AntiForgeryToken()
+
+                <div class="form-group">
+                    <label class="form-label">درصد مالیات</label>
+                    <input type="number" name="TaxPercentage" step="0.01" class="form-control"
+                           value="@Model.TaxSettings.TaxPercentage" />
+                    <p class="text-xs text-[#57534E] mt-1">مثلاً 9 برای ۹ درصد</p>
+                </div>
+
+                <div class="flex items-center gap-2">
+                    <input type="checkbox" name="IsActive" class="w-4 h-4 rounded border-[#D6D3D1] accent-[#C2410C]"
+                           checked="@Model.TaxSettings.IsActive" />
+                    <label class="text-sm">فعال بودن مالیات</label>
+                </div>
+
+                <div class="mt-4">
+                    <button type="submit" class="px-4 py-2 bg-[#C2410C] text-white rounded-lg text-sm font-semibold hover:bg-[#9A3412] transition">
+                        <i class="fas fa-save ml-1"></i> ذخیره تنظیمات مالیات
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- وضعیت تنظیمات -->
+    <div class="bg-[#F5F5F4] border border-[#D6D3D1] rounded-xl p-6">
+        <h3 class="font-['Playfair_Display'] text-xl font-semibold text-[#1C1917] mb-2">
+            <i class="fas fa-info-circle text-[#C2410C] ml-2"></i> وضعیت تنظیمات
+        </h3>
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 text-sm">
+            <div class="flex items-center gap-2">
+                <span class="text-[#57534E]">هزینه ارسال:</span>
+                <span class="font-semibold">@Model.ShippingSettings.ShippingCost.ToString("N0") تومان</span>
+                @if (Model.ShippingSettings.IsActive)
+                {
+                    <span class="text-[#16A34A] text-xs">✓ فعال</span>
+                }
+                else
+                {
+                    <span class="text-[#DC2626] text-xs">✗ غیرفعال</span>
+                }
+            </div>
+            <div class="flex items-center gap-2">
+                <span class="text-[#57534E]">درصد مالیات:</span>
+                <span class="font-semibold">@Model.TaxSettings.TaxPercentage%</span>
+                @if (Model.TaxSettings.IsActive)
+                {
+                    <span class="text-[#16A34A] text-xs">✓ فعال</span>
+                }
+                else
+                {
+                    <span class="text-[#DC2626] text-xs">✗ غیرفعال</span>
+                }
+            </div>
+            <div class="flex items-center gap-2">
+                <span class="text-[#57534E]">ارسال رایگان:</span>
+                <span class="font-semibold">
+                    @if (Model.ShippingSettings.FreeShippingThreshold.HasValue && Model.ShippingSettings.FreeShippingThreshold.Value > 0)
+                    {
+                        <span>بالای @Model.ShippingSettings.FreeShippingThreshold.Value.ToString("N0") تومان</span>
+                    }
+                    else
+                    {
+                        <span class="text-[#57534E]">غیرفعال</span>
+                    }
+                </span>
+            </div>
+            <div class="flex items-center gap-2">
+                <span class="text-[#57534E]">آخرین به‌روزرسانی:</span>
+                <span class="font-semibold">@DateTime.Now.ToString("yyyy/MM/dd HH:mm")</span>
+            </div>
+        </div>
+    </div>
+</div>

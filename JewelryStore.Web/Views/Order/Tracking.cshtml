@@ -1,0 +1,297 @@
+﻿@using JewelryStore.Domain.Enums
+@using JewelryStore.Services.DTOs.Order
+@model OrderDetailDto
+@{
+    ViewData["Title"] = $"پیگیری سفارش {Model.OrderNumber}";
+}
+
+<style>
+    :root {
+        --hs-bg: #FBF7F0;
+        --hs-forest: #1F3D2E;
+        --hs-forest-deep: #142A1F;
+        --hs-tan: #C2A878;
+        --hs-ink: #1A1F1B;
+        --hs-ink-muted: #5C625C;
+        --hs-outline: #E3DCC9;
+        --hs-display: 'Cormorant Garamond', 'IranNastaliq', serif;
+        --hs-sans: 'Vazirmatn', 'Inter', sans-serif;
+    }
+
+    .hs-display {
+        font-family: var(--hs-display);
+        letter-spacing: -0.02em;
+        line-height: 1.1;
+    }
+
+    .hs-sans {
+        font-family: var(--hs-sans);
+    }
+
+    .hs-uppercase {
+        text-transform: uppercase;
+        letter-spacing: 0.18em;
+        font-size: 0.7rem;
+    }
+
+    .hs-transition {
+        transition: all 320ms cubic-bezier(0.22, 0.61, 0.36, 1);
+    }
+
+    .hs-card {
+        background: #FFFFFF;
+        border: 1px solid var(--hs-outline);
+        border-radius: 4px;
+    }
+
+    .status-step {
+        display: flex;
+        align-items: center;
+        gap: 16px;
+        padding: 16px 0;
+        border-bottom: 1px solid var(--hs-outline);
+        opacity: 0.5;
+    }
+
+        .status-step:last-child {
+            border-bottom: none;
+        }
+
+        .status-step.completed {
+            opacity: 1;
+        }
+
+        .status-step .step-icon {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 18px;
+            background: #E7E5E4;
+            color: #8E928D;
+            flex-shrink: 0;
+        }
+
+        .status-step.completed .step-icon {
+            background: var(--hs-forest);
+            color: #FFFFFF;
+        }
+
+        .status-step .step-content {
+            flex: 1;
+        }
+
+        .status-step .step-title {
+            font-family: var(--hs-sans);
+            font-weight: 600;
+            color: var(--hs-ink);
+        }
+
+        .status-step .step-date {
+            font-family: var(--hs-sans);
+            font-size: 12px;
+            color: var(--hs-ink-muted);
+        }
+</style>
+
+<div class="min-h-screen" style="background-color: #FBF7F0; color: #1A1F1B;">
+
+    <!-- ✅ هدر صفحه -->
+    <div class="border-b border-[#E3DCC9] py-20">
+        <div class="max-w-[1440px] mx-auto px-6 md:px-12">
+            <nav class="hs-sans text-sm text-[#5C625C] mb-4">
+                <a asp-action="History" class="hover:text-[#1F3D2E] transition-colors">
+                    <i class="fas fa-arrow-right ml-1"></i> بازگشت به تاریخچه
+                </a>
+            </nav>
+            <h1 class="hs-display text-4xl md:text-5xl text-[#1A1F1B]">
+                <i class="fas fa-truck text-[#C2A878] text-3xl ml-4"></i>
+                پیگیری سفارش
+            </h1>
+            <p class="hs-sans text-lg text-[#5C625C] mt-2">
+                سفارش @Model.OrderNumber
+            </p>
+        </div>
+    </div>
+
+    <!-- ✅ محتوای اصلی -->
+    <div class="max-w-[1440px] mx-auto px-6 md:px-12 py-16">
+        <div class="grid grid-cols-1 lg:grid-cols-3 gap-12">
+            <!-- وضعیت پیگیری -->
+            <div class="lg:col-span-2">
+                <div class="hs-card p-8">
+                    <h3 class="hs-display text-2xl text-[#1A1F1B] mb-6">وضعیت ارسال</h3>
+
+                    <!-- کد رهگیری -->
+                    @if (!string.IsNullOrEmpty(Model.TrackingCode))
+                    {
+                        <div class="bg-[#F5EFE3] border border-[#E3DCC9] rounded p-4 mb-6">
+                            <p class="hs-sans text-sm text-[#5C625C]">کد رهگیری</p>
+                            <p class="hs-sans font-mono text-xl font-semibold text-[#1F3D2E]">@Model.TrackingCode</p>
+                        </div>
+                    }
+                    else
+                    {
+                        <div class="bg-[#FEF3C7] border border-[#F59E0B] rounded p-4 mb-6">
+                            <p class="hs-sans text-sm text-[#92400E]">
+                                <i class="fas fa-exclamation-triangle ml-1"></i>
+                                کد رهگیری هنوز ثبت نشده است.
+                            </p>
+                        </div>
+                    }
+
+                    <!-- مراحل ارسال -->
+                    <!-- مراحل ارسال -->
+                    <div class="space-y-0">
+                        <div class="status-step completed">
+                            <div class="step-icon"><i class="fas fa-check"></i></div>
+                            <div class="step-content">
+                                <p class="step-title">ثبت سفارش</p>
+                                <p class="step-date">@Model.CreatedAt.ToString("yyyy/MM/dd HH:mm")</p>
+                            </div>
+                        </div>
+
+                        <div class="status-step @(Model.OrderStatus >= OrderStatus.Paid ? "completed" : "")">
+                            <div class="step-icon"><i class="fas fa-credit-card"></i></div>
+                            <div class="step-content">
+                                <p class="step-title">پرداخت</p>
+                                <p class="step-date">
+                                    @if (Model.PaymentDate.HasValue)
+                                    {
+                                        @Model.PaymentDate.Value.ToString("yyyy/MM/dd HH:mm")
+                                    }
+                                    else
+                                    {
+                                        <span class="text-[#8E928D]">در انتظار پرداخت</span>
+                                    }
+                                </p>
+                            </div>
+                        </div>
+
+                        <div class="status-step @(Model.OrderStatus >= OrderStatus.Processing ? "completed" : "")">
+                            <div class="step-icon"><i class="fas fa-box"></i></div>
+                            <div class="step-content">
+                                <p class="step-title">آماده‌سازی سفارش</p>
+                                <p class="step-date">
+                                    @if (Model.OrderStatus >= OrderStatus.Processing && Model.UpdatedAt.HasValue)
+                                    {
+                                        @Model.UpdatedAt.Value.ToString("yyyy/MM/dd HH:mm")
+                                    }
+                                    else
+                                    {
+                                        <span class="text-[#8E928D]">در انتظار</span>
+                                    }
+                                </p>
+                            </div>
+                        </div>
+
+                        <div class="status-step @(Model.OrderStatus >= OrderStatus.Shipped ? "completed" : "")">
+                            <div class="step-icon"><i class="fas fa-truck"></i></div>
+                            <div class="step-content">
+                                <p class="step-title">ارسال سفارش</p>
+                                <p class="step-date">
+                                    @if (Model.ShippingDate.HasValue)
+                                    {
+                                        @Model.ShippingDate.Value.ToString("yyyy/MM/dd HH:mm")
+                                    }
+                                    else
+                                    {
+                                        <span class="text-[#8E928D]">در انتظار ارسال</span>
+                                    }
+                                </p>
+                            </div>
+                        </div>
+
+                        <div class="status-step @(Model.OrderStatus >= OrderStatus.Delivered ? "completed" : "")">
+                            <div class="step-icon"><i class="fas fa-home"></i></div>
+                            <div class="step-content">
+                                <p class="step-title">تحویل سفارش</p>
+                                <p class="step-date">
+                                    @if (Model.DeliveryDate.HasValue)
+                                    {
+                                        @Model.DeliveryDate.Value.ToString("yyyy/MM/dd HH:mm")
+                                    }
+                                    else
+                                    {
+                                        <span class="text-[#8E928D]">در انتظار تحویل</span>
+                                    }
+                                </p>
+                            </div>
+                        </div>
+                    </div>
+
+            <!-- اطلاعات سفارش -->
+            <div class="lg:col-span-1">
+                <div class="hs-card p-6">
+                    <h3 class="hs-display text-xl text-[#1A1F1B] mb-4">خلاصه سفارش</h3>
+
+                    <div class="space-y-3 text-sm">
+                        <div class="flex justify-between">
+                            <span class="text-[#5C625C]">شماره سفارش</span>
+                            <span class="font-mono font-medium">@Model.OrderNumber</span>
+                        </div>
+                        <div class="flex justify-between">
+                            <span class="text-[#5C625C]">تاریخ ثبت</span>
+                            <span>@Model.CreatedAt.ToString("yyyy/MM/dd")</span>
+                        </div>
+                        <div class="flex justify-between">
+                            <span class="text-[#5C625C]">وضعیت</span>
+                            <span>@GetStatusName(Model.OrderStatus)</span>
+                        </div>
+                        <div class="flex justify-between">
+                            <span class="text-[#5C625C]">مبلغ</span>
+                            <span class="font-semibold text-[#1F3D2E]">@Model.TotalAmount.ToString("N0") تومان</span>
+                        </div>
+                        <div class="flex justify-between">
+                            <span class="text-[#5C625C]">تعداد آیتم</span>
+                            <span>@Model.Items.Count</span>
+                        </div>
+                    </div>
+
+                    <div class="mt-6 pt-6 border-t border-[#E3DCC9]">
+                        <h4 class="hs-sans text-xs uppercase tracking-[0.18em] text-[#5C625C] mb-3">آیتم‌های سفارش</h4>
+                        @foreach (var item in Model.Items.Take(3))
+                        {
+                            <div class="flex items-center gap-3 py-2 border-b border-[#E3DCC9] last:border-none">
+                                <img src="@(item.ProductImage ?? "/images/no-image.png")"
+                                     class="w-12 h-12 object-cover rounded border border-[#E3DCC9]" />
+                                <div class="flex-1">
+                                    <p class="hs-sans text-sm text-[#1A1F1B] line-clamp-1">@item.ProductName</p>
+                                    <p class="hs-sans text-xs text-[#5C625C]">@item.Quantity × @item.FinalUnitPrice.ToString("N0")</p>
+                                </div>
+                            </div>
+                        }
+                        @if (Model.Items.Count > 3)
+                        {
+                            <p class="hs-sans text-xs text-[#5C625C] mt-2">+@(Model.Items.Count - 3) آیتم دیگر</p>
+                        }
+                    </div>
+
+                    <a asp-action="Details" asp-route-orderId="@Model.Id"
+                       class="btn-hs-outline w-full py-2.5 text-sm block text-center mt-4">
+                        <i class="fas fa-eye ml-1"></i> مشاهده جزئیات کامل
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+@functions {
+    private string GetStatusName(OrderStatus status)
+    {
+        return status switch
+        {
+            OrderStatus.Pending => "در انتظار پرداخت",
+            OrderStatus.Paid => "پرداخت شده",
+            OrderStatus.Processing => "در حال پردازش",
+            OrderStatus.Shipped => "ارسال شده",
+            OrderStatus.Delivered => "تحویل داده شده",
+            OrderStatus.Cancelled => "لغو شده",
+            OrderStatus.Returned => "مرجوع شده",
+            _ => "نامشخص"
+        };
+    }
+}

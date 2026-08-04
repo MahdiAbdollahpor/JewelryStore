@@ -9,11 +9,16 @@ namespace JewelryStore.Web.Controllers
     {
         private readonly ICartService _cartService;
         private readonly IProductService _productService;
+        private readonly ILogger<CartController> _logger;
 
-        public CartController(ICartService cartService, IProductService productService)
+        public CartController(
+            ICartService cartService,
+            IProductService productService,
+            ILogger<CartController> logger)
         {
             _cartService = cartService;
             _productService = productService;
+            _logger = logger;
         }
 
         // 1️⃣ نمایش سبد خرید
@@ -30,28 +35,38 @@ namespace JewelryStore.Web.Controllers
         // 2️⃣ افزودن به سبد خرید (AJAX)
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public async Task<IActionResult> AddToCart(AddToCartDto addDto)
+        public async Task<IActionResult> AddToCart([FromBody] AddToCartDto addDto)
         {
             try
             {
                 var userId = GetUserId();
                 var sessionId = GetSessionId();
 
+                // بررسی موجودی قبل از افزودن
+                var product = await _productService.GetProductByIdAsync(addDto.ProductId);
+                if (product == null)
+                    return Json(new { success = false, message = "محصول یافت نشد." });
+
+                if (product.Quantity < addDto.Quantity)
+                    return Json(new { success = false, message = $"موجودی محصول کافی نیست. موجودی: {product.Quantity}" });
+
                 var cartItem = await _cartService.AddToCartAsync(userId, sessionId, addDto);
 
-                // دریافت تعداد کل آیتم‌های سبد خرید
                 var itemCount = await _cartService.GetCartItemsCountAsync(userId, sessionId);
+                var total = await _cartService.GetCartTotalAsync(userId, sessionId);
 
                 return Json(new
                 {
                     success = true,
-                    message = "محصول با موفقیت به سبد خرید اضافه شد.",
+                    message = "اثر با موفقیت به کلکسیون شما افزوده شد.",
                     itemCount = itemCount,
+                    total = total.ToString("N0"),
                     cartItem = cartItem
                 });
             }
             catch (Exception ex)
             {
+                _logger.LogError(ex, "خطا در افزودن به سبد خرید");
                 return Json(new
                 {
                     success = false,
@@ -63,7 +78,7 @@ namespace JewelryStore.Web.Controllers
         // 3️⃣ به‌روزرسانی تعداد آیتم (AJAX)
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public async Task<IActionResult> UpdateQuantity(UpdateCartItemDto updateDto)
+        public async Task<IActionResult> UpdateQuantity([FromBody] UpdateCartItemDto updateDto)
         {
             try
             {
@@ -73,19 +88,21 @@ namespace JewelryStore.Web.Controllers
 
                 var cartItem = await _cartService.UpdateCartItemAsync(userId.Value, updateDto);
 
-                // محاسبه مجدد جمع کل
                 var total = await _cartService.GetCartTotalAsync(userId, null);
+                var itemCount = await _cartService.GetCartItemsCountAsync(userId, null);
 
                 return Json(new
                 {
                     success = true,
                     cartItem = cartItem,
-                    total = total,
-                    message = "سبد خرید با موفقیت به‌روزرسانی شد."
+                    total = total.ToString("N0"),
+                    itemCount = itemCount,
+                    message = "کلکسیون شما با موفقیت به‌روزرسانی شد."
                 });
             }
             catch (Exception ex)
             {
+                _logger.LogError(ex, "خطا در به‌روزرسانی تعداد");
                 return Json(new
                 {
                     success = false,
@@ -109,16 +126,15 @@ namespace JewelryStore.Web.Controllers
 
                 if (result)
                 {
-                    // محاسبه مجدد جمع کل و تعداد
                     var total = await _cartService.GetCartTotalAsync(userId, null);
                     var itemCount = await _cartService.GetCartItemsCountAsync(userId, null);
 
                     return Json(new
                     {
                         success = true,
-                        total = total,
+                        total = total.ToString("N0"),
                         itemCount = itemCount,
-                        message = "آیتم با موفقیت از سبد خرید حذف شد."
+                        message = "اثر با موفقیت از کلکسیون شما حذف شد."
                     });
                 }
 
@@ -126,6 +142,7 @@ namespace JewelryStore.Web.Controllers
             }
             catch (Exception ex)
             {
+                _logger.LogError(ex, "خطا در حذف از سبد خرید");
                 return Json(new
                 {
                     success = false,
@@ -141,14 +158,14 @@ namespace JewelryStore.Web.Controllers
         {
             var userId = GetUserId();
             if (!userId.HasValue)
-                return RedirectToAction("Index", "Account");
+                return RedirectToAction("Login", "Account");
 
             await _cartService.ClearCartAsync(userId.Value);
-            TempData["Success"] = "سبد خرید شما خالی شد.";
+            TempData["Success"] = "کلکسیون شما با موفقیت خالی شد.";
             return RedirectToAction("Index");
         }
 
-        // 6️⃣ نمایش ویجت سبد خرید (برای هدر)
+        // 6️⃣ ویجت سبد خرید (برای هدر)
         [HttpGet]
         public async Task<IActionResult> CartWidget()
         {
@@ -165,7 +182,33 @@ namespace JewelryStore.Web.Controllers
             });
         }
 
-        // 🔧 متدهای کمکی خصوصی
+        // 7️⃣ تعداد آیتم‌های سبد خرید
+        [HttpGet]
+        public async Task<IActionResult> Count()
+        {
+            var userId = GetUserId();
+            var sessionId = GetSessionId();
+
+            var count = await _cartService.GetCartItemsCountAsync(userId, sessionId);
+            return Json(new { count });
+        }
+
+        // 8️⃣ تسویه حساب (هدایت به صفحه سفارش)
+        [HttpGet]
+        public IActionResult Checkout()
+        {
+            var userId = GetUserId();
+            if (!userId.HasValue)
+            {
+                TempData["Error"] = "لطفاً برای تکمیل سفارش وارد حساب کاربری خود شوید.";
+                return RedirectToAction("Login", "Account");
+            }
+
+            // می‌توانیم یک ViewModel برای تسویه حساب بسازیم
+            return View();
+        }
+
+        // 🔧 متدهای کمکی
 
         private int? GetUserId()
         {
@@ -188,7 +231,7 @@ namespace JewelryStore.Web.Controllers
             sessionId = Guid.NewGuid().ToString();
             var options = new CookieOptions
             {
-                Expires = DateTime.Now.AddDays(7),
+                Expires = DateTime.Now.AddDays(30), // لوکس: مدت طولانی‌تر
                 HttpOnly = true,
                 Secure = true,
                 SameSite = SameSiteMode.Lax

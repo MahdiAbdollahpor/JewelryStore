@@ -1,0 +1,205 @@
+﻿using JewelryStore.Services.DTOs.Admin;
+using JewelryStore.Services.DTOs.Product;
+using JewelryStore.Services.Interfaces;
+using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Mvc;
+
+namespace JewelryStore.Web.Areas.Admin.Controllers
+{
+    [Area("Admin")]
+    [Authorize(Roles = "Admin")]
+    public class ProductsController : Controller
+    {
+        private readonly IAdminService _adminService;
+        private readonly IProductService _productService;
+        private readonly ILogger<ProductsController> _logger;
+
+        public ProductsController(
+            IAdminService adminService,
+            IProductService productService,
+            ILogger<ProductsController> logger)
+        {
+            _adminService = adminService;
+            _productService = productService;
+            _logger = logger;
+        }
+
+        [HttpGet]
+        public async Task<IActionResult> Index(AdminProductFilterDto filter)
+        {
+            try
+            {
+                var products = await _adminService.GetAllProductsAsync(filter);
+                ViewBag.CurrentFilter = filter;
+                return View(products);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "خطا در دریافت لیست محصولات");
+                TempData["Error"] = "خطا در دریافت لیست محصولات.";
+                return View(new List<ProductListDto>());
+            }
+        }
+
+        [HttpGet]
+        public async Task<IActionResult> Detail(int id)
+        {
+            try
+            {
+                var product = await _adminService.GetProductByIdAsync(id);
+                if (product == null)
+                    return NotFound();
+
+                return View(product);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "خطا در دریافت جزئیات محصول");
+                TempData["Error"] = "خطا در دریافت جزئیات محصول.";
+                return RedirectToAction("Index");
+            }
+        }
+
+        [HttpGet]
+        public IActionResult Create()
+        {
+            return View(new CreateProductDto());
+        }
+
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> Create(CreateProductDto createDto, List<IFormFile> images)
+        {
+            if (!ModelState.IsValid)
+                return View(createDto);
+
+            try
+            {
+                createDto.ImageFiles = images;
+                var product = await _adminService.CreateProductAsync(createDto);
+                TempData["Success"] = "محصول با موفقیت ایجاد شد.";
+                return RedirectToAction("Detail", new { id = product.Id });
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "خطا در ایجاد محصول");
+                ModelState.AddModelError("", ex.Message);
+                return View(createDto);
+            }
+        }
+
+        [HttpGet]
+        public async Task<IActionResult> Edit(int id)
+        {
+            try
+            {
+                var product = await _adminService.GetProductByIdAsync(id);
+                if (product == null)
+                    return NotFound();
+
+                var updateDto = new UpdateProductDto
+                {
+                    Name = product.Name,
+                    CategoryId = product.CategoryId,
+                    Brand = product.Brand,
+                    Description = product.Description,
+                    ShortDescription = product.ShortDescription,
+                    BasePrice = product.BasePrice,
+                    DiscountPercentage = product.DiscountPercentage,
+                    Weight = product.Weight,
+                    Purity = product.Purity,
+                    CraftsmanshipFee = product.CraftsmanshipFee,
+                    StoneType = product.StoneType,
+                    StoneWeight = product.StoneWeight,
+                    StoneQuality = product.StoneQuality,
+                    Quantity = product.Quantity,
+                    MinOrderQuantity = product.MinOrderQuantity,
+                    MaxOrderQuantity = product.MaxOrderQuantity,
+                    IsActive = product.IsActive,
+                    IsFeatured = product.IsFeatured,
+                    IsNew = product.IsNew,
+                    Tags = product.Tags
+                };
+
+                ViewBag.ProductId = id;
+                return View(updateDto);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "خطا در دریافت اطلاعات محصول");
+                TempData["Error"] = "خطا در دریافت اطلاعات محصول.";
+                return RedirectToAction("Index");
+            }
+        }
+
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> Edit(int id, UpdateProductDto updateDto, List<IFormFile> images)
+        {
+            if (!ModelState.IsValid)
+            {
+                ViewBag.ProductId = id;
+                return View(updateDto);
+            }
+
+            try
+            {
+                updateDto.ImageFiles = images;
+                await _adminService.UpdateProductAsync(id, updateDto);
+                TempData["Success"] = "محصول با موفقیت ویرایش شد.";
+                return RedirectToAction("Detail", new { id });
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "خطا در ویرایش محصول");
+                ModelState.AddModelError("", ex.Message);
+                ViewBag.ProductId = id;
+                return View(updateDto);
+            }
+        }
+
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> ToggleStatus(int id)
+        {
+            try
+            {
+                var result = await _adminService.ToggleProductStatusAsync(id);
+                if (result)
+                    TempData["Success"] = "وضعیت محصول با موفقیت تغییر کرد.";
+                else
+                    TempData["Error"] = "خطا در تغییر وضعیت محصول.";
+
+                return RedirectToAction("Index");
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "خطا در تغییر وضعیت محصول");
+                TempData["Error"] = "خطا در تغییر وضعیت محصول.";
+                return RedirectToAction("Index");
+            }
+        }
+
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> Delete(int id)
+        {
+            try
+            {
+                var result = await _adminService.DeleteProductAsync(id);
+                if (result)
+                    TempData["Success"] = "محصول با موفقیت حذف شد.";
+                else
+                    TempData["Error"] = "خطا در حذف محصول.";
+
+                return RedirectToAction("Index");
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "خطا در حذف محصول");
+                TempData["Error"] = "خطا در حذف محصول.";
+                return RedirectToAction("Index");
+            }
+        }
+    }
+}

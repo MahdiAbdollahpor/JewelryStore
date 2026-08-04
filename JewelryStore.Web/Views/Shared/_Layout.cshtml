@@ -1,49 +1,374 @@
 ﻿<!DOCTYPE html>
-<html lang="en">
+<html lang="fa" dir="rtl">
 <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>@ViewData["Title"] - JewelryStore.Web</title>
-    <link rel="stylesheet" href="~/lib/bootstrap/dist/css/bootstrap.min.css" />
-    <link rel="stylesheet" href="~/css/site.css" asp-append-version="true" />
-    <link rel="stylesheet" href="~/JewelryStore.Web.styles.css" asp-append-version="true" />
+    <title>@ViewData["Title"] - جواهری</title>
+
+    <!-- ✅ Tailwind CSS از CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+
+    <!-- ✅ پیکربندی Tailwind با رنگ‌های Hearthstone -->
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        'hs-bg': '#FBF7F0',
+                        'hs-surface': '#F5EFE3',
+                        'hs-elevated': '#FFFFFF',
+                        'hs-sunken': '#ECE4D2',
+                        'hs-forest': '#1F3D2E',
+                        'hs-forest-deep': '#142A1F',
+                        'hs-forest-soft': '#3D6650',
+                        'hs-tan': '#C2A878',
+                        'hs-tan-deep': '#9C8552',
+                        'hs-ink': '#1A1F1B',
+                        'hs-ink-muted': '#5C625C',
+                        'hs-ink-subtle': '#8E928D',
+                        'hs-outline': '#E3DCC9',
+                        'hs-outline-strong': '#C9C0AA',
+                    },
+                    fontFamily: {
+                        'display': ['IranNastaliq', 'Cormorant Garamond', 'serif'],
+                        'serif': ['Vazirmatn', 'Source Serif 4', 'serif'],
+                        'sans': ['Vazirmatn', 'Inter', 'sans-serif'],
+                    }
+                }
+            }
+        }
+    </script>
+
+    <!-- ✅ FontAwesome 6 -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" />
+
+    <!-- ✅ فونت فارسی Vazirmatn -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/rastikerdar/vazirmatn@v33.003/Vazirmatn-font-face.css" />
+
+    <!-- ✅ فونت Cormorant Garamond (معادل Canela) -->
+    <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,600;0,700;1,400&display=swap" rel="stylesheet" />
+
+    <!-- ✅ استایل‌های اختصاصی Hearthstone -->
+    <style>
+        /* تنظیمات پایه RTL */
+        body {
+            direction: rtl;
+            font-family: 'Vazirmatn', 'Inter', sans-serif;
+            background-color: #FBF7F0;
+            color: #1A1F1B;
+        }
+
+        /* کلاس‌های کمکی Hearthstone */
+        .hs-container {
+            max-width: 1440px;
+            margin: 0 auto;
+            padding: 0 48px;
+        }
+
+        .hs-display {
+            font-family: 'Cormorant Garamond', 'IranNastaliq', serif;
+            letter-spacing: -0.02em;
+            line-height: 1.1;
+        }
+
+        .hs-sans {
+            font-family: 'Vazirmatn', 'Inter', sans-serif;
+        }
+
+        .hs-serif {
+            font-family: 'Vazirmatn', 'Source Serif 4', serif;
+        }
+
+        .hs-uppercase {
+            text-transform: uppercase;
+            letter-spacing: 0.18em;
+            font-size: 0.7rem;
+        }
+
+        .hs-transition {
+            transition: all 320ms cubic-bezier(0.22, 0.61, 0.36, 1);
+        }
+
+        /* دکمه‌ها */
+        .btn-hs-primary {
+            background-color: #1F3D2E;
+            color: #FBF7F0;
+            border-radius: 2px;
+            font-weight: 500;
+            text-transform: uppercase;
+            letter-spacing: 0.12em;
+            transition: all 320ms cubic-bezier(0.22, 0.61, 0.36, 1);
+            font-family: 'Vazirmatn', 'Inter', sans-serif;
+        }
+
+            .btn-hs-primary:hover {
+                background-color: #142A1F;
+            }
+
+        .btn-hs-outline {
+            background-color: transparent;
+            border: 1px solid #1F3D2E;
+            color: #1F3D2E;
+            border-radius: 2px;
+            font-weight: 500;
+            text-transform: uppercase;
+            letter-spacing: 0.12em;
+            transition: all 320ms cubic-bezier(0.22, 0.61, 0.36, 1);
+            font-family: 'Vazirmatn', 'Inter', sans-serif;
+        }
+
+            .btn-hs-outline:hover {
+                background-color: #1F3D2E;
+                color: #FBF7F0;
+            }
+
+        /* کارت‌ها */
+        .hs-card {
+            background-color: #FFFFFF;
+            border: 1px solid #E3DCC9;
+            border-radius: 4px;
+            transition: all 320ms cubic-bezier(0.22, 0.61, 0.36, 1);
+        }
+
+            .hs-card:hover {
+                box-shadow: 0 8px 32px rgba(20, 42, 31, 0.08);
+                transform: translateY(-2px);
+            }
+
+        /* اینپوت‌ها */
+        .hs-input {
+            width: 100%;
+            background-color: transparent;
+            border: none;
+            border-bottom: 1px solid #C9C0AA;
+            padding: 0.75rem 0;
+            font-family: 'Vazirmatn', 'Inter', sans-serif;
+            color: #1A1F1B;
+            transition: all 320ms cubic-bezier(0.22, 0.61, 0.36, 1);
+        }
+
+            .hs-input:focus {
+                outline: none;
+                border-bottom: 2px solid #1F3D2E;
+            }
+
+            .hs-input::placeholder {
+                color: #8E928D;
+            }
+
+        /* نوار اسکرول مخفی */
+        .scrollbar-hide::-webkit-scrollbar {
+            display: none;
+        }
+
+        .scrollbar-hide {
+            -ms-overflow-style: none;
+            scrollbar-width: none;
+        }
+
+        /* انیمیشن منوی کاربری */
+        .dropdown-menu {
+            opacity: 0;
+            visibility: hidden;
+            transform: translateY(-8px);
+            transition: all 320ms cubic-bezier(0.22, 0.61, 0.36, 1);
+        }
+
+        .group:hover .dropdown-menu {
+            opacity: 1;
+            visibility: visible;
+            transform: translateY(0);
+        }
+    </style>
 </head>
 <body>
-    <header>
-        <nav class="navbar navbar-expand-sm navbar-toggleable-sm navbar-light bg-white border-bottom box-shadow mb-3">
-            <div class="container-fluid">
-                <a class="navbar-brand" asp-area="" asp-controller="Home" asp-action="Index">JewelryStore.Web</a>
-                <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target=".navbar-collapse" aria-controls="navbarSupportedContent"
-                        aria-expanded="false" aria-label="Toggle navigation">
-                    <span class="navbar-toggler-icon"></span>
-                </button>
-                <div class="navbar-collapse collapse d-sm-inline-flex justify-content-between">
-                    <ul class="navbar-nav flex-grow-1">
-                        <li class="nav-item">
-                            <a class="nav-link text-dark" asp-area="" asp-controller="Home" asp-action="Index">Home</a>
-                        </li>
-                        <li class="nav-item">
-                            <a class="nav-link text-dark" asp-area="" asp-controller="Home" asp-action="Privacy">Privacy</a>
-                        </li>
+
+    <!-- ✅ هدر لوکس Hearthstone -->
+    <header class="bg-[#FFFFFF] border-b border-[#E3DCC9] h-20 flex items-center sticky top-0 z-50">
+        <div class="hs-container w-full flex items-center justify-between">
+            <!-- لوگو -->
+            <a asp-controller="Product" asp-action="Index"
+               class="hs-display text-3xl md:text-4xl font-bold text-[#1F3D2E] tracking-[-0.02em]">
+                جواهری
+            </a>
+
+            <!-- منوی اصلی (وسط) -->
+            <nav class="hidden lg:flex items-center gap-10">
+                <a asp-controller="Product" asp-action="Index"
+                   class="hs-sans hs-uppercase text-[#5C625C] hover:text-[#1F3D2E] hs-transition">
+                    کلکسیون
+                </a>
+                <a asp-controller="Product" asp-action="Index" asp-route-OnlyDiscounted="true"
+                   class="hs-sans hs-uppercase text-[#5C625C] hover:text-[#1F3D2E] hs-transition">
+                    تخفیف‌ها
+                </a>
+                <a href="#"
+                   class="hs-sans hs-uppercase text-[#5C625C] hover:text-[#1F3D2E] hs-transition">
+                    مجله
+                </a>
+            </nav>
+
+            <!-- ابزارهای کاربری (چپ) -->
+            <div class="flex items-center gap-6">
+                <!-- جستجو -->
+                <form asp-controller="Product" asp-action="Search" method="get" class="hidden md:block">
+                    <div class="relative">
+                        <input type="text" name="term" placeholder="جستجو..."
+                               class="hs-input !border-b !border-[#E3DCC9] text-sm w-40 focus:!border-[#1F3D2E] pl-8" />
+                        <button type="submit" class="absolute left-0 top-1/2 -translate-y-1/2 text-[#8E928D] hover:text-[#1F3D2E] hs-transition">
+                            <i class="fas fa-search text-sm"></i>
+                        </button>
+                    </div>
+                </form>
+
+                <!-- علاقه‌مندی‌ها -->
+                <a asp-controller="Wishlist" asp-action="Index" class="relative text-[#5C625C] hover:text-[#1F3D2E] hs-transition">
+                    <i class="far fa-heart text-xl"></i>
+                    <span id="wishlist-count" class="absolute -top-2 -right-3 hs-sans text-[10px] text-[#C2A878]">0</span>
+                </a>
+
+                <!-- سبد خرید -->
+                <a asp-controller="Cart" asp-action="Index" class="relative text-[#5C625C] hover:text-[#1F3D2E] hs-transition">
+                    <i class="fas fa-shopping-bag text-xl"></i>
+                    <span id="cart-item-count" class="absolute -top-2 -right-3 hs-sans text-[10px] text-[#C2A878]">0</span>
+                </a>
+
+                <!-- ✅ حساب کاربری / ورود / ثبت‌نام -->
+                @if (User.Identity?.IsAuthenticated == true)
+                {
+                    <!-- کاربر لاگین کرده -->
+                    <div class="relative group">
+                        <button class="text-[#5C625C] hover:text-[#1F3D2E] hs-transition">
+                            <i class="far fa-user-circle text-2xl"></i>
+                        </button>
+                        <div class="dropdown-menu absolute left-0 top-full mt-4 w-56 bg-[#FFFFFF] border border-[#E3DCC9] rounded-[4px] shadow-[0_8px_32px_rgba(20,42,31,0.08)]">
+                            <a asp-controller="Account" asp-action="Profile"
+                               class="block px-5 py-3 hs-sans text-sm text-[#1A1F1B] hover:bg-[#FBF7F0] hs-transition border-b border-[#E3DCC9]">
+                                <i class="fas fa-user ml-2"></i> پروفایل
+                            </a>
+                            <a asp-controller="Wishlist" asp-action="Index"
+                               class="block px-5 py-3 hs-sans text-sm text-[#1A1F1B] hover:bg-[#FBF7F0] hs-transition border-b border-[#E3DCC9]">
+                                <i class="fas fa-heart ml-2"></i> علاقه‌مندی‌ها
+                            </a>
+                            <a asp-controller="Order" asp-action="History"
+                               class="block px-5 py-3 hs-sans text-sm text-[#1A1F1B] hover:bg-[#FBF7F0] hs-transition border-b border-[#E3DCC9]">
+                                <i class="fas fa-receipt ml-2"></i> سفارشات
+                            </a>
+                            @if (User.IsInRole("Admin"))
+                            {
+                                <a asp-area="Admin" asp-controller="Dashboard" asp-action="Index"
+                                   class="block px-5 py-3 hs-sans text-sm text-[#1F3D2E] hover:bg-[#FBF7F0] hs-transition border-b border-[#E3DCC9]">
+                                    <i class="fas fa-cog ml-2"></i> پنل مدیریت
+                                </a>
+                            }
+                            <form asp-controller="Account" asp-action="Logout" method="post" class="block">
+                                @Html.AntiForgeryToken()
+                                <button type="submit" class="w-full text-right px-5 py-3 hs-sans text-sm text-[#8C3A36] hover:bg-[#FBF7F0] hs-transition">
+                                    <i class="fas fa-sign-out-alt ml-2"></i> خروج
+                                </button>
+                            </form>
+                        </div>
+                    </div>
+                }
+                else
+                {
+                    <!-- کاربر لاگین نکرده -->
+                    <div class="flex items-center gap-4">
+                        <a asp-controller="Account" asp-action="Login"
+                           class="hs-sans text-sm text-[#5C625C] hover:text-[#1F3D2E] hs-transition">
+                            ورود
+                        </a>
+                        <span class="text-[#E3DCC9]">|</span>
+                        <a asp-controller="Account" asp-action="Register"
+                           class="hs-sans text-sm font-medium text-[#1F3D2E] hover:text-[#3D6650] hs-transition">
+                            ثبت‌نام
+                        </a>
+                    </div>
+                }
+            </div>
+        </div>
+    </header>
+
+    <!-- ✅ محتوای اصلی -->
+    <main class="min-h-screen">
+        @RenderBody()
+    </main>
+
+    <!-- ✅ فوتر لوکس -->
+    <footer class="border-t border-[#E3DCC9] bg-[#FBF7F0] py-20 mt-20">
+        <div class="hs-container">
+            <div class="grid grid-cols-1 md:grid-cols-12 gap-12">
+                <!-- بخش اول: برند -->
+                <div class="md:col-span-5">
+                    <h5 class="hs-display text-4xl font-bold text-[#1F3D2E] mb-4">
+                        جواهری
+                    </h5>
+                    <p class="hs-serif text-lg text-[#5C625C] leading-relaxed max-w-md">
+                        هر قطعه، روایتی منحصر‌به‌فرد از هنر و صنعت‌گری استادکاران
+                    </p>
+                </div>
+
+                <!-- بخش دوم: لینک‌ها -->
+                <div class="md:col-span-3">
+                    <h6 class="hs-sans hs-uppercase text-[#1A1F1B] mb-6">دسترسی سریع</h6>
+                    <ul class="space-y-4 hs-sans text-sm text-[#5C625C]">
+                        <li><a href="#" class="hover:text-[#1F3D2E] hs-transition">درباره ما</a></li>
+                        <li><a href="#" class="hover:text-[#1F3D2E] hs-transition">تماس با ما</a></li>
+                        <li><a href="#" class="hover:text-[#1F3D2E] hs-transition">قوانین و مقررات</a></li>
                     </ul>
                 </div>
-            </div>
-        </nav>
-    </header>
-    <div class="container">
-        <main role="main" class="pb-3">
-            @RenderBody()
-        </main>
-    </div>
 
-    <footer class="border-top footer text-muted">
-        <div class="container">
-            &copy; 2026 - JewelryStore.Web - <a asp-area="" asp-controller="Home" asp-action="Privacy">Privacy</a>
+                <!-- بخش سوم: شبکه‌های اجتماعی -->
+                <div class="md:col-span-4">
+                    <h6 class="hs-sans hs-uppercase text-[#1A1F1B] mb-6">شبکه‌های اجتماعی</h6>
+                    <div class="flex gap-6 text-2xl text-[#5C625C]">
+                        <a href="#" class="hover:text-[#1F3D2E] hs-transition"><i class="fab fa-instagram"></i></a>
+                        <a href="#" class="hover:text-[#1F3D2E] hs-transition"><i class="fab fa-telegram"></i></a>
+                        <a href="#" class="hover:text-[#1F3D2E] hs-transition"><i class="fab fa-whatsapp"></i></a>
+                        <a href="#" class="hover:text-[#1F3D2E] hs-transition"><i class="fab fa-youtube"></i></a>
+                    </div>
+                    <p class="hs-sans text-xs text-[#8E928D] mt-6">
+                        © 1404 جواهری — تمامی حقوق محفوظ است
+                    </p>
+                </div>
+            </div>
         </div>
     </footer>
-    <script src="~/lib/jquery/dist/jquery.min.js"></script>
-    <script src="~/lib/bootstrap/dist/js/bootstrap.bundle.min.js"></script>
-    <script src="~/js/site.js" asp-append-version="true"></script>
+
+    <!-- ✅ اسکریپت‌ها -->
+    <script>
+        // به‌روزرسانی ویجت سبد خرید
+        async function updateCartWidget() {
+            try {
+                const response = await fetch('/Cart/CartWidget');
+                const data = await response.json();
+                const countEl = document.querySelector('#cart-item-count');
+                const totalEl = document.querySelector('#cart-total');
+                if (countEl) countEl.textContent = data.itemCount;
+                if (totalEl) totalEl.textContent = data.total;
+            } catch (error) {
+                console.error('Error updating cart widget:', error);
+            }
+        }
+
+        // به‌روزرسانی ویجت علاقه‌مندی‌ها
+        async function updateWishlistWidget() {
+            try {
+                const response = await fetch('/Wishlist/Count');
+                const data = await response.json();
+                const el = document.querySelector('#wishlist-count');
+                if (el) el.textContent = data.count;
+            } catch (error) {
+                console.error('Error updating wishlist widget:', error);
+            }
+        }
+
+        document.addEventListener('DOMContentLoaded', function() {
+            updateCartWidget();
+            updateWishlistWidget();
+        });
+    </script>
+
     @await RenderSectionAsync("Scripts", required: false)
 </body>
 </html>

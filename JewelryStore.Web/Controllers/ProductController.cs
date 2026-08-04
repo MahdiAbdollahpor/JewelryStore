@@ -21,7 +21,7 @@ namespace JewelryStore.Web.Controllers
         {
             var (products, totalCount) = await _productService.GetProductsAsync(filter);
 
-            // دریافت لیست دسته‌بندی‌ها برای فیلتر
+            // دریافت لیست دسته‌بندی‌ها برای فیلتر (با استفاده از ICategoryService)
             var categories = await _categoryService.GetAllCategoriesAsync(true);
             ViewBag.Categories = categories;
             ViewBag.TotalCount = totalCount;
@@ -50,7 +50,7 @@ namespace JewelryStore.Web.Controllers
             }
         }
 
-        // 3️⃣ جستجوی سریع (برای هدر سایت)
+        // 3️⃣ جستجوی محصولات
         [HttpGet]
         public async Task<IActionResult> Search(string term)
         {
@@ -59,22 +59,6 @@ namespace JewelryStore.Web.Controllers
 
             var products = await _productService.SearchProductsAsync(term);
             ViewBag.SearchTerm = term;
-            return View(products);
-        }
-
-        // 4️⃣ نمایش محصولات ویژه
-        [HttpGet]
-        public async Task<IActionResult> Featured()
-        {
-            var products = await _productService.GetFeaturedProductsAsync(12);
-            return View(products);
-        }
-
-        // 5️⃣ نمایش محصولات جدید
-        [HttpGet]
-        public async Task<IActionResult> NewArrivals()
-        {
-            var products = await _productService.GetNewProductsAsync(12);
             return View(products);
         }
     }

@@ -17,5 +17,6 @@ namespace JewelryStore.Services.DTOs.User
         public bool IsActive { get; set; }
         public string? Address { get; set; }
         public DateTime CreatedAt { get; set; }
+        public DateTime? LastLoginAt { get; set; }
     }
 }

@@ -1,0 +1,231 @@
+﻿@using JewelryStore.Services.DTOs.Product
+@using JewelryStore.Domain.Enums
+@model UpdateProductDto
+@{
+    ViewData["Title"] = "ویرایش محصول";
+    var productId = ViewBag.ProductId as int?;
+}
+
+<style>
+    :root {
+        --es-primary: #C2410C;
+        --es-surface: #F5F5F4;
+        --es-border: #D6D3D1;
+    }
+
+    .form-group {
+        margin-bottom: 20px;
+    }
+
+    .form-label {
+        display: block;
+        font-size: 13px;
+        font-weight: 600;
+        color: #57534E;
+        margin-bottom: 4px;
+    }
+
+    .form-control {
+        width: 100%;
+        padding: 10px 12px;
+        border: 1px solid var(--es-border);
+        border-radius: 8px;
+        background: #FFFFFF;
+        font-size: 14px;
+        transition: all 150ms ease;
+    }
+
+        .form-control:focus {
+            outline: none;
+            border-color: var(--es-primary);
+            box-shadow: 0 0 0 3px rgba(194, 65, 12, 0.12);
+        }
+
+    .validation-message {
+        color: #DC2626;
+        font-size: 12px;
+        margin-top: 4px;
+    }
+</style>
+
+<div class="space-y-6">
+    <!-- هدر -->
+    <div>
+        <nav class="text-sm text-[#57534E] mb-2">
+            <a asp-action="Index" class="hover:text-[#C2410C] transition">مدیریت محصولات</a>
+            <span class="mx-2">/</span>
+            <a asp-action="Detail" asp-route-id="@productId" class="hover:text-[#C2410C] transition">جزئیات</a>
+            <span class="mx-2">/</span>
+            <span class="text-[#1C1917]">ویرایش</span>
+        </nav>
+        <h1 class="font-['Playfair_Display'] text-3xl font-bold text-[#1C1917]">ویرایش محصول</h1>
+        <p class="text-[#57534E] mt-1">شناسه: #@productId</p>
+    </div>
+
+    <!-- فرم -->
+    <div class="bg-[#F5F5F4] border border-[#D6D3D1] rounded-xl p-6">
+        <form asp-action="Edit" asp-route-id="@productId" method="post" enctype="multipart/form-data">
+            @Html.AntiForgeryToken()
+
+            <div asp-validation-summary="ModelOnly" class="text-[#DC2626] text-sm mb-4"></div>
+
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <!-- نام -->
+                <div class="form-group">
+                    <label asp-for="Name" class="form-label">نام محصول *</label>
+                    <input asp-for="Name" class="form-control" />
+                    <span asp-validation-for="Name" class="validation-message"></span>
+                </div>
+
+                <!-- برند -->
+                <div class="form-group">
+                    <label asp-for="Brand" class="form-label">برند</label>
+                    <input asp-for="Brand" class="form-control" />
+                    <span asp-validation-for="Brand" class="validation-message"></span>
+                </div>
+
+                <!-- دسته‌بندی -->
+                <div class="form-group">
+                    <label asp-for="CategoryId" class="form-label">دسته‌بندی *</label>
+                    <select asp-for="CategoryId" class="form-control">
+                        <option value="">انتخاب کنید...</option>
+                        @* در اینجا باید دسته‌بندی‌ها از ViewBag یا ViewData بیایند *@
+                    </select>
+                    <span asp-validation-for="CategoryId" class="validation-message"></span>
+                </div>
+
+                <!-- قیمت پایه -->
+                <div class="form-group">
+                    <label asp-for="BasePrice" class="form-label">قیمت پایه (تومان) *</label>
+                    <input asp-for="BasePrice" type="number" class="form-control" />
+                    <span asp-validation-for="BasePrice" class="validation-message"></span>
+                </div>
+
+                <!-- درصد تخفیف -->
+                <div class="form-group">
+                    <label asp-for="DiscountPercentage" class="form-label">درصد تخفیف</label>
+                    <input asp-for="DiscountPercentage" type="number" class="form-control" />
+                    <span asp-validation-for="DiscountPercentage" class="validation-message"></span>
+                </div>
+
+                <!-- موجودی -->
+                <div class="form-group">
+                    <label asp-for="Quantity" class="form-label">موجودی *</label>
+                    <input asp-for="Quantity" type="number" class="form-control" />
+                    <span asp-validation-for="Quantity" class="validation-message"></span>
+                </div>
+
+                <!-- وزن -->
+                <div class="form-group">
+                    <label asp-for="Weight" class="form-label">وزن (گرم) *</label>
+                    <input asp-for="Weight" type="number" step="0.001" class="form-control" />
+                    <span asp-validation-for="Weight" class="validation-message"></span>
+                </div>
+
+                <!-- عیار -->
+                <div class="form-group">
+                    <label asp-for="Purity" class="form-label">عیار *</label>
+                    <select asp-for="Purity" class="form-control">
+                        <option value="">انتخاب کنید...</option>
+                        @foreach (Purity purity in Enum.GetValues(typeof(Purity)))
+                        {
+                            <option value="@purity">@purity</option>
+                        }
+                    </select>
+                    <span asp-validation-for="Purity" class="validation-message"></span>
+                </div>
+
+                <!-- اجرت ساخت -->
+                <div class="form-group">
+                    <label asp-for="CraftsmanshipFee" class="form-label">اجرت ساخت (تومان)</label>
+                    <input asp-for="CraftsmanshipFee" type="number" class="form-control" />
+                    <span asp-validation-for="CraftsmanshipFee" class="validation-message"></span>
+                </div>
+
+                <!-- نوع سنگ -->
+                <div class="form-group">
+                    <label asp-for="StoneType" class="form-label">نوع سنگ</label>
+                    <select asp-for="StoneType" class="form-control">
+                        <option value="">بدون سنگ</option>
+                        @foreach (StoneType stone in Enum.GetValues(typeof(StoneType)))
+                        {
+                            <option value="@stone">@stone</option>
+                        }
+                    </select>
+                    <span asp-validation-for="StoneType" class="validation-message"></span>
+                </div>
+
+                <!-- وزن سنگ -->
+                <div class="form-group">
+                    <label asp-for="StoneWeight" class="form-label">وزن سنگ (قیراط)</label>
+                    <input asp-for="StoneWeight" type="number" step="0.01" class="form-control" />
+                    <span asp-validation-for="StoneWeight" class="validation-message"></span>
+                </div>
+
+                <!-- کیفیت سنگ -->
+                <div class="form-group">
+                    <label asp-for="StoneQuality" class="form-label">کیفیت سنگ</label>
+                    <select asp-for="StoneQuality" class="form-control">
+                        <option value="">انتخاب کنید...</option>
+                        @foreach (StoneQuality quality in Enum.GetValues(typeof(StoneQuality)))
+                        {
+                            <option value="@quality">@quality</option>
+                        }
+                    </select>
+                    <span asp-validation-for="StoneQuality" class="validation-message"></span>
+                </div>
+            </div>
+
+            <!-- توضیحات -->
+            <div class="form-group">
+                <label asp-for="Description" class="form-label">توضیحات</label>
+                <textarea asp-for="Description" class="form-control" rows="6"></textarea>
+                <span asp-validation-for="Description" class="validation-message"></span>
+            </div>
+
+            <!-- توضیحات کوتاه -->
+            <div class="form-group">
+                <label asp-for="ShortDescription" class="form-label">توضیحات کوتاه</label>
+                <textarea asp-for="ShortDescription" class="form-control" rows="3"></textarea>
+                <span asp-validation-for="ShortDescription" class="validation-message"></span>
+            </div>
+
+            <!-- تصاویر -->
+            <div class="form-group">
+                <label class="form-label">تصاویر جدید (برای جایگزینی)</label>
+                <input type="file" name="images" class="form-control" multiple accept="image/*" />
+                <p class="text-xs text-[#57534E] mt-1">آپلود تصاویر جدید جایگزین تصاویر قبلی خواهد شد</p>
+            </div>
+
+            <!-- چک‌باکس‌ها -->
+            <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                <div class="flex items-center gap-2">
+                    <input type="checkbox" asp-for="IsFeatured" class="w-4 h-4 rounded border-[#D6D3D1] accent-[#C2410C]" />
+                    <label asp-for="IsFeatured" class="text-sm">محصول ویژه</label>
+                </div>
+                <div class="flex items-center gap-2">
+                    <input type="checkbox" asp-for="IsNew" class="w-4 h-4 rounded border-[#D6D3D1] accent-[#C2410C]" />
+                    <label asp-for="IsNew" class="text-sm">محصول جدید</label>
+                </div>
+                <div class="flex items-center gap-2">
+                    <input type="checkbox" asp-for="IsActive" class="w-4 h-4 rounded border-[#D6D3D1] accent-[#C2410C]" />
+                    <label asp-for="IsActive" class="text-sm">فعال</label>
+                </div>
+            </div>
+
+            <!-- دکمه‌ها -->
+            <div class="flex items-center gap-3 mt-6 pt-6 border-t border-[#D6D3D1]">
+                <button type="submit" class="px-6 py-2 bg-[#C2410C] text-white rounded-lg text-sm font-semibold hover:bg-[#9A3412] transition">
+                    <i class="fas fa-save ml-1"></i> ذخیره تغییرات
+                </button>
+                <a asp-action="Detail" asp-route-id="@productId" class="px-6 py-2 border border-[#D6D3D1] rounded-lg text-sm font-semibold text-[#57534E] hover:bg-[#E7E5E4] transition">
+                    انصراف
+                </a>
+            </div>
+        </form>
+    </div>
+</div>
+
+@section Scripts {
+    @await Html.PartialAsync("_ValidationScriptsPartial")
+}

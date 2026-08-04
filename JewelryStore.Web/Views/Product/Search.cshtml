@@ -1,0 +1,245 @@
+﻿@using JewelryStore.Services.DTOs.Product
+@model IEnumerable<ProductListDto>
+@{
+    ViewData["Title"] = "نتایج جستجو";
+    var searchTerm = ViewBag.SearchTerm as string;
+}
+
+<style>
+    :root {
+        --hs-bg: #FBF7F0;
+        --hs-forest: #1F3D2E;
+        --hs-ink: #1A1F1B;
+        --hs-ink-muted: #5C625C;
+        --hs-ink-subtle: #8E928D;
+        --hs-outline: #E3DCC9;
+        --hs-outline-strong: #C9C0AA;
+        --hs-tan: #C2A878;
+        --hs-display: 'Cormorant Garamond', 'IranNastaliq', serif;
+        --hs-sans: 'Vazirmatn', 'Inter', sans-serif;
+    }
+
+    .hs-display {
+        font-family: var(--hs-display);
+        letter-spacing: -0.02em;
+        line-height: 1.1;
+    }
+
+    .hs-sans {
+        font-family: var(--hs-sans);
+    }
+
+    .hs-uppercase {
+        text-transform: uppercase;
+        letter-spacing: 0.18em;
+        font-size: 0.7rem;
+    }
+
+    .hs-transition {
+        transition: all 320ms cubic-bezier(0.22, 0.61, 0.36, 1);
+    }
+
+    .hs-card {
+        background-color: #FFFFFF;
+        border: 1px solid var(--hs-outline);
+        border-radius: 4px;
+        transition: all 320ms cubic-bezier(0.22, 0.61, 0.36, 1);
+    }
+
+        .hs-card:hover {
+            box-shadow: 0 8px 32px rgba(20, 42, 31, 0.08);
+            transform: translateY(-2px);
+        }
+
+    .btn-hs-outline {
+        background-color: transparent;
+        border: 1px solid var(--hs-forest);
+        color: var(--hs-forest);
+        border-radius: 2px;
+        font-weight: 500;
+        text-transform: uppercase;
+        letter-spacing: 0.12em;
+        font-family: var(--hs-sans);
+        transition: all 320ms cubic-bezier(0.22, 0.61, 0.36, 1);
+    }
+
+        .btn-hs-outline:hover {
+            background-color: var(--hs-forest);
+            color: #FBF7F0;
+        }
+
+    .btn-hs-primary {
+        background-color: var(--hs-forest);
+        color: #FBF7F0;
+        border-radius: 2px;
+        font-weight: 500;
+        text-transform: uppercase;
+        letter-spacing: 0.12em;
+        font-family: var(--hs-sans);
+        transition: all 320ms cubic-bezier(0.22, 0.61, 0.36, 1);
+    }
+
+        .btn-hs-primary:hover {
+            background-color: #142A1F;
+        }
+</style>
+
+<div class="min-h-screen" style="background-color: #FBF7F0; color: #1A1F1B;">
+
+    <!-- ✅ هدر نتایج جستجو -->
+    <div class="border-b border-[#E3DCC9] py-20">
+        <div class="max-w-[1440px] mx-auto px-6 md:px-12">
+            <h1 class="hs-display text-4xl md:text-5xl text-[#1A1F1B] mb-4">
+                <i class="fas fa-search text-[#C2A878] text-3xl ml-4"></i>
+                نتایج جستجو
+            </h1>
+            <p class="hs-sans text-lg text-[#5C625C]">
+                <span class="font-semibold text-[#1A1F1B]">@Model.Count()</span> اثر برای "<span class="font-semibold text-[#1F3D2E]">@searchTerm</span>"
+            </p>
+        </div>
+    </div>
+
+    <!-- ✅ لیست نتایج -->
+    <div class="max-w-[1440px] mx-auto px-6 md:px-12 py-16">
+        @if (!Model.Any())
+        {
+            <div class="text-center py-24">
+                <i class="fas fa-gem text-6xl text-[#C2A878] block mb-6 opacity-50"></i>
+                <h3 class="hs-display text-3xl text-[#1A1F1B] mb-4">هیچ اثری یافت نشد</h3>
+                <p class="hs-sans text-[#5C625C] mb-8">لطفاً عبارت جستجوی خود را تغییر دهید یا از دسته‌بندی‌ها استفاده کنید.</p>
+                <a asp-action="Index" class="btn-hs-primary px-8 py-3 text-sm inline-block">
+                    <i class="fas fa-arrow-right ml-2"></i> بازگشت به کلکسیون
+                </a>
+            </div>
+        }
+        else
+        {
+            <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-8">
+                @foreach (var product in Model)
+                {
+                    <div class="hs-card group overflow-hidden">
+                        <a asp-action="Details" asp-route-slug="@product.Slug" class="block">
+                            <div class="relative aspect-[4/3] overflow-hidden bg-[#ECE4D2]">
+                                <img src="@(product.MainImageUrl ?? "/images/no-image.png")"
+                                     class="w-full h-full object-cover group-hover:scale-[1.02] hs-transition duration-[480ms]"
+                                     alt="@product.Name" />
+                                @if (!product.IsInStock)
+                                {
+                                    <div class="absolute inset-0 bg-black/20 flex items-center justify-center">
+                                        <span class="hs-sans hs-uppercase text-xs px-4 py-2 bg-white/90 text-[#1A1F1B] rounded-full">
+                                            ناموجود
+                                        </span>
+                                    </div>
+                                }
+                            </div>
+                        </a>
+
+                        <div class="p-5">
+                            <a asp-action="Details" asp-route-slug="@product.Slug">
+                                <h6 class="hs-display text-xl text-[#1A1F1B] mb-2 group-hover:text-[#1F3D2E] hs-transition line-clamp-1">
+                                    @product.Name
+                                </h6>
+                            </a>
+
+                            <div class="flex items-end justify-between mt-auto pt-4 border-t border-[#E3DCC9]">
+                                <div>
+                                    @if (product.DiscountPercentage > 0)
+                                    {
+                                        <p class="hs-sans text-lg font-semibold tabular-nums text-[#1F3D2E]">
+                                            @product.FinalPrice.ToString("N0") <span class="text-xs font-normal text-[#5C625C]">تومان</span>
+                                        </p>
+                                        <p class="hs-sans text-xs tabular-nums text-[#8E928D] line-through">
+                                            @String.Format("{0:N0}", product.FinalPrice / (1 - product.DiscountPercentage / 100))
+                                        </p>
+                                    }
+                                    else
+                                    {
+                                        <p class="hs-sans text-lg font-semibold tabular-nums text-[#1F3D2E]">
+                                            @product.FinalPrice.ToString("N0") <span class="text-xs font-normal text-[#5C625C]">تومان</span>
+                                        </p>
+                                    }
+                                </div>
+
+                                @if (product.AverageRating > 0)
+                                {
+                                    <div class="flex items-center gap-1">
+                                        <i class="fas fa-star text-[#C2A878] text-xs"></i>
+                                        <span class="hs-sans text-xs tabular-nums text-[#5C625C]">@product.AverageRating.ToString("0.0")</span>
+                                    </div>
+                                }
+                            </div>
+                        </div>
+
+                        <div class="px-5 pb-5 space-y-2">
+                            <a asp-action="Details" asp-route-slug="@product.Slug"
+                               class="btn-hs-outline w-full py-2.5 text-xs block text-center">
+                                <i class="fas fa-eye ml-1"></i> مشاهده جزئیات
+                            </a>
+                            @if (product.IsInStock)
+                            {
+                                <button class="btn-hs-primary w-full py-2.5 text-xs add-to-cart-btn" data-product-id="@product.Id">
+                                    <i class="fas fa-shopping-bag ml-1"></i> افزودن به کلکسیون
+                                </button>
+                            }
+                            else
+                            {
+                                <button disabled class="w-full py-2.5 border border-[#E3DCC9] text-[#8E928D] hs-sans text-xs uppercase tracking-[0.12em] rounded-[2px] cursor-not-allowed">
+                                    <i class="fas fa-exclamation-circle ml-1"></i> ناموجود
+                                </button>
+                            }
+                        </div>
+                    </div>
+                }
+            </div>
+        }
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        // افزودن به سبد خرید با AJAX
+        document.querySelectorAll('.add-to-cart-btn').forEach(btn => {
+            btn.addEventListener('click', async function() {
+                const productId = this.dataset.productId;
+                const originalText = this.innerText;
+                this.innerHTML = '<span class="inline-block animate-spin">⟳</span>';
+                this.disabled = true;
+                this.style.opacity = '0.7';
+
+                try {
+                    const response = await fetch('/Cart/AddToCart', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'RequestVerificationToken': document.querySelector('input[name="__RequestVerificationToken"]')?.value || ''
+                        },
+                        body: JSON.stringify({ productId: productId, quantity: 1 })
+                    });
+
+                    const result = await response.json();
+                    if (result.success) {
+                        if (typeof updateCartWidget === 'function') updateCartWidget();
+                        this.innerHTML = '✓ افزوده شد';
+                        this.style.backgroundColor = '#4A7C59';
+                        setTimeout(() => {
+                            this.innerHTML = originalText;
+                            this.style.backgroundColor = '';
+                            this.disabled = false;
+                            this.style.opacity = '1';
+                        }, 2000);
+                    } else {
+                        alert(result.message);
+                        this.innerHTML = originalText;
+                        this.disabled = false;
+                        this.style.opacity = '1';
+                    }
+                } catch (error) {
+                    alert('خطا در ارتباط با سرور');
+                    this.innerHTML = originalText;
+                    this.disabled = false;
+                    this.style.opacity = '1';
+                }
+            });
+        });
+    </script>
+}

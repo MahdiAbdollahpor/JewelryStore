@@ -1,163 +1,380 @@
 ﻿@using JewelryStore.Services.DTOs.Product
 @model IEnumerable<ProductListDto>
 @{
-    ViewData["Title"] = "محصولات";
+    ViewData["Title"] = "جواهرات دست‌ساز";
     var filter = ViewBag.CurrentFilter as ProductFilterDto;
 }
 
-<div class="container my-4">
-    <div class="row">
-        <!-- سایدبار فیلتر -->
-        <div class="col-md-3">
-            <div class="card shadow-sm">
-                <div class="card-header bg-primary text-white">
-                    <h5 class="mb-0">فیلتر محصولات</h5>
-                </div>
-                <div class="card-body">
-                    <form asp-action="Index" method="get" id="filterForm">
+<style>
+    :root {
+        --hs-bg: #FBF7F0;
+        --hs-surface: #F5EFE3;
+        --hs-elevated: #FFFFFF;
+        --hs-sunken: #ECE4D2;
+        --hs-forest: #1F3D2E;
+        --hs-forest-deep: #142A1F;
+        --hs-tan: #C2A878;
+        --hs-ink: #1A1F1B;
+        --hs-ink-muted: #5C625C;
+        --hs-ink-subtle: #8E928D;
+        --hs-outline: #E3DCC9;
+        --hs-outline-strong: #C9C0AA;
+        --hs-font-display: 'IranNastaliq', 'Cormorant Garamond', serif;
+        --hs-font-sans: 'Vazirmatn', sans-serif;
+    }
+
+    .hs-display {
+        font-family: var(--hs-font-display);
+        letter-spacing: -0.02em;
+        line-height: 1.1;
+    }
+
+    .hs-sans {
+        font-family: var(--hs-font-sans);
+    }
+
+    .hs-uppercase {
+        text-transform: uppercase;
+        letter-spacing: 0.18em;
+        font-size: 0.7rem;
+    }
+
+    .hs-transition {
+        transition: all 320ms cubic-bezier(0.22, 0.61, 0.36, 1);
+    }
+
+    .btn-hs-primary {
+        background-color: var(--hs-forest);
+        color: var(--hs-bg);
+        border-radius: 2px;
+        font-weight: 500;
+        text-transform: uppercase;
+        letter-spacing: 0.12em;
+        font-family: var(--hs-font-sans);
+        transition: all 320ms cubic-bezier(0.22, 0.61, 0.36, 1);
+    }
+
+        .btn-hs-primary:hover {
+            background-color: var(--hs-forest-deep);
+        }
+
+    .btn-hs-outline {
+        background-color: transparent;
+        border: 1px solid var(--hs-forest);
+        color: var(--hs-forest);
+        border-radius: 2px;
+        font-weight: 500;
+        text-transform: uppercase;
+        letter-spacing: 0.12em;
+        font-family: var(--hs-font-sans);
+        transition: all 320ms cubic-bezier(0.22, 0.61, 0.36, 1);
+    }
+
+        .btn-hs-outline:hover {
+            background-color: var(--hs-forest);
+            color: var(--hs-bg);
+        }
+
+    .hs-input {
+        width: 100%;
+        background-color: transparent;
+        border: none;
+        border-bottom: 1px solid var(--hs-outline-strong);
+        padding: 0.75rem 0;
+        font-family: var(--hs-font-sans);
+        color: var(--hs-ink);
+        transition: all 320ms cubic-bezier(0.22, 0.61, 0.36, 1);
+    }
+
+        .hs-input:focus {
+            outline: none;
+            border-bottom: 2px solid var(--hs-forest);
+        }
+
+        .hs-input::placeholder {
+            color: var(--hs-ink-subtle);
+        }
+
+    .hs-select {
+        width: 100%;
+        background-color: transparent;
+        border: none;
+        border-bottom: 1px solid var(--hs-outline-strong);
+        padding: 0.75rem 0;
+        font-family: var(--hs-font-sans);
+        color: var(--hs-ink);
+        cursor: pointer;
+        appearance: none;
+        transition: all 320ms cubic-bezier(0.22, 0.61, 0.36, 1);
+    }
+
+        .hs-select:focus {
+            outline: none;
+            border-bottom: 2px solid var(--hs-forest);
+        }
+
+    .hs-card {
+        background-color: var(--hs-elevated);
+        border: 1px solid var(--hs-outline);
+        border-radius: 4px;
+        transition: all 320ms cubic-bezier(0.22, 0.61, 0.36, 1);
+    }
+
+        .hs-card:hover {
+            box-shadow: 0 8px 32px rgba(20, 42, 31, 0.08);
+            transform: translateY(-2px);
+        }
+
+    .hs-filter-active {
+        background-color: var(--hs-forest);
+        color: var(--hs-bg);
+    }
+
+    .hs-checkbox {
+        width: 16px;
+        height: 16px;
+        border: 1px solid var(--hs-outline-strong);
+        border-radius: 2px;
+        cursor: pointer;
+        accent-color: var(--hs-forest);
+    }
+</style>
+
+<div class="min-h-screen" style="background-color: var(--hs-bg); color: var(--hs-ink);">
+
+    <!-- ✅ هدر صفحه - سبک ادیتوریال -->
+    <header class="border-b border-[#E3DCC9] py-16 md:py-24">
+        <div class="max-w-[1440px] mx-auto px-6 md:px-12">
+            <h1 class="hs-display text-4xl md:text-6xl lg:text-7xl text-[#1A1F1B] mb-4">
+                جواهرات دست‌ساز
+            </h1>
+            <p class="hs-sans text-lg md:text-xl text-[#5C625C] max-w-xl leading-relaxed">
+                هر قطعه، روایتی منحصر‌به‌فرد از هنر و صنعت‌گری استادکاران
+            </p>
+        </div>
+    </header>
+
+    <!-- ✅ بخش اصلی -->
+    <div class="max-w-[1440px] mx-auto px-6 md:px-12 py-12 md:py-16">
+        <div class="grid grid-cols-1 lg:grid-cols-12 gap-8 lg:gap-12">
+
+            <!-- سایدبار فیلتر -->
+            <aside class="lg:col-span-3">
+                <div class="sticky top-8 bg-[#F5EFE3] border border-[#E3DCC9] rounded-[4px] p-6">
+                    <h6 class="hs-display text-2xl text-[#1A1F1B] mb-8">
+                        پالایش
+                    </h6>
+
+                    <form asp-action="Index" method="get" id="filterForm" class="space-y-8">
                         <!-- جستجو -->
-                        <div class="mb-3">
-                            <label class="form-label">جستجو</label>
-                            <input type="text" name="SearchTerm" class="form-control"
-                                   value="@filter?.SearchTerm" placeholder="نام محصول یا برند..." />
+                        <div>
+                            <label class="hs-sans hs-uppercase text-[#5C625C] block mb-3">
+                                جستجو
+                            </label>
+                            <input type="text" name="SearchTerm" value="@filter?.SearchTerm" placeholder="نام اثر یا برند..."
+                                   class="hs-input" />
                         </div>
 
                         <!-- دسته‌بندی -->
-                        <div class="mb-3">
-                            <label class="form-label">دسته‌بندی</label>
-                            <select name="CategoryId" class="form-select">
-                                <option value="">همه دسته‌ها</option>
-                                @foreach (var cat in ViewBag.Categories)
-                                {
-                                    <option value="@cat.Id" selected="@(filter?.CategoryId == cat.Id)">
-                                        @cat.Name
-                                    </option>
-                                }
-                            </select>
+                        <div>
+                            <label class="hs-sans hs-uppercase text-[#5C625C] block mb-3">
+                                دسته‌بندی
+                            </label>
+                            <div class="relative">
+                                <select name="CategoryId" class="hs-select pr-8">
+                                    <option value="">همه دسته‌ها</option>
+                                    @foreach (var cat in ViewBag.Categories)
+                                    {
+                                        <option value="@cat.Id" selected="@(filter?.CategoryId == cat.Id)">@cat.Name</option>
+                                    }
+                                </select>
+                                <i class="fas fa-chevron-down absolute right-0 top-1/2 -translate-y-1/2 text-[#8E928D] text-xs pointer-events-none"></i>
+                            </div>
                         </div>
 
                         <!-- محدوده قیمت -->
-                        <div class="mb-3">
-                            <label class="form-label">محدوده قیمت</label>
-                            <div class="row">
-                                <div class="col-6">
-                                    <input type="number" name="MinPrice" class="form-control"
-                                           placeholder="از" value="@filter?.MinPrice" />
+                        <div>
+                            <label class="hs-sans hs-uppercase text-[#5C625C] block mb-3">
+                                محدوده قیمت
+                            </label>
+                            <div class="grid grid-cols-2 gap-4">
+                                <div>
+                                    <input type="number" name="MinPrice" class="hs-input text-center tabular-nums" placeholder="از" value="@filter?.MinPrice" />
                                 </div>
-                                <div class="col-6">
-                                    <input type="number" name="MaxPrice" class="form-control"
-                                           placeholder="تا" value="@filter?.MaxPrice" />
+                                <div>
+                                    <input type="number" name="MaxPrice" class="hs-input text-center tabular-nums" placeholder="تا" value="@filter?.MaxPrice" />
                                 </div>
                             </div>
+                            <span class="hs-sans text-xs text-[#8E928D] mt-2 block">تومان</span>
                         </div>
 
-                        <!-- موجودی -->
-                        <div class="mb-3 form-check">
-                            <input type="checkbox" name="OnlyInStock" class="form-check-input"
-                                   id="InStock" value="true" checked="@filter?.OnlyInStock" />
-                            <label class="form-check-label" for="InStock">فقط محصولات موجود</label>
-                        </div>
-
-                        <!-- تخفیف‌دار -->
-                        <div class="mb-3 form-check">
-                            <input type="checkbox" name="OnlyDiscounted" class="form-check-input"
-                                   id="Discounted" value="true" checked="@filter?.OnlyDiscounted" />
-                            <label class="form-check-label" for="Discounted">فقط تخفیف‌دار</label>
+                        <!-- فیلترهای چک‌باکس -->
+                        <div class="space-y-4 pt-4 border-t border-[#E3DCC9]">
+                            <div class="flex items-center gap-3">
+                                <input type="checkbox" name="OnlyInStock" id="InStock" value="true" checked="@filter?.OnlyInStock"
+                                       class="hs-checkbox" />
+                                <label for="InStock" class="hs-sans text-sm text-[#1A1F1B] cursor-pointer">فقط آثار موجود</label>
+                            </div>
+                            <div class="flex items-center gap-3">
+                                <input type="checkbox" name="OnlyDiscounted" id="Discounted" value="true" checked="@filter?.OnlyDiscounted"
+                                       class="hs-checkbox" />
+                                <label for="Discounted" class="hs-sans text-sm text-[#1A1F1B] cursor-pointer">آثار تخفیف‌دار</label>
+                            </div>
                         </div>
 
                         <!-- مرتب‌سازی -->
-                        <div class="mb-3">
-                            <label class="form-label">مرتب‌سازی</label>
-                            <select name="SortBy" class="form-select">
-                                <option value="Newest" selected="@(filter?.SortBy == "Newest")">جدیدترین</option>
-                                <option value="PriceLowToHigh" selected="@(filter?.SortBy == "PriceLowToHigh")">ارزان‌ترین</option>
-                                <option value="PriceHighToLow" selected="@(filter?.SortBy == "PriceHighToLow")">گران‌ترین</option>
-                                <option value="Popularity" selected="@(filter?.SortBy == "Popularity")">پرفروش‌ترین</option>
-                                <option value="Rating" selected="@(filter?.SortBy == "Rating")">محبوب‌ترین</option>
-                            </select>
-                        </div>
-
-                        <button type="submit" class="btn btn-primary w-100">اعمال فیلتر</button>
-                    </form>
-                </div>
-            </div>
-        </div>
-
-        <!-- لیست محصولات -->
-        <div class="col-md-9">
-            <div class="d-flex justify-content-between align-items-center mb-3">
-                <h4>@ViewBag.TotalCount محصول</h4>
-                <span class="text-muted">صفحه @filter?.Page</span>
-            </div>
-
-            @if (!Model.Any())
-            {
-                <div class="alert alert-info">
-                    <i class="bi bi-info-circle"></i> هیچ محصولی با این فیلترها یافت نشد.
-                </div>
-            }
-            else
-            {
-                <div class="row">
-                    @foreach (var product in Model)
-                    {
-                        <div class="col-md-4 mb-4">
-                            <div class="card h-100 shadow-sm product-card">
-                                <div class="position-relative">
-                                    <img src="@(product.MainImageUrl ?? "/images/no-image.png")"
-                                         class="card-img-top" alt="@product.Name"
-                                         style="height: 200px; object-fit: cover;" />
-                                    @if (product.DiscountPercentage > 0)
-                                    {
-                                        <span class="badge bg-danger position-absolute top-0 end-0 m-2">
-                                            @product.DiscountPercentage% تخفیف
-                                        </span>
-                                    }
-                                    @if (product.IsNew)
-                                    {
-                                        <span class="badge bg-success position-absolute top-0 start-0 m-2">
-                                            جدید
-                                        </span>
-                                    }
-                                </div>
-                                <div class="card-body">
-                                    <h6 class="card-title">@product.Name</h6>
-                                    <div class="d-flex justify-content-between align-items-center">
-                                        <div>
-                                            <span class="fw-bold text-primary">@(product.FinalPrice.ToString("N0") ?? "۰") تومان</span>
-                                            @if (product.DiscountPercentage > 0)
-                                            {
-                                                <!-- ✅ اصلاح: محاسبه قیمت اصلی -->
-                                                var originalPrice = product.FinalPrice / (1 - product.DiscountPercentage / 100);
-                                                <small class="text-muted text-decoration-line-through d-block">
-                                                    @(originalPrice?.ToString("N0") ?? "۰")
-                                                </small>
-                                            }
-                                        </div>
-                                        <div class="text-warning">
-                                            @for (int i = 1; i <= 5; i++)
-                                            {
-                                                <i class="bi bi-star@(i <= Math.Floor(product.AverageRating) ? "-fill" : "")"></i>
-                                            }
-                                            <small class="text-muted">(@product.ReviewCount)</small>
-                                        </div>
-                                    </div>
-                                </div>
-                                <div class="card-footer bg-white border-0">
-                                    <div class="d-grid gap-2">
-                                        <a asp-action="Details" asp-route-slug="@product.Slug"
-                                           class="btn btn-outline-primary btn-sm">مشاهده جزئیات</a>
-                                        <button class="btn btn-primary btn-sm add-to-cart-btn"
-                                                data-product-id="@product.Id">
-                                            <i class="bi bi-cart-plus"></i> افزودن به سبد خرید
-                                        </button>
-                                    </div>
-                                </div>
+                        <div class="pt-4 border-t border-[#E3DCC9]">
+                            <label class="hs-sans hs-uppercase text-[#5C625C] block mb-3">
+                                مرتب‌سازی
+                            </label>
+                            <div class="relative">
+                                <select name="SortBy" class="hs-select pr-8">
+                                    <option value="Newest" selected="@(filter?.SortBy == "Newest")">جدیدترین</option>
+                                    <option value="PriceLowToHigh" selected="@(filter?.SortBy == "PriceLowToHigh")">ارزان‌ترین</option>
+                                    <option value="PriceHighToLow" selected="@(filter?.SortBy == "PriceHighToLow")">گران‌ترین</option>
+                                    <option value="Popularity" selected="@(filter?.SortBy == "Popularity")">پرفروش‌ترین</option>
+                                    <option value="Rating" selected="@(filter?.SortBy == "Rating")">محبوب‌ترین</option>
+                                </select>
+                                <i class="fas fa-chevron-down absolute right-0 top-1/2 -translate-y-1/2 text-[#8E928D] text-xs pointer-events-none"></i>
                             </div>
                         </div>
-                    }
+
+                        <button type="submit" class="btn-hs-primary w-full py-3 text-sm">
+                            اعمال فیلتر
+                        </button>
+                    </form>
                 </div>
-            }
+            </aside>
+
+            <!-- لیست محصولات -->
+            <main class="lg:col-span-9">
+                <!-- نوار اطلاعات -->
+                <div class="flex justify-between items-center mb-8 pb-6 border-b border-[#E3DCC9]">
+                    <span class="hs-sans text-sm text-[#5C625C]">
+                        @ViewBag.TotalCount <span class="text-[#C2A878]">اثر</span>
+                    </span>
+                    <span class="hs-sans hs-uppercase text-[#8E928D]">
+                        صفحه @filter?.Page
+                    </span>
+                </div>
+
+                @if (!Model.Any())
+                {
+                    <div class="bg-[#F5EFE3] border border-[#E3DCC9] rounded-[4px] p-12 text-center">
+                        <i class="fas fa-gem text-4xl text-[#C2A878] mb-4 block"></i>
+                        <p class="hs-sans text-[#5C625C]">هیچ اثری با این ویژگی‌ها یافت نشد</p>
+                    </div>
+                }
+                else
+                {
+                    <div class="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-8 lg:gap-10">
+                        @foreach (var product in Model)
+                        {
+                            <div class="hs-card group overflow-hidden">
+                                <a asp-action="Details" asp-route-slug="@product.Slug" class="block">
+                                    <div class="relative aspect-[4/3] overflow-hidden bg-[#ECE4D2]">
+                                        <img src="@(product.MainImageUrl ?? "/images/no-image.png")"
+                                             class="w-full h-full object-cover group-hover:scale-[1.02] hs-transition duration-[480ms]"
+                                             alt="@product.Name" />
+
+                                        @if (product.DiscountPercentage > 0)
+                                        {
+                                            <span class="absolute top-4 left-4 hs-sans hs-uppercase text-[10px] px-3 py-1.5 bg-[#C2A878] text-white rounded-full">
+                                                @product.DiscountPercentage% تخفیف
+                                            </span>
+                                        }
+                                        @if (product.IsNew)
+                                        {
+                                            <span class="absolute top-4 right-4 hs-sans hs-uppercase text-[10px] px-3 py-1.5 bg-[#1F3D2E] text-white rounded-full">
+                                                اثر جدید
+                                            </span>
+                                        }
+                                        @if (!product.IsInStock)
+                                        {
+                                            <div class="absolute inset-0 bg-black/20 flex items-center justify-center">
+                                                <span class="hs-sans hs-uppercase text-xs px-4 py-2 bg-white/90 text-[#1A1F1B] rounded-full">
+                                                    ناموجود
+                                                </span>
+                                            </div>
+                                        }
+                                    </div>
+                                </a>
+
+                                <div class="p-6">
+                                    <a asp-action="Details" asp-route-slug="@product.Slug">
+                                        <h6 class="hs-display text-xl text-[#1A1F1B] mb-2 group-hover:text-[#1F3D2E] hs-transition line-clamp-1">
+                                            @product.Name
+                                        </h6>
+                                    </a>
+
+                                  
+
+                                    <div class="flex items-end justify-between mt-auto pt-4 border-t border-[#E3DCC9]">
+                                        <div>
+                                            @if (product.DiscountPercentage > 0)
+                                            {
+                                                <p class="hs-sans text-lg font-semibold tabular-nums text-[#1F3D2E]">
+                                                    @product.FinalPrice.ToString("N0") <span class="text-xs font-normal text-[#5C625C]">تومان</span>
+                                                </p>
+                                                <p class="hs-sans text-xs tabular-nums text-[#8E928D] line-through">
+                                                    @String.Format("{0:N0}", product.FinalPrice / (1 - product.DiscountPercentage / 100))
+                                                </p>
+                                            }
+                                            else
+                                            {
+                                                <p class="hs-sans text-lg font-semibold tabular-nums text-[#1F3D2E]">
+                                                    @product.FinalPrice.ToString("N0") <span class="text-xs font-normal text-[#5C625C]">تومان</span>
+                                                </p>
+                                            }
+                                        </div>
+
+                                        @if (product.AverageRating > 0)
+                                        {
+                                            <div class="flex items-center gap-1">
+                                                <i class="fas fa-star text-[#C2A878] text-xs"></i>
+                                                <span class="hs-sans text-xs tabular-nums text-[#5C625C]">@product.AverageRating.ToString("0.0")</span>
+                                            </div>
+                                        }
+                                    </div>
+                                </div>
+
+                                <div class="px-6 pb-6 space-y-3">
+                                    <a asp-action="Details" asp-route-slug="@product.Slug"
+                                       class="btn-hs-outline w-full py-2.5 text-xs block text-center">
+                                        مشاهده جزئیات
+                                    </a>
+                                    @if (product.IsInStock)
+                                    {
+                                        <button class="btn-hs-primary w-full py-2.5 text-xs add-to-cart-btn" data-product-id="@product.Id">
+                                            افزودن به کلکسیون
+                                        </button>
+                                    }
+                                    else
+                                    {
+                                        <button disabled class="w-full py-2.5 border border-[#E3DCC9] text-[#8E928D] hs-sans text-xs uppercase tracking-[0.12em] rounded-[2px] cursor-not-allowed">
+                                            ناموجود
+                                        </button>
+                                    }
+                                </div>
+                            </div>
+                        }
+                    </div>
+
+                    <!-- Pagination -->
+                    @if (ViewBag.TotalPages > 1)
+                    {
+                        <div class="flex justify-center gap-2 mt-16 pt-8 border-t border-[#E3DCC9]">
+                            @for (int i = 1; i <= ViewBag.TotalPages; i++)
+                            {
+                                <a asp-action="Index" asp-route-page="@i"
+                                   class="hs-sans w-10 h-10 flex items-center justify-center tabular-nums text-sm border border-[#E3DCC9] rounded-[2px] hs-transition @(filter?.Page == i ? "bg-[#1F3D2E] text-[#FBF7F0] border-[#1F3D2E]" : "text-[#5C625C] hover:border-[#1F3D2E]")">
+                                    @i
+                                </a>
+                            }
+                        </div>
+                    }
+                }
+            </main>
         </div>
     </div>
 </div>
@@ -168,43 +385,47 @@
         document.querySelectorAll('.add-to-cart-btn').forEach(btn => {
             btn.addEventListener('click', async function() {
                 const productId = this.dataset.productId;
-                const originalText = this.innerHTML;
-                this.innerHTML = '<span class="spinner-border spinner-border-sm"></span>';
+                const originalText = this.innerText;
+                this.innerHTML = '<span class="inline-block animate-spin">⟳</span>';
                 this.disabled = true;
+                this.style.opacity = '0.7';
 
                 try {
                     const response = await fetch('/Cart/AddToCart', {
                         method: 'POST',
                         headers: {
                             'Content-Type': 'application/json',
-                            'RequestVerificationToken': document.querySelector('input[name="__RequestVerificationToken"]').value
+                            'RequestVerificationToken': document.querySelector('input[name="__RequestVerificationToken"]')?.value || ''
                         },
                         body: JSON.stringify({ productId: productId, quantity: 1 })
                     });
 
                     const result = await response.json();
                     if (result.success) {
-                        // به‌روزرسانی ویجت سبد خرید
-                        updateCartWidget();
-                        this.innerHTML = '✅ افزوده شد';
+                        if (typeof updateCartWidget === 'function') updateCartWidget();
+                        this.innerHTML = '✓ افزوده شد';
+                        this.style.backgroundColor = '#4A7C59';
                         setTimeout(() => {
                             this.innerHTML = originalText;
+                            this.style.backgroundColor = '';
                             this.disabled = false;
+                            this.style.opacity = '1';
                         }, 2000);
                     } else {
                         alert(result.message);
                         this.innerHTML = originalText;
                         this.disabled = false;
+                        this.style.opacity = '1';
                     }
                 } catch (error) {
                     alert('خطا در ارتباط با سرور');
                     this.innerHTML = originalText;
                     this.disabled = false;
+                    this.style.opacity = '1';
                 }
             });
         });
 
-        // به‌روزرسانی ویجت سبد خرید
         async function updateCartWidget() {
             try {
                 const response = await fetch('/Cart/CartWidget');

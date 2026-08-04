@@ -1,0 +1,278 @@
+﻿@using JewelryStore.Services.DTOs.Product
+@model ProductDto
+@{
+    ViewData["Title"] = $"جزئیات محصول - {Model.Name}";
+}
+
+<style>
+    :root {
+        --es-primary: #C2410C;
+        --es-surface: #F5F5F4;
+        --es-surface-raised: #E7E5E4;
+        --es-border: #D6D3D1;
+        --es-text-primary: #1C1917;
+        --es-text-secondary: #57534E;
+    }
+
+    .info-row {
+        display: flex;
+        justify-content: space-between;
+        padding: 12px 0;
+        border-bottom: 1px solid var(--es-border);
+    }
+
+        .info-row:last-child {
+            border-bottom: none;
+        }
+
+    .info-label {
+        color: var(--es-text-secondary);
+        font-size: 14px;
+    }
+
+    .info-value {
+        font-weight: 500;
+        color: var(--es-text-primary);
+    }
+
+    .thumbnail-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(100px, 1fr));
+        gap: 8px;
+    }
+
+        .thumbnail-grid img {
+            width: 100%;
+            height: 100px;
+            object-fit: cover;
+            border-radius: 4px;
+            border: 1px solid var(--es-border);
+        }
+</style>
+
+<div class="space-y-6">
+    <!-- هدر -->
+    <div class="flex items-center justify-between">
+        <div>
+            <nav class="text-sm text-[#57534E] mb-2">
+                <a asp-action="Index" class="hover:text-[#C2410C] transition">مدیریت محصولات</a>
+                <span class="mx-2">/</span>
+                <span class="text-[#1C1917]">@Model.Name</span>
+            </nav>
+            <h1 class="font-['Playfair_Display'] text-3xl font-bold text-[#1C1917]">@Model.Name</h1>
+            <p class="text-[#57534E] mt-1">شناسه: #@Model.Id</p>
+        </div>
+        <div class="flex gap-3">
+            <a asp-action="Edit" asp-route-id="@Model.Id"
+               class="px-4 py-2 bg-[#C2410C] text-white rounded-lg text-sm font-semibold hover:bg-[#9A3412] transition">
+                <i class="fas fa-edit"></i> ویرایش
+            </a>
+            <form asp-action="ToggleStatus" asp-route-id="@Model.Id" method="post">
+                @Html.AntiForgeryToken()
+                <button type="submit" class="px-4 py-2 border border-[#D6D3D1] rounded-lg text-sm font-semibold hover:bg-[#E7E5E4] transition">
+                    <i class="fas @(Model.IsActive ? "fa-pause" : "fa-play")"></i>
+                    @(Model.IsActive ? "غیرفعال" : "فعال")
+                </button>
+            </form>
+        </div>
+    </div>
+
+    <!-- اطلاعات -->
+    <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+        <!-- اطلاعات اصلی -->
+        <div class="md:col-span-2 bg-[#F5F5F4] border border-[#D6D3D1] rounded-xl p-6">
+            <h3 class="font-['Playfair_Display'] text-xl font-semibold text-[#1C1917] mb-4">اطلاعات محصول</h3>
+
+            <div class="info-row">
+                <span class="info-label">نام</span>
+                <span class="info-value">@Model.Name</span>
+            </div>
+            <div class="info-row">
+                <span class="info-label">برند</span>
+                <span class="info-value">@(Model.Brand ?? "-")</span>
+            </div>
+            <div class="info-row">
+                <span class="info-label">دسته‌بندی</span>
+                <span class="info-value">@Model.CategoryName</span>
+            </div>
+            <div class="info-row">
+                <span class="info-label">قیمت پایه</span>
+                <span class="info-value">@Model.BasePrice.ToString("N0") تومان</span>
+            </div>
+            <div class="info-row">
+                <span class="info-label">قیمت نهایی</span>
+                <span class="info-value font-bold text-[#C2410C]">@Model.FinalPrice.ToString("N0") تومان</span>
+            </div>
+            <div class="info-row">
+                <span class="info-label">تخفیف</span>
+                <span class="info-value">@Model.DiscountPercentage%</span>
+            </div>
+            <div class="info-row">
+                <span class="info-label">موجودی</span>
+                <span class="info-value">@Model.Quantity عدد</span>
+            </div>
+            <div class="info-row">
+                <span class="info-label">وضعیت</span>
+                <span class="info-value">
+                    <span class="inline-block px-3 py-1 rounded-full text-xs font-semibold @(Model.IsActive ? "bg-green-100 text-green-700" : "bg-red-100 text-red-700")">
+                        @(Model.IsActive ? "فعال" : "غیرفعال")
+                    </span>
+                </span>
+            </div>
+            <div class="info-row">
+                <span class="info-label">ویژه</span>
+                <span class="info-value">@(Model.IsFeatured ? "بله" : "خیر")</span>
+            </div>
+            <div class="info-row">
+                <span class="info-label">جدید</span>
+                <span class="info-value">@(Model.IsNew ? "بله" : "خیر")</span>
+            </div>
+            <div class="info-row">
+                <span class="info-label">بازدید</span>
+                <span class="info-value">@Model.ViewCount</span>
+            </div>
+            <div class="info-row">
+                <span class="info-label">امتیاز</span>
+                <span class="info-value">@Model.AverageRating (@Model.ReviewCount نظر)</span>
+            </div>
+        </div>
+
+        <!-- مشخصات جواهر -->
+        <div class="bg-[#F5F5F4] border border-[#D6D3D1] rounded-xl p-6">
+            <h3 class="font-['Playfair_Display'] text-xl font-semibold text-[#1C1917] mb-4">مشخصات جواهر</h3>
+
+            <div class="info-row">
+                <span class="info-label">وزن</span>
+                <span class="info-value">@Model.Weight.ToString("N2") گرم</span>
+            </div>
+            <div class="info-row">
+                <span class="info-label">عیار</span>
+                <span class="info-value">@Model.Purity</span>
+            </div>
+            <div class="info-row">
+                <span class="info-label">اجرت ساخت</span>
+                <span class="info-value">@Model.CraftsmanshipFee.ToString("N0") تومان</span>
+            </div>
+            <div class="info-row">
+                <span class="info-label">قیمت مرجع طلا</span>
+                <span class="info-value">@Model.GoldPriceReference.ToString("N0") تومان</span>
+            </div>
+            @if (Model.StoneType.HasValue)
+            {
+                <div class="info-row">
+                    <span class="info-label">نوع سنگ</span>
+                    <span class="info-value">@Model.StoneType</span>
+                </div>
+                <div class="info-row">
+                    <span class="info-label">وزن سنگ</span>
+                    <span class="info-value">@Model.StoneWeight?.ToString("N2") قیراط</span>
+                </div>
+                <div class="info-row">
+                    <span class="info-label">کیفیت سنگ</span>
+                    <span class="info-value">@Model.StoneQuality</span>
+                </div>
+            }
+        </div>
+    </div>
+
+    <!-- توضیحات -->
+    <div class="bg-[#F5F5F4] border border-[#D6D3D1] rounded-xl p-6">
+        <h3 class="font-['Playfair_Display'] text-xl font-semibold text-[#1C1917] mb-4">توضیحات</h3>
+        <div class="prose prose-stone max-w-none text-[#1C1917] leading-relaxed">
+            @Html.Raw(Model.Description)
+        </div>
+    </div>
+
+    <!-- تصاویر -->
+    @if (Model.ImageUrls.Any())
+    {
+        <div class="bg-[#F5F5F4] border border-[#D6D3D1] rounded-xl p-6">
+            <h3 class="font-['Playfair_Display'] text-xl font-semibold text-[#1C1917] mb-4">گالری تصاویر</h3>
+            <div class="thumbnail-grid">
+                @foreach (var img in Model.ImageUrls)
+                {
+                    <img src="@img" alt="تصویر محصول" />
+                }
+            </div>
+        </div>
+    }
+
+    <!-- تگ‌ها و ویژگی‌ها -->
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+        @if (Model.Tags.Any())
+        {
+            <div class="bg-[#F5F5F4] border border-[#D6D3D1] rounded-xl p-6">
+                <h3 class="font-['Playfair_Display'] text-xl font-semibold text-[#1C1917] mb-4">برچسب‌ها</h3>
+                <div class="flex flex-wrap gap-2">
+                    @foreach (var tag in Model.Tags)
+                    {
+                        <span class="px-3 py-1 bg-[#E7E5E4] rounded-full text-sm text-[#57534E]">#@tag</span>
+                    }
+                </div>
+            </div>
+        }
+        @if (Model.Attributes.Any())
+        {
+            <div class="bg-[#F5F5F4] border border-[#D6D3D1] rounded-xl p-6">
+                <h3 class="font-['Playfair_Display'] text-xl font-semibold text-[#1C1917] mb-4">ویژگی‌ها</h3>
+                <div class="space-y-2">
+                    @foreach (var attr in Model.Attributes)
+                    {
+                        <div class="flex justify-between text-sm">
+                            <span class="text-[#57534E]">@attr.Key</span>
+                            <span class="font-medium">@attr.Value</span>
+                        </div>
+                    }
+                </div>
+            </div>
+        }
+    </div>
+
+    <!-- تنوع‌ها -->
+    @if (Model.Variants.Any())
+    {
+        <div class="bg-[#F5F5F4] border border-[#D6D3D1] rounded-xl p-6">
+            <h3 class="font-['Playfair_Display'] text-xl font-semibold text-[#1C1917] mb-4">تنوع‌ها</h3>
+            <div class="overflow-x-auto">
+                <table class="w-full text-sm">
+                    <thead>
+                        <tr class="border-b border-[#D6D3D1]">
+                            <th class="text-right py-2 text-[#57534E]">نام</th>
+                            <th class="text-right py-2 text-[#57534E]">ویژگی‌ها</th>
+                            <th class="text-right py-2 text-[#57534E]">موجودی</th>
+                            <th class="text-right py-2 text-[#57534E]">تغییر قیمت</th>
+                            <th class="text-right py-2 text-[#57534E]">وضعیت</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach (var variant in Model.Variants)
+                        {
+                            <tr class="border-b border-[#D6D3D1] last:border-none">
+                                <td class="py-2">@variant.VariantName</td>
+                                <td class="py-2 text-[#57534E]">@variant.VariantAttributes</td>
+                                <td class="py-2">@variant.Quantity</td>
+                                <td class="py-2">@variant.PriceAdjustment.ToString("N0")</td>
+                                <td class="py-2">
+                                    <span class="inline-block px-2 py-1 rounded-full text-xs font-semibold @(variant.IsActive ? "bg-green-100 text-green-700" : "bg-red-100 text-red-700")">
+                                        @(variant.IsActive ? "فعال" : "غیرفعال")
+                                    </span>
+                                </td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    }
+
+    <!-- دکمه حذف -->
+    <div class="border-t border-[#D6D3D1] pt-6">
+        <form asp-action="Delete" asp-route-id="@Model.Id" method="post"
+              onsubmit="return confirm('آیا از حذف این محصول اطمینان دارید؟')">
+            @Html.AntiForgeryToken()
+            <button type="submit" class="px-4 py-2 bg-red-600 text-white rounded-lg text-sm font-semibold hover:bg-red-700 transition">
+                <i class="fas fa-trash"></i> حذف محصول
+            </button>
+        </form>
+    </div>
+</div>

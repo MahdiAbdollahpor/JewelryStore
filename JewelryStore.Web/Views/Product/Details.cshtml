@@ -2,272 +2,359 @@
 @model ProductDto
 @{
     ViewData["Title"] = Model.Name;
+
+    // محاسبه قیمت اصلی برای نمایش خط‌خورده
+    var originalPrice = Model.DiscountPercentage > 0 && Model.DiscountPercentage < 100
+        ? Math.Round(Model.FinalPrice / (1 - (Model.DiscountPercentage / 100m)))
+        : Model.FinalPrice;
 }
 
-<div class="container my-4">
-    <nav aria-label="breadcrumb">
-        <ol class="breadcrumb">
-            <li class="breadcrumb-item"><a asp-action="Index">محصولات</a></li>
-            <li class="breadcrumb-item active">@Model.Name</li>
-        </ol>
-    </nav>
+<!-- تعریف متغیرهای CSS اختصاصی Hearthstone برای این صفحه -->
+<style>
+    :root {
+        --hs-bg: #FBF7F0;
+        --hs-surface: #F5EFE3;
+        --hs-surface-elevated: #FFFFFF;
+        --hs-forest: #1F3D2E;
+        --hs-forest-deep: #142A1F;
+        --hs-tan: #C2A878;
+        --hs-ink: #1A1F1B;
+        --hs-ink-muted: #5C625C;
+        --hs-outline: #E3DCC9;
+        --hs-font-display: 'IranNastaliq', 'Cormorant Garamond', serif; /* معادل سریف لوکس */
+        --hs-font-body: 'Vazirmatn', 'Source Serif 4', sans-serif;
+    }
 
-    <div class="row">
-        <!-- گالری تصاویر -->
-        <div class="col-md-6">
-            <div class="product-gallery">
-                <div class="main-image mb-3">
-                    <img src="@(Model.MainImageUrl ?? "/images/no-image.png")"
-                         class="img-fluid rounded shadow-sm" alt="@Model.Name"
-                         id="mainProductImage" />
-                </div>
-                @if (Model.ImageUrls.Any())
+    .hs-container {
+        max-width: 1440px;
+        margin: 0 auto;
+        padding: 0 48px;
+    }
+
+    .hs-editorial-col {
+        max-width: 680px;
+        margin: 0 auto;
+    }
+
+    /* تایپوگرافی */
+    .hs-display {
+        font-family: var(--hs-font-display);
+        letter-spacing: -0.02em;
+        line-height: 1.1;
+    }
+
+    .hs-sans {
+        font-family: var(--hs-font-body);
+    }
+
+    .hs-uppercase {
+        text-transform: uppercase;
+        letter-spacing: 0.18em;
+        font-size: 0.75rem;
+    }
+
+    /* دکمه‌ها */
+    .btn-hs-primary {
+        background-color: var(--hs-forest);
+        color: var(--hs-bg);
+        border-radius: 2px;
+        font-weight: 500;
+        text-transform: uppercase;
+        letter-spacing: 0.12em;
+        transition: all 320ms cubic-bezier(0.22, 0.61, 0.36, 1);
+    }
+
+        .btn-hs-primary:hover {
+            background-color: var(--hs-forest-deep);
+        }
+
+    /* انیمیشن‌ها */
+    .hs-transition {
+        transition: all 320ms cubic-bezier(0.22, 0.61, 0.36, 1);
+    }
+</style>
+
+<div class="bg-[#FBF7F0] min-h-screen text-[#1A1F1B]">
+
+    <!-- ✅ هدر مینیمال و لوکس -->
+    <div class="border-b border-[#E3DCC9] py-6">
+        <div class="hs-container flex justify-between items-center">
+            <nav class="hs-sans text-xs uppercase tracking-[0.18em] text-[#5C625C]">
+                <a asp-action="Index" class="hover:text-[#1F3D2E] hs-transition">کلکسیون</a>
+                <span class="mx-4 text-[#C2A878]">/</span>
+                <span class="text-[#1A1F1B]">@Model.Name</span>
+            </nav>
+            <div class="hs-sans text-xs uppercase tracking-[0.18em] text-[#5C625C]">
+                @if (!string.IsNullOrEmpty(Model.Brand))
                 {
-                    <div class="thumbnail-images d-flex flex-wrap gap-2">
-                        @foreach (var img in Model.ImageUrls)
-                        {
-                            <img src="@img" class="img-thumbnail" style="width: 80px; height: 80px; object-fit: cover; cursor: pointer;"
-                                 onclick="document.getElementById('mainProductImage').src = this.src" />
-                        }
-                    </div>
-                }
-            </div>
-        </div>
-
-        <!-- اطلاعات محصول -->
-        <div class="col-md-6">
-            <h2 class="mb-3">@Model.Name</h2>
-
-            @if (!string.IsNullOrEmpty(Model.Brand))
-            {
-                <p class="text-muted"><i class="bi bi-tag"></i> برند: @Model.Brand</p>
-            }
-
-            <div class="d-flex align-items-center mb-3">
-                <div class="text-warning me-2">
-                    @for (int i = 1; i <= 5; i++)
-                    {
-                        <i class="bi bi-star@(i <= Math.Floor(Model.AverageRating) ? "-fill" : "")"></i>
-                    }
-                </div>
-                <span class="text-muted">(@Model.ReviewCount نظر)</span>
-            </div>
-
-            <div class="price-section mb-4">
-                @if (Model.DiscountPercentage > 0)
-                {
-                    <span class="h3 text-danger">@Model.FinalPrice.ToString("N0") تومان</span>
-                    <span class="h5 text-muted text-decoration-line-through">@Model.BasePrice.ToString("N0")</span>
-                    <span class="badge bg-danger ms-2">@Model.DiscountPercentage% تخفیف</span>
-                }
-                else
-                {
-                    <span class="h3 text-primary">@Model.FinalPrice.ToString("N0") تومان</span>
-                }
-            </div>
-
-            <div class="product-info mb-4">
-                <div class="row g-3">
-                    <div class="col-6">
-                        <div class="info-item border rounded p-2">
-                            <small class="text-muted d-block">وزن</small>
-                            <span class="fw-bold">@Model.Weight گرم</span>
-                        </div>
-                    </div>
-                    <div class="col-6">
-                        <div class="info-item border rounded p-2">
-                            <small class="text-muted d-block">عیار</small>
-                            <span class="fw-bold">@Model.Purity</span>
-                        </div>
-                    </div>
-                    @if (Model.StoneType.HasValue)
-                    {
-                        <div class="col-6">
-                            <div class="info-item border rounded p-2">
-                                <small class="text-muted d-block">نوع سنگ</small>
-                                <span class="fw-bold">@Model.StoneType</span>
-                            </div>
-                        </div>
-                        <div class="col-6">
-                            <div class="info-item border rounded p-2">
-                                <small class="text-muted d-block">وزن سنگ</small>
-                                <span class="fw-bold">@Model.StoneWeight قیراط</span>
-                            </div>
-                        </div>
-                    }
-                </div>
-            </div>
-
-            @if (!Model.IsInStock)
-            {
-                <div class="alert alert-warning">این محصول در حال حاضر موجود نیست.</div>
-            }
-
-            <!-- افزودن به سبد خرید -->
-            <form id="addToCartForm" class="mb-4">
-                <input type="hidden" name="ProductId" value="@Model.Id" />
-                <div class="row g-3 align-items-end">
-                    @if (Model.Variants.Any())
-                    {
-                        <div class="col-12">
-                            <label class="form-label">انتخاب تنوع</label>
-                            <select name="VariantId" class="form-select">
-                                <option value="">انتخاب کنید...</option>
-                                @foreach (var variant in Model.Variants)
-                                {
-                                    <option value="@variant.Id">
-                                        @variant.VariantName (موجودی: @variant.Quantity)
-                                    </option>
-                                }
-                            </select>
-                        </div>
-                    }
-                    <div class="col-4">
-                        <label class="form-label">تعداد</label>
-                        <input type="number" name="Quantity" class="form-control" value="1"
-                               min="1" max="@Model.MaxOrderQuantity" />
-                    </div>
-                    <div class="col-8">
-                        <button type="button" class="btn btn-primary btn-lg w-100" id="addToCartBtn">
-                            <i class="bi bi-cart-plus"></i> افزودن به سبد خرید
-                        </button>
-                    </div>
-                </div>
-            </form>
-
-            <div class="product-tags mt-3">
-                @foreach (var tag in Model.Tags)
-                {
-                    <span class="badge bg-secondary me-1">#@tag</span>
+                    <span>طراحی: @Model.Brand</span>
                 }
             </div>
         </div>
     </div>
 
-    <!-- توضیحات کامل -->
-    <div class="row mt-5">
-        <div class="col-12">
-            <ul class="nav nav-tabs" id="productTabs" role="tablist">
-                <li class="nav-item" role="presentation">
-                    <button class="nav-link active" id="description-tab" data-bs-toggle="tab"
-                            data-bs-target="#description" type="button" role="tab">
-                        توضیحات
+    <!-- ✅ بخش قهرمان (Hero Section) -->
+    <section class="hs-container py-16 md:py-24">
+        <div class="grid grid-cols-1 lg:grid-cols-12 gap-16 lg:gap-24">
+
+            <!-- گالری تصاویر (سمت راست در RTL) -->
+            <div class="lg:col-span-7 space-y-4">
+                <div class="relative w-full aspect-[4/3] bg-[#F5EFE3] overflow-hidden border border-[#E3DCC9]">
+                    <img src="@(Model.MainImageUrl ?? "/images/no-image.png")"
+                         class="w-full h-full object-cover"
+                         alt="@Model.Name"
+                         id="mainProductImage" />
+                </div>
+
+                @if (Model.ImageUrls.Any())
+                {
+                    <div class="flex gap-3 overflow-x-auto pb-2 scrollbar-hide">
+                        @foreach (var img in Model.ImageUrls)
+                        {
+                            <button onclick="document.getElementById('mainProductImage').src = '@img'"
+                                    class="flex-shrink-0 w-24 h-20 border border-[#E3DCC9] hover:border-[#1F3D2E] hs-transition focus:outline-none focus:border-[#1F3D2E]">
+                                <img src="@img" class="w-full h-full object-cover" alt="Thumbnail" />
+                            </button>
+                        }
+                    </div>
+                }
+            </div>
+
+            <!-- اطلاعات محصول (سمت چپ در RTL) -->
+            <div class="lg:col-span-5 flex flex-col justify-center">
+                <h1 class="hs-display text-4xl md:text-5xl lg:text-6xl text-[#1A1F1B] mb-6 leading-tight">
+                    @Model.Name
+                </h1>
+
+                <!-- نوار مشخصات کلیدی (Spec Strip) -->
+                <div class="flex flex-wrap items-center gap-x-6 gap-y-2 py-6 border-y border-[#E3DCC9] mb-8">
+                    <div class="flex flex-col">
+                        <span class="hs-sans text-[10px] uppercase tracking-[0.18em] text-[#C2A878] mb-1">وزن</span>
+                        <span class="hs-sans text-lg font-semibold tabular-nums">@Model.Weight.ToString("N2") <span class="text-sm font-normal text-[#5C625C]">گرم</span></span>
+                    </div>
+                    <div class="w-px h-10 bg-[#E3DCC9] hidden sm:block"></div>
+                    <div class="flex flex-col">
+                        <span class="hs-sans text-[10px] uppercase tracking-[0.18em] text-[#C2A878] mb-1">عیار</span>
+                        <span class="hs-sans text-lg font-semibold tabular-nums">@Model.Purity</span>
+                    </div>
+                    @if (Model.StoneType.HasValue)
+                    {
+                        <div class="w-px h-10 bg-[#E3DCC9] hidden sm:block"></div>
+                        <div class="flex flex-col">
+                            <span class="hs-sans text-[10px] uppercase tracking-[0.18em] text-[#C2A878] mb-1">سنگ</span>
+                            <span class="hs-sans text-lg font-semibold">@Model.StoneType</span>
+                        </div>
+                    }
+                </div>
+
+                <!-- قیمت -->
+                <div class="mb-8">
+                    @if (Model.DiscountPercentage > 0)
+                    {
+                        <div class="flex items-baseline gap-4">
+                            <span class="hs-sans text-3xl font-semibold tabular-nums text-[#1F3D2E]">@Model.FinalPrice.ToString("N0") <span class="text-base font-normal">تومان</span></span>
+                            <span class="hs-sans text-lg tabular-nums text-[#8E928D] line-through">@originalPrice.ToString("N0")</span>
+                        </div>
+                    }
+                    else
+                    {
+                        <span class="hs-sans text-3xl font-semibold tabular-nums text-[#1F3D2E]">@Model.FinalPrice.ToString("N0") <span class="text-base font-normal">تومان</span></span>
+                    }
+                </div>
+
+                <!-- وضعیت موجودی -->
+                @if (!Model.IsInStock)
+                {
+                    <div class="mb-8 px-4 py-3 border border-[#C2A878]/30 bg-[#C2A878]/5">
+                        <p class="hs-sans text-sm text-[#9C8552] uppercase tracking-widest">این اثر در حال حاضر قابل سفارش نیست</p>
+                    </div>
+                }
+
+                <!-- فرم خرید -->
+                <form id="addToCartForm" class="space-y-6">
+                    <input type="hidden" name="ProductId" value="@Model.Id" />
+
+                    @if (Model.Variants.Any())
+                    {
+                        <div>
+                            <label class="hs-sans text-[10px] uppercase tracking-[0.18em] text-[#5C625C] block mb-3">انتخاب تنوع</label>
+                            <select name="VariantId" class="w-full bg-transparent border-b border-[#C9C0AA] py-3 hs-sans text-[#1A1F1B] focus:outline-none focus:border-[#1F3D2E] focus:border-b-2 hs-transition appearance-none cursor-pointer">
+                                <option value="">لطفاً انتخاب کنید...</option>
+                                @foreach (var variant in Model.Variants)
+                                {
+                                    <option value="@variant.Id">@variant.VariantName — @(variant.Quantity > 0 ? "موجود" : "ناموجود")</option>
+                                }
+                            </select>
+                        </div>
+                    }
+
+                    <div class="flex items-stretch gap-4 pt-2">
+                        <div class="w-24">
+                            <label class="hs-sans text-[10px] uppercase tracking-[0.18em] text-[#5C625C] block mb-3">تعداد</label>
+                            <input type="number" name="Quantity" value="1" min="1"
+                                   class="w-full bg-transparent border-b border-[#C9C0AA] py-3 hs-sans text-center tabular-nums focus:outline-none focus:border-[#1F3D2E] focus:border-b-2 hs-transition" />
+                        </div>
+
+                        <div class="flex-1">
+                            <div class="h-[42px] mt-[27px]">
+                                @if (Model.IsInStock)
+                                {
+                                    <button type="button" id="addToCartBtn" class="btn-hs-primary w-full h-full px-6 py-3 hs-sans text-sm">
+                                        افزودن به کلکسیون
+                                    </button>
+                                }
+                                else
+                                {
+                                    <button type="button" disabled class="w-full h-full border border-[#E3DCC9] text-[#8E928D] hs-sans text-sm uppercase tracking-[0.12em] cursor-not-allowed">
+                                        ناموجود
+                                    </button>
+                                }
+                            </div>
+                        </div>
+                    </div>
+                </form>
+
+                <!-- تگ‌ها -->
+                @if (Model.Tags.Any())
+                {
+                    <div class="mt-10 pt-8 border-t border-[#E3DCC9] flex flex-wrap gap-2">
+                        @foreach (var tag in Model.Tags)
+                        {
+                            <span class="hs-sans text-[10px] uppercase tracking-[0.18em] px-3 py-1.5 border border-[#E3DCC9] rounded-full text-[#5C625C]">#@tag</span>
+                        }
+                    </div>
+                }
+            </div>
+        </div>
+    </section>
+
+    <!-- ✅ توضیحات و مشخصات (Editorial Layout) -->
+    <section class="border-t border-[#E3DCC9] py-24">
+        <div class="hs-container">
+            <div class="hs-editorial-col">
+                <div class="flex justify-center gap-8 mb-16 border-b border-[#E3DCC9]">
+                    <button onclick="switchTab('desc', this)" class="tab-btn active hs-sans text-xs uppercase tracking-[0.18em] pb-4 border-b-2 border-[#1F3D2E] text-[#1F3D2E] hs-transition">
+                        شرح اثر
                     </button>
-                </li>
-                <li class="nav-item" role="presentation">
-                    <button class="nav-link" id="specs-tab" data-bs-toggle="tab"
-                            data-bs-target="#specs" type="button" role="tab">
+                    <button onclick="switchTab('specs', this)" class="tab-btn hs-sans text-xs uppercase tracking-[0.18em] pb-4 border-b-2 border-transparent text-[#5C625C] hover:text-[#1F3D2E] hs-transition">
                         مشخصات فنی
                     </button>
-                </li>
-            </ul>
-            <div class="tab-content p-3 border border-top-0 rounded-bottom" id="productTabsContent">
-                <div class="tab-pane fade show active" id="description" role="tabpanel">
+                </div>
+
+                <div id="panel-desc" class="tab-panel prose prose-lg prose-stone font-serif text-[#1A1F1B] leading-relaxed">
                     @Html.Raw(Model.Description)
                 </div>
-                <div class="tab-pane fade" id="specs" role="tabpanel">
-                    <table class="table table-striped">
-                        <tbody>
-                            <tr><td>وزن</td><td>@Model.Weight گرم</td></tr>
-                            <tr><td>عیار</td><td>@Model.Purity</td></tr>
-                            <tr><td>اجرت ساخت</td><td>@Model.CraftsmanshipFee.ToString("N0") تومان</td></tr>
-                            <tr><td>قیمت مرجع طلا</td><td>@Model.GoldPriceReference.ToString("N0") تومان</td></tr>
+
+                <div id="panel-specs" class="tab-panel hidden">
+                    <table class="w-full hs-sans text-sm">
+                        <tbody class="divide-y divide-[#E3DCC9]">
+                            <tr><td class="py-4 text-[#5C625C] uppercase tracking-widest text-[10px] w-1/3">وزن خالص</td><td class="py-4 tabular-nums font-medium">@Model.Weight.ToString("N2") گرم</td></tr>
+                            <tr><td class="py-4 text-[#5C625C] uppercase tracking-widest text-[10px]">عیار طلا</td><td class="py-4 font-medium">@Model.Purity</td></tr>
+                            <tr><td class="py-4 text-[#5C625C] uppercase tracking-widest text-[10px]">اجرت ساخت</td><td class="py-4 tabular-nums font-medium">@Model.CraftsmanshipFee.ToString("N0") تومان</td></tr>
+                            <tr><td class="py-4 text-[#5C625C] uppercase tracking-widest text-[10px]">قیمت مرجع</td><td class="py-4 tabular-nums font-medium">@Model.GoldPriceReference.ToString("N0") تومان</td></tr>
                             @if (Model.StoneType.HasValue)
                             {
-                                <tr><td>نوع سنگ</td><td>@Model.StoneType</td></tr>
-                                <tr><td>وزن سنگ</td><td>@Model.StoneWeight قیراط</td></tr>
-                                <tr><td>کیفیت سنگ</td><td>@Model.StoneQuality</td></tr>
+                                <tr><td class="py-4 text-[#5C625C] uppercase tracking-widest text-[10px]">نوع سنگ</td><td class="py-4 font-medium">@Model.StoneType</td></tr>
+                                <tr><td class="py-4 text-[#5C625C] uppercase tracking-widest text-[10px]">وزن سنگ</td><td class="py-4 tabular-nums font-medium">@Model.StoneWeight?.ToString("N2") قیراط</td></tr>
+                                <tr><td class="py-4 text-[#5C625C] uppercase tracking-widest text-[10px]">کیفیت سنگ</td><td class="py-4 font-medium">@Model.StoneQuality</td></tr>
                             }
                         </tbody>
                     </table>
                 </div>
             </div>
         </div>
-    </div>
+    </section>
 
-    <!-- محصولات مرتبط -->
+    <!-- ✅ محصولات مرتبط -->
     @if (ViewBag.RelatedProducts != null && ((IEnumerable<ProductListDto>)ViewBag.RelatedProducts).Any())
     {
-        <div class="row mt-5">
-            <div class="col-12">
-                <h4>محصولات مرتبط</h4>
-                <div class="row">
+        <section class="border-t border-[#E3DCC9] py-24 bg-[#F5EFE3]">
+            <div class="hs-container">
+                <h2 class="hs-display text-3xl md:text-4xl text-center mb-16 text-[#1A1F1B]">آثار هم‌خانواده</h2>
+
+                <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-x-8 gap-y-16">
                     @foreach (var product in ViewBag.RelatedProducts)
                     {
-                        <div class="col-md-3 mb-3">
-                            <div class="card h-100 shadow-sm">
+                        <a asp-action="Details" asp-route-slug="@product.Slug" class="group block">
+                            <div class="aspect-[3/2] overflow-hidden border border-[#E3DCC9] mb-6 bg-[#FFFFFF]">
                                 <img src="@(product.MainImageUrl ?? "/images/no-image.png")"
-                                     class="card-img-top" alt="@product.Name"
-                                     style="height: 150px; object-fit: cover;" />
-                                <div class="card-body">
-                                    <h6 class="card-title">@product.Name</h6>
-                                    <p class="card-text text-primary">@product.FinalPrice.ToString("N0") تومان</p>
-                                    <a asp-action="Details" asp-route-slug="@product.Slug"
-                                       class="btn btn-outline-primary btn-sm w-100">مشاهده</a>
-                                </div>
+                                     class="w-full h-full object-cover group-hover:scale-[1.02] hs-transition duration-[480ms]"
+                                     alt="@product.Name" />
                             </div>
-                        </div>
+                            <h3 class="hs-display text-xl text-[#1A1F1B] mb-2 group-hover:text-[#1F3D2E] hs-transition">@product.Name</h3>
+                            <p class="hs-sans text-sm tabular-nums font-semibold text-[#1F3D2E]">@product.FinalPrice.ToString("N0") تومان</p>
+                        </a>
                     }
                 </div>
             </div>
-        </div>
+        </section>
     }
 </div>
 
-@section Scripts {
-    <script>
-        document.getElementById('addToCartBtn').addEventListener('click', async function() {
-            const form = document.getElementById('addToCartForm');
-            const formData = new FormData(form);
-            const data = {
-                productId: parseInt(formData.get('ProductId')),
-                variantId: formData.get('VariantId') ? parseInt(formData.get('VariantId')) : null,
-                quantity: parseInt(formData.get('Quantity'))
-            };
+<script>
+    // تب‌های ادیتوریال
+    function switchTab(tabName, btnElement) {
+        document.querySelectorAll('.tab-panel').forEach(el => el.classList.add('hidden'));
+        document.getElementById(`panel-${tabName}`).classList.remove('hidden');
 
-            this.innerHTML = '<span class="spinner-border spinner-border-sm"></span>';
-            this.disabled = true;
-
-            try {
-                const response = await fetch('/Cart/AddToCart', {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                        'RequestVerificationToken': document.querySelector('input[name="__RequestVerificationToken"]').value
-                    },
-                    body: JSON.stringify(data)
-                });
-
-                const result = await response.json();
-                if (result.success) {
-                    updateCartWidget();
-                    this.innerHTML = '✅ افزوده شد';
-                    setTimeout(() => {
-                        this.innerHTML = '<i class="bi bi-cart-plus"></i> افزودن به سبد خرید';
-                        this.disabled = false;
-                    }, 2000);
-                } else {
-                    alert(result.message);
-                    this.innerHTML = '<i class="bi bi-cart-plus"></i> افزودن به سبد خرید';
-                    this.disabled = false;
-                }
-            } catch (error) {
-                alert('خطا در ارتباط با سرور');
-                this.innerHTML = '<i class="bi bi-cart-plus"></i> افزودن به سبد خرید';
-                this.disabled = false;
-            }
+        document.querySelectorAll('.tab-btn').forEach(btn => {
+            btn.classList.remove('border-[#1F3D2E]', 'text-[#1F3D2E]');
+            btn.classList.add('border-transparent', 'text-[#5C625C]');
         });
 
-        // به‌روزرسانی ویجت سبد خرید
-        async function updateCartWidget() {
-            try {
-                const response = await fetch('/Cart/CartWidget');
-                const data = await response.json();
-                document.querySelector('#cart-item-count').textContent = data.itemCount;
-                document.querySelector('#cart-total').textContent = data.total;
-            } catch (error) {
-                console.error('Error updating cart widget:', error);
+        btnElement.classList.remove('border-transparent', 'text-[#5C625C]');
+        btnElement.classList.add('border-[#1F3D2E]', 'text-[#1F3D2E]');
+    }
+
+    // افزودن به سبد خرید با حفظ استایل Hearthstone
+    document.getElementById('addToCartBtn')?.addEventListener('click', async function() {
+        const form = document.getElementById('addToCartForm');
+        const formData = new FormData(form);
+        const data = {
+            productId: parseInt(formData.get('ProductId')),
+            variantId: formData.get('VariantId') ? parseInt(formData.get('VariantId')) : null,
+            quantity: parseInt(formData.get('Quantity'))
+        };
+
+        const originalText = this.innerText;
+        this.innerHTML = '<span class="inline-block animate-spin mr-2">⟳</span> در حال پردازش';
+        this.disabled = true;
+        this.style.opacity = '0.7';
+
+        try {
+            const response = await fetch('/Cart/AddToCart', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'RequestVerificationToken': document.querySelector('input[name="__RequestVerificationToken"]')?.value || ''
+                },
+                body: JSON.stringify(data)
+            });
+
+            const result = await response.json();
+            if (result.success) {
+                this.innerHTML = '✓ افزوده شد';
+                this.style.backgroundColor = '#4A7C59'; // Success Green
+                if (typeof updateCartWidget === 'function') updateCartWidget();
+                setTimeout(() => {
+                    this.innerHTML = originalText;
+                    this.style.backgroundColor = '';
+                    this.disabled = false;
+                    this.style.opacity = '1';
+                }, 2500);
+            } else {
+                alert(result.message);
+                resetButton(this, originalText);
             }
+        } catch (error) {
+            alert('خطا در ارتباط با سرور');
+            resetButton(this, originalText);
         }
-    </script>
-}
+    });
+
+    function resetButton(btn, text) {
+        btn.innerHTML = text;
+        btn.disabled = false;
+        btn.style.opacity = '1';
+    }
+</script>

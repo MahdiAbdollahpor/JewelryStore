@@ -1,0 +1,228 @@
+﻿@using JewelryStore.Services.DTOs.Order
+@using JewelryStore.Domain.Enums
+@model OrderDetailDto
+@{
+    ViewData["Title"] = $"جزئیات سفارش {Model.OrderNumber}";
+}
+
+<style>
+    :root {
+        --es-primary: #C2410C;
+        --es-surface: #F5F5F4;
+        --es-surface-raised: #E7E5E4;
+        --es-border: #D6D3D1;
+        --es-text-primary: #1C1917;
+        --es-text-secondary: #57534E;
+    }
+
+    .status-badge {
+        padding: 4px 16px;
+        border-radius: 9999px;
+        font-size: 12px;
+        font-weight: 600;
+        text-transform: uppercase;
+        letter-spacing: 0.04em;
+    }
+
+    .status-pending {
+        background: rgba(245, 158, 11, 0.1);
+        color: #D97706;
+    }
+
+    .status-paid {
+        background: rgba(22, 163, 74, 0.1);
+        color: #16A34A;
+    }
+
+    .status-processing {
+        background: rgba(194, 65, 12, 0.1);
+        color: #C2410C;
+    }
+
+    .status-shipped {
+        background: rgba(22, 163, 74, 0.1);
+        color: #16A34A;
+    }
+
+    .status-delivered {
+        background: rgba(22, 163, 74, 0.15);
+        color: #16A34A;
+    }
+
+    .status-cancelled {
+        background: rgba(220, 38, 38, 0.1);
+        color: #DC2626;
+    }
+
+    .status-returned {
+        background: rgba(220, 38, 38, 0.1);
+        color: #DC2626;
+    }
+</style>
+
+<div class="space-y-6">
+    <!-- هدر -->
+    <div>
+        <nav class="text-sm text-[#57534E] mb-2">
+            <a asp-action="Index" class="hover:text-[#C2410C] transition">مدیریت سفارشات</a>
+            <span class="mx-2">/</span>
+            <span class="text-[#1C1917]">@Model.OrderNumber</span>
+        </nav>
+        <div class="flex items-center justify-between">
+            <div>
+                <h1 class="font-['Playfair_Display'] text-3xl font-bold text-[#1C1917]">سفارش @Model.OrderNumber</h1>
+                <p class="text-[#57534E] mt-1">ثبت شده در @Model.CreatedAt.ToString("yyyy/MM/dd HH:mm")</p>
+            </div>
+            <span class="status-badge status-@(Model.OrderStatus.ToString().ToLower())">
+                @GetStatusName(Model.OrderStatus)
+            </span>
+        </div>
+    </div>
+
+    <!-- اطلاعات -->
+    <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        <!-- آیتم‌های سفارش -->
+        <div class="lg:col-span-2 bg-[#F5F5F4] border border-[#D6D3D1] rounded-xl p-6">
+            <h3 class="font-['Playfair_Display'] text-xl font-semibold text-[#1C1917] mb-4">آیتم‌های سفارش</h3>
+            <div class="space-y-3">
+                @foreach (var item in Model.Items)
+                {
+                    <div class="flex items-center gap-4 p-3 bg-white rounded-lg border border-[#D6D3D1]">
+                        <img src="@(item.ProductImage ?? "/images/no-image.png")"
+                             class="w-16 h-16 object-cover rounded" />
+                        <div class="flex-1">
+                            <p class="font-medium text-[#1C1917]">@item.ProductName</p>
+                            @if (!string.IsNullOrEmpty(item.VariantName))
+                            {
+                                <p class="text-sm text-[#57534E]">تنوع: @item.VariantName</p>
+                            }
+                            <p class="text-sm text-[#57534E]">@item.Quantity × @item.FinalUnitPrice.ToString("N0") تومان</p>
+                        </div>
+                        <div class="text-left">
+                            <p class="font-semibold text-[#1C1917]">@item.TotalPrice.ToString("N0") تومان</p>
+                        </div>
+                    </div>
+                }
+            </div>
+        </div>
+
+        <!-- خلاصه سفارش -->
+        <div class="bg-[#F5F5F4] border border-[#D6D3D1] rounded-xl p-6">
+            <h3 class="font-['Playfair_Display'] text-xl font-semibold text-[#1C1917] mb-4">خلاصه سفارش</h3>
+
+            <div class="space-y-2 text-sm">
+                <div class="flex justify-between">
+                    <span class="text-[#57534E]">جمع کل</span>
+                    <span>@Model.SubTotal.ToString("N0") تومان</span>
+                </div>
+                @if (Model.DiscountTotal > 0)
+                {
+                    <div class="flex justify-between text-[#16A34A]">
+                        <span>تخفیف</span>
+                        <span>-@Model.DiscountTotal.ToString("N0") تومان</span>
+                    </div>
+                }
+                <div class="flex justify-between">
+                    <span class="text-[#57534E]">هزینه ارسال</span>
+                    <span>@Model.ShippingCost.ToString("N0") تومان</span>
+                </div>
+                <div class="flex justify-between">
+                    <span class="text-[#57534E]">مالیات</span>
+                    <span>@Model.TaxAmount.ToString("N0") تومان</span>
+                </div>
+                @if (Model.DiscountCodeAmount > 0)
+                {
+                    <div class="flex justify-between text-[#16A34A]">
+                        <span>تخفیف کد</span>
+                        <span>-@Model.DiscountCodeAmount.ToString("N0") تومان</span>
+                    </div>
+                }
+                <div class="flex justify-between font-semibold text-lg pt-2 border-t border-[#D6D3D1]">
+                    <span>قابل پرداخت</span>
+                    <span class="text-[#C2410C]">@Model.TotalAmount.ToString("N0") تومان</span>
+                </div>
+            </div>
+
+            <!-- اطلاعات گیرنده -->
+            <div class="mt-4 pt-4 border-t border-[#D6D3D1]">
+                <h4 class="text-xs font-semibold text-[#57534E] uppercase tracking-wider mb-2">اطلاعات تحویل</h4>
+                <p class="text-sm">@Model.RecipientName</p>
+                <p class="text-sm text-[#57534E]">@Model.RecipientPhone</p>
+                <p class="text-sm text-[#57534E] mt-1">@Model.ShippingAddress</p>
+            </div>
+
+            <!-- کد رهگیری -->
+            <div class="mt-4 pt-4 border-t border-[#D6D3D1]">
+                <h4 class="text-xs font-semibold text-[#57534E] uppercase tracking-wider mb-2">کد رهگیری</h4>
+                @if (!string.IsNullOrEmpty(Model.TrackingCode))
+                {
+                    <p class="font-mono text-sm font-medium">@Model.TrackingCode</p>
+                }
+                else
+                {
+                    <p class="text-sm text-[#57534E]">هنوز ثبت نشده</p>
+                }
+            </div>
+        </div>
+    </div>
+
+    <!-- عملیات -->
+    <div class="bg-[#F5F5F4] border border-[#D6D3D1] rounded-xl p-6">
+        <h3 class="font-['Playfair_Display'] text-xl font-semibold text-[#1C1917] mb-4">عملیات</h3>
+        <div class="flex flex-wrap gap-4">
+            <!-- تغییر وضعیت -->
+            <form asp-action="UpdateStatus" asp-route-id="@Model.Id" method="post" class="flex items-center gap-3">
+                @Html.AntiForgeryToken()
+                <select name="status" class="px-3 py-2 border border-[#D6D3D1] rounded-lg bg-white text-sm focus:outline-none focus:ring-2 focus:ring-[#C2410C]/20 focus:border-[#C2410C]">
+                    @foreach (OrderStatus status in Enum.GetValues(typeof(OrderStatus)))
+                    {
+                        <option value="@status" selected="@(Model.OrderStatus == status)">@GetStatusName(status)</option>
+                    }
+                </select>
+                <input type="text" name="note" class="px-3 py-2 border border-[#D6D3D1] rounded-lg bg-white text-sm w-48 focus:outline-none focus:ring-2 focus:ring-[#C2410C]/20 focus:border-[#C2410C]" placeholder="یادداشت (اختیاری)" />
+                <button type="submit" class="px-4 py-2 bg-[#C2410C] text-white rounded-lg text-sm font-semibold hover:bg-[#9A3412] transition">
+                    <i class="fas fa-save ml-1"></i> تغییر وضعیت
+                </button>
+            </form>
+
+            <!-- افزودن کد رهگیری -->
+            <form asp-action="AddTracking" asp-route-id="@Model.Id" method="post" class="flex items-center gap-3">
+                @Html.AntiForgeryToken()
+                <input type="text" name="trackingCode" class="px-3 py-2 border border-[#D6D3D1] rounded-lg bg-white text-sm w-48 focus:outline-none focus:ring-2 focus:ring-[#C2410C]/20 focus:border-[#C2410C]" placeholder="کد رهگیری" />
+                <button type="submit" class="px-4 py-2 border border-[#D6D3D1] rounded-lg text-sm font-semibold hover:bg-[#E7E5E4] transition">
+                    <i class="fas fa-plus ml-1"></i> افزودن کد رهگیری
+                </button>
+            </form>
+
+            <!-- لغو سفارش -->
+            @if (Model.OrderStatus == OrderStatus.Pending || Model.OrderStatus == OrderStatus.Paid)
+            {
+                <form asp-action="Cancel" asp-route-id="@Model.Id" method="post"
+                      onsubmit="return confirm('آیا از لغو این سفارش اطمینان دارید؟')">
+                    @Html.AntiForgeryToken()
+                    <input type="text" name="reason" class="px-3 py-2 border border-[#D6D3D1] rounded-lg bg-white text-sm w-48 focus:outline-none focus:ring-2 focus:ring-[#C2410C]/20 focus:border-[#C2410C]" placeholder="دلیل لغو" />
+                    <button type="submit" class="px-4 py-2 bg-red-600 text-white rounded-lg text-sm font-semibold hover:bg-red-700 transition">
+                        <i class="fas fa-times ml-1"></i> لغو سفارش
+                    </button>
+                </form>
+            }
+        </div>
+    </div>
+</div>
+
+@functions {
+    private string GetStatusName(OrderStatus status)
+    {
+        return status switch
+        {
+            OrderStatus.Pending => "در انتظار پرداخت",
+            OrderStatus.Paid => "پرداخت شده",
+            OrderStatus.Processing => "در حال پردازش",
+            OrderStatus.Shipped => "ارسال شده",
+            OrderStatus.Delivered => "تحویل داده شده",
+            OrderStatus.Cancelled => "لغو شده",
+            OrderStatus.Returned => "مرجوع شده",
+            _ => "نامشخص"
+        };
+    }
+}

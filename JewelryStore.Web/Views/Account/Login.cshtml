@@ -1,0 +1,151 @@
+﻿@using JewelryStore.Services.DTOs.User
+@model LoginDto
+@{
+    ViewData["Title"] = "ورود";
+}
+
+<style>
+    :root {
+        --hs-bg: #FBF7F0;
+        --hs-forest: #1F3D2E;
+        --hs-tan: #C2A878;
+        --hs-ink: #1A1F1B;
+        --hs-ink-muted: #5C625C;
+        --hs-outline: #E3DCC9;
+        --hs-display: 'Cormorant Garamond', 'IranNastaliq', serif;
+        --hs-sans: 'Vazirmatn', 'Inter', sans-serif;
+    }
+
+    .hs-display {
+        font-family: var(--hs-display);
+        letter-spacing: -0.02em;
+        line-height: 1.1;
+    }
+
+    .hs-sans {
+        font-family: var(--hs-sans);
+    }
+
+    .hs-uppercase {
+        text-transform: uppercase;
+        letter-spacing: 0.18em;
+        font-size: 0.7rem;
+    }
+
+    .hs-transition {
+        transition: all 320ms cubic-bezier(0.22, 0.61, 0.36, 1);
+    }
+
+    .hs-input {
+        width: 100%;
+        background: transparent;
+        border: none;
+        border-bottom: 1px solid #C9C0AA;
+        padding: 0.75rem 0;
+        font-family: var(--hs-sans);
+        color: var(--hs-ink);
+        transition: all 320ms cubic-bezier(0.22, 0.61, 0.36, 1);
+    }
+
+        .hs-input:focus {
+            outline: none;
+            border-bottom: 2px solid var(--hs-forest);
+        }
+
+        .hs-input::placeholder {
+            color: #8E928D;
+        }
+
+    .btn-hs-primary {
+        background: var(--hs-forest);
+        color: #FBF7F0;
+        border-radius: 2px;
+        font-weight: 500;
+        text-transform: uppercase;
+        letter-spacing: 0.12em;
+        transition: all 320ms cubic-bezier(0.22, 0.61, 0.36, 1);
+        font-family: var(--hs-sans);
+    }
+
+        .btn-hs-primary:hover {
+            background: #142A1F;
+        }
+</style>
+
+<div class="min-h-screen flex items-center justify-center" style="background-color: #FBF7F0; padding: 48px 24px;">
+    <div class="w-full max-w-md">
+        <!-- لوگو و عنوان -->
+        <div class="text-center mb-12">
+            <a asp-action="Index" asp-controller="Product"
+               class="hs-display text-4xl font-bold text-[#1F3D2E] tracking-[-0.02em] block">
+                جواهری
+            </a>
+            <h1 class="hs-display text-3xl mt-6 text-[#1A1F1B]">ورود</h1>
+            <p class="hs-sans text-[#5C625C] mt-2">به کلکسیون خود خوش آمدید</p>
+        </div>
+
+        <!-- فرم ورود -->
+        <div class="bg-white border border-[#E3DCC9] rounded-[4px] p-8">
+            <form asp-action="Login" method="post">
+                @Html.AntiForgeryToken()
+                <input type="hidden" name="returnUrl" value="@ViewBag.ReturnUrl" />
+
+                <div asp-validation-summary="ModelOnly" class="text-[#8C3A36] hs-sans text-sm mb-4"></div>
+
+                <!-- شماره موبایل -->
+                <div class="mb-6">
+                    <label asp-for="PhoneNumber" class="hs-sans text-xs uppercase tracking-[0.18em] text-[#5C625C] block mb-2">
+                        شماره موبایل
+                    </label>
+                    <input asp-for="PhoneNumber" class="hs-input" placeholder="09xxxxxxxxx" dir="ltr" />
+                    <span asp-validation-for="PhoneNumber" class="hs-sans text-xs text-[#8C3A36] block mt-1"></span>
+                </div>
+
+                <!-- رمز عبور -->
+                <div class="mb-6">
+                    <label asp-for="Password" class="hs-sans text-xs uppercase tracking-[0.18em] text-[#5C625C] block mb-2">
+                        رمز عبور
+                    </label>
+                    <input asp-for="Password" type="password" class="hs-input" placeholder="رمز عبور خود را وارد کنید" />
+                    <span asp-validation-for="Password" class="hs-sans text-xs text-[#8C3A36] block mt-1"></span>
+                </div>
+
+                <!-- دکمه ورود -->
+                <button type="submit" class="btn-hs-primary w-full py-3 text-sm">
+                    ورود به حساب کاربری
+                </button>
+            </form>
+
+            <!-- گزینه‌های دیگر -->
+            <div class="mt-6 space-y-4">
+                <div class="relative">
+                    <div class="absolute inset-0 flex items-center">
+                        <div class="w-full border-t border-[#E3DCC9]"></div>
+                    </div>
+                    <div class="relative flex justify-center text-sm">
+                        <span class="px-4 bg-white text-[#8E928D] hs-sans text-xs uppercase tracking-[0.18em]">یا</span>
+                    </div>
+                </div>
+
+                <div class="text-center">
+                    <a asp-action="LoginWithCode" class="hs-sans text-sm text-[#1F3D2E] hover:text-[#3D6650] hs-transition">
+                        <i class="fas fa-sms ml-1"></i> ورود با کد یکبارمصرف
+                    </a>
+                </div>
+
+                <div class="text-center">
+                    <p class="hs-sans text-sm text-[#5C625C]">
+                        حساب کاربری ندارید؟
+                        <a asp-action="Register" class="text-[#1F3D2E] hover:text-[#3D6650] hs-transition font-medium">
+                            ثبت‌نام کنید
+                        </a>
+                    </p>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    @await Html.PartialAsync("_ValidationScriptsPartial")
+}

@@ -1,4 +1,5 @@
-﻿using JewelryStore.Domain.Enums;
+﻿using JewelryStore.Domain.Entities;
+using JewelryStore.Domain.Enums;
 using JewelryStore.Services.DTOs.Order;
 using System;
 using System.Collections.Generic;
@@ -30,5 +31,6 @@ namespace JewelryStore.Services.Interfaces
 
         /// افزودن کد رهگیری به سفارش (فقط ادمین)
         Task<bool> AddTrackingCodeAsync(int orderId, string trackingCode);
+        Task<Order> GetOrderEntityByIdAsync(int orderId);
     }
 }

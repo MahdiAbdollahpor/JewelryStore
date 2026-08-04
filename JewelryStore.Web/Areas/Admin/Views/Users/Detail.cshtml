@@ -1,0 +1,181 @@
+﻿@using JewelryStore.Services.DTOs.User
+@model UserProfileDto
+@{
+    ViewData["Title"] = $"جزئیات کاربر - {Model.Username}";
+}
+
+<style>
+    :root {
+        --es-primary: #C2410C;
+        --es-surface: #F5F5F4;
+        --es-border: #D6D3D1;
+        --es-text-primary: #1C1917;
+        --es-text-secondary: #57534E;
+    }
+
+    .info-row {
+        display: flex;
+        justify-content: space-between;
+        padding: 12px 0;
+        border-bottom: 1px solid var(--es-border);
+    }
+
+        .info-row:last-child {
+            border-bottom: none;
+        }
+
+    .info-label {
+        color: var(--es-text-secondary);
+        font-size: 14px;
+    }
+
+    .info-value {
+        font-weight: 500;
+        color: var(--es-text-primary);
+    }
+
+    .status-badge {
+        padding: 4px 12px;
+        border-radius: 9999px;
+        font-size: 11px;
+        font-weight: 600;
+        text-transform: uppercase;
+        letter-spacing: 0.04em;
+    }
+
+    .status-active {
+        background: rgba(22, 163, 74, 0.1);
+        color: #16A34A;
+    }
+
+    .status-inactive {
+        background: rgba(220, 38, 38, 0.1);
+        color: #DC2626;
+    }
+
+    .status-verified {
+        background: rgba(22, 163, 74, 0.1);
+        color: #16A34A;
+    }
+
+    .status-unverified {
+        background: rgba(245, 158, 11, 0.1);
+        color: #D97706;
+    }
+</style>
+
+<div class="space-y-6">
+    <!-- هدر -->
+    <div>
+        <nav class="text-sm text-[#57534E] mb-2">
+            <a asp-action="Index" class="hover:text-[#C2410C] transition">مدیریت کاربران</a>
+            <span class="mx-2">/</span>
+            <span class="text-[#1C1917]">@Model.Username</span>
+        </nav>
+        <div class="flex items-center justify-between">
+            <div>
+                <h1 class="font-['Playfair_Display'] text-3xl font-bold text-[#1C1917]">
+                    @(Model.FullName ?? Model.Username)
+                </h1>
+                <p class="text-[#57534E] mt-1">شناسه: #@Model.Id</p>
+            </div>
+            <div class="flex gap-3">
+                <form asp-action="ToggleStatus" asp-route-id="@Model.Id" method="post">
+                    @Html.AntiForgeryToken()
+                    <button type="submit" class="px-4 py-2 border border-[#D6D3D1] rounded-lg text-sm font-semibold hover:bg-[#E7E5E4] transition">
+                        <i class="fas @(Model.IsActive ? "fa-pause" : "fa-play") ml-1"></i>
+                        @(Model.IsActive ? "غیرفعال" : "فعال")
+                    </button>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- اطلاعات -->
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+        <div class="bg-[#F5F5F4] border border-[#D6D3D1] rounded-xl p-6">
+            <h3 class="font-['Playfair_Display'] text-xl font-semibold text-[#1C1917] mb-4">اطلاعات شخصی</h3>
+
+            <div class="info-row">
+                <span class="info-label">نام کاربری</span>
+                <span class="info-value">@Model.Username</span>
+            </div>
+            <div class="info-row">
+                <span class="info-label">نام کامل</span>
+                <span class="info-value">@(Model.FullName ?? "-")</span>
+            </div>
+            <div class="info-row">
+                <span class="info-label">شماره موبایل</span>
+                <span class="info-value">@Model.PhoneNumber</span>
+            </div>
+            <div class="info-row">
+                <span class="info-label">آدرس</span>
+                <span class="info-value">@(Model.Address ?? "-")</span>
+            </div>
+        </div>
+
+        <div class="bg-[#F5F5F4] border border-[#D6D3D1] rounded-xl p-6">
+            <h3 class="font-['Playfair_Display'] text-xl font-semibold text-[#1C1917] mb-4">وضعیت حساب</h3>
+
+            <div class="info-row">
+                <span class="info-label">نقش</span>
+                <span class="info-value">
+                    <form asp-action="ChangeRole" asp-route-id="@Model.Id" method="post" class="flex items-center gap-2">
+                        @Html.AntiForgeryToken()
+                        <select name="role" class="px-3 py-1 border border-[#D6D3D1] rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#C2410C]/20 focus:border-[#C2410C]">
+                            <option value="User" selected="@(Model.Role == "User")">کاربر</option>
+                            <option value="Admin" selected="@(Model.Role == "Admin")">ادمین</option>
+                        </select>
+                        <button type="submit" class="px-3 py-1 bg-[#C2410C] text-white rounded-lg text-sm hover:bg-[#9A3412] transition">
+                            تغییر
+                        </button>
+                    </form>
+                </span>
+            </div>
+            <div class="info-row">
+                <span class="info-label">وضعیت حساب</span>
+                <span class="info-value">
+                    <span class="status-badge @(Model.IsActive ? "status-active" : "status-inactive")">
+                        @(Model.IsActive ? "فعال" : "غیرفعال")
+                    </span>
+                </span>
+            </div>
+            <div class="info-row">
+                <span class="info-label">تایید شماره</span>
+                <span class="info-value">
+                    <span class="status-badge @(Model.IsPhoneVerified ? "status-verified" : "status-unverified")">
+                        @(Model.IsPhoneVerified ? "تایید شده" : "تایید نشده")
+                    </span>
+                </span>
+            </div>
+            <div class="info-row">
+                <span class="info-label">تاریخ ثبت‌نام</span>
+                <span class="info-value">@Model.CreatedAt.ToString("yyyy/MM/dd HH:mm")</span>
+            </div>
+            <div class="info-row">
+                <span class="info-label">آخرین ورود</span>
+                <span class="info-value">
+                    @if (Model.LastLoginAt.HasValue)
+                    {
+                        @Model.LastLoginAt.Value.ToString("yyyy/MM/dd HH:mm")
+                    }
+                    else
+                    {
+                        <span class="text-[#57534E]">-</span>
+                    }
+                </span>
+            </div>
+        </div>
+    </div>
+
+    <!-- حذف کاربر -->
+    <div class="border-t border-[#D6D3D1] pt-6">
+        <form asp-action="Delete" asp-route-id="@Model.Id" method="post"
+              onsubmit="return confirm('آیا از حذف این کاربر اطمینان دارید؟')">
+            @Html.AntiForgeryToken()
+            <button type="submit" class="px-4 py-2 bg-red-600 text-white rounded-lg text-sm font-semibold hover:bg-red-700 transition">
+                <i class="fas fa-trash ml-1"></i> حذف کاربر
+            </button>
+        </form>
+    </div>
+</div>

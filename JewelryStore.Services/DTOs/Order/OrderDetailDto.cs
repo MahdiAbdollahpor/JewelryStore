@@ -11,6 +11,7 @@ namespace JewelryStore.Services.DTOs.Order
     {
         public int Id { get; set; }
         public string OrderNumber { get; set; }
+        public int UserId { get; set; }
         public DateTime CreatedAt { get; set; }
         public OrderStatus OrderStatus { get; set; }
         public PaymentStatus PaymentStatus { get; set; }
@@ -20,6 +21,18 @@ namespace JewelryStore.Services.DTOs.Order
         public string RecipientPhone { get; set; }
         public string? TrackingCode { get; set; }
         public List<OrderItemDetailDto> Items { get; set; }
+
+        public decimal SubTotal { get; set; }
+        public decimal DiscountTotal { get; set; }
+        public decimal ShippingCost { get; set; }
+        public decimal TaxAmount { get; set; }
+        public decimal DiscountCodeAmount { get; set; }
+
+        public DateTime? PaymentDate { get; set; }
+        public DateTime? ShippingDate { get; set; }
+        public DateTime? DeliveryDate { get; set; }
+        public DateTime? UpdatedAt { get; set; }
+
     }
 
     public class OrderItemDetailDto

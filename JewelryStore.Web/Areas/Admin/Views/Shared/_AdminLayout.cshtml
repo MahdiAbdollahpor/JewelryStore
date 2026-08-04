@@ -1,0 +1,125 @@
+﻿<!DOCTYPE html>
+<html lang="fa" dir="rtl">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>@ViewData["Title"] - مدیریت جواهری</title>
+
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        'es-primary': '#C2410C',
+                        'es-primary-hover': '#9A3412',
+                        'es-accent': '#F59E0B',
+                        'es-surface': '#F5F5F4',
+                        'es-surface-raised': '#E7E5E4',
+                        'es-border': '#D6D3D1',
+                        'es-text-primary': '#1C1917',
+                        'es-text-secondary': '#57534E',
+                        'es-success': '#16A34A',
+                        'es-warning': '#D97706',
+                        'es-error': '#DC2626',
+                    }
+                }
+            }
+        }
+    </script>
+
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" />
+    <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,600;0,700;0,800;1,400&family=Source+Sans+3:wght@400;600&family=Fira+Code:wght@400;600&display=swap" rel="stylesheet" />
+
+    <style>
+        body {
+            font-family: 'Source Sans 3', 'Vazirmatn', sans-serif;
+            background-color: #FAFAF9;
+            color: #1C1917;
+        }
+
+        .font-display {
+            font-family: 'Playfair Display', 'Vazirmatn', serif;
+        }
+
+        .sidebar-item {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 10px 16px;
+            border-radius: 8px;
+            color: #57534E;
+            transition: all 150ms ease;
+            text-decoration: none;
+        }
+
+            .sidebar-item:hover {
+                background-color: #E7E5E4;
+                color: #1C1917;
+            }
+
+            .sidebar-item.active {
+                background-color: rgba(194, 65, 12, 0.08);
+                color: #C2410C;
+                border-right: 3px solid #C2410C;
+                border-left: none;
+            }
+
+            .sidebar-item i {
+                width: 20px;
+                text-align: center;
+            }
+    </style>
+</head>
+<body>
+    <div class="flex min-h-screen">
+        <!-- سایدبار -->
+        <aside class="w-64 bg-white border-l border-[#D6D3D1] min-h-screen p-4 flex flex-col">
+            <div class="mb-8 px-2">
+                <a asp-area="Admin" asp-controller="Dashboard" asp-action="Index" class="font-display text-2xl font-bold text-[#C2410C] tracking-[-0.02em]">
+                    جواهری
+                </a>
+                <p class="text-xs text-[#57534E] mt-1">پنل مدیریت</p>
+            </div>
+
+            <nav class="flex-1 space-y-1">
+                <a asp-area="Admin" asp-controller="Dashboard" asp-action="Index" class="sidebar-item @(ViewContext.RouteData.Values["Controller"].ToString() == "Dashboard" ? "active" : "")">
+                    <i class="fas fa-chart-pie"></i> داشبورد
+                </a>
+                <a asp-area="Admin" asp-controller="Users" asp-action="Index" class="sidebar-item @(ViewContext.RouteData.Values["Controller"].ToString() == "Users" ? "active" : "")">
+                    <i class="fas fa-users"></i> کاربران
+                </a>
+                <a asp-area="Admin" asp-controller="Products" asp-action="Index" class="sidebar-item @(ViewContext.RouteData.Values["Controller"].ToString() == "Products" ? "active" : "")">
+                    <i class="fas fa-gem"></i> محصولات
+                </a>
+                <a asp-area="Admin" asp-controller="Orders" asp-action="Index" class="sidebar-item @(ViewContext.RouteData.Values["Controller"].ToString() == "Orders" ? "active" : "")">
+                    <i class="fas fa-shopping-bag"></i> سفارشات
+                </a>
+                <a asp-area="Admin" asp-controller="Discounts" asp-action="Index" class="sidebar-item @(ViewContext.RouteData.Values["Controller"].ToString() == "Discounts" ? "active" : "")">
+                    <i class="fas fa-tags"></i> تخفیف‌ها
+                </a>
+                <a asp-area="Admin" asp-controller="Settings" asp-action="Index" class="sidebar-item @(ViewContext.RouteData.Values["Controller"].ToString() == "Settings" ? "active" : "")">
+                    <i class="fas fa-cog"></i> تنظیمات
+                </a>
+            </nav>
+
+            <div class="pt-4 border-t border-[#D6D3D1]">
+                <form asp-area="" asp-controller="Account" asp-action="Logout" method="post">
+                    @Html.AntiForgeryToken()
+                    <button type="submit" class="sidebar-item w-full text-right">
+                        <i class="fas fa-sign-out-alt"></i> خروج
+                    </button>
+                </form>
+            </div>
+        </aside>
+
+        <!-- محتوای اصلی -->
+        <main class="flex-1 p-8">
+            @RenderBody()
+        </main>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    @await RenderSectionAsync("Scripts", required: false)
+</body>
+</html>

@@ -1,0 +1,161 @@
+﻿@using JewelryStore.Services.DTOs.Admin
+@using JewelryStore.Domain.Enums
+@model CreateDiscountDto
+@{
+    ViewData["Title"] = "ایجاد کد تخفیف جدید";
+}
+
+<style>
+    :root {
+        --es-primary: #C2410C;
+        --es-surface: #F5F5F4;
+        --es-border: #D6D3D1;
+    }
+
+    .form-group {
+        margin-bottom: 20px;
+    }
+
+    .form-label {
+        display: block;
+        font-size: 13px;
+        font-weight: 600;
+        color: #57534E;
+        margin-bottom: 4px;
+    }
+
+    .form-control {
+        width: 100%;
+        padding: 10px 12px;
+        border: 1px solid var(--es-border);
+        border-radius: 8px;
+        background: #FFFFFF;
+        font-size: 14px;
+        transition: all 150ms ease;
+    }
+
+        .form-control:focus {
+            outline: none;
+            border-color: var(--es-primary);
+            box-shadow: 0 0 0 3px rgba(194, 65, 12, 0.12);
+        }
+
+    .validation-message {
+        color: #DC2626;
+        font-size: 12px;
+        margin-top: 4px;
+    }
+</style>
+
+<div class="space-y-6">
+    <!-- هدر -->
+    <div>
+        <nav class="text-sm text-[#57534E] mb-2">
+            <a asp-action="Index" class="hover:text-[#C2410C] transition">مدیریت تخفیف‌ها</a>
+            <span class="mx-2">/</span>
+            <span class="text-[#1C1917]">ایجاد کد تخفیف جدید</span>
+        </nav>
+        <h1 class="font-['Playfair_Display'] text-3xl font-bold text-[#1C1917]">ایجاد کد تخفیف جدید</h1>
+    </div>
+
+    <!-- فرم -->
+    <div class="bg-[#F5F5F4] border border-[#D6D3D1] rounded-xl p-6">
+        <form asp-action="Create" method="post">
+            @Html.AntiForgeryToken()
+
+            <div asp-validation-summary="ModelOnly" class="text-[#DC2626] text-sm mb-4"></div>
+
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <!-- کد -->
+                <div class="form-group">
+                    <label asp-for="Code" class="form-label">کد تخفیف *</label>
+                    <input asp-for="Code" class="form-control" placeholder="مثلاً SUMMER1404" />
+                    <span asp-validation-for="Code" class="validation-message"></span>
+                    <p class="text-xs text-[#57534E] mt-1">کد باید یکتا باشد</p>
+                </div>
+
+                <!-- عنوان -->
+                <div class="form-group">
+                    <label asp-for="Title" class="form-label">عنوان *</label>
+                    <input asp-for="Title" class="form-control" placeholder="مثلاً تخفیف تابستانه" />
+                    <span asp-validation-for="Title" class="validation-message"></span>
+                </div>
+
+                <!-- نوع تخفیف -->
+                <div class="form-group">
+                    <label asp-for="DiscountType" class="form-label">نوع تخفیف *</label>
+                    <select asp-for="DiscountType" class="form-control">
+                        @foreach (DiscountType type in Enum.GetValues(typeof(DiscountType)))
+                        {
+                            <option value="@type">@(type == DiscountType.Percentage ? "درصدی" : "مبلغ ثابت")</option>
+                        }
+                    </select>
+                    <span asp-validation-for="DiscountType" class="validation-message"></span>
+                </div>
+
+                <!-- مقدار تخفیف -->
+                <div class="form-group">
+                    <label asp-for="DiscountValue" class="form-label">مقدار تخفیف *</label>
+                    <input asp-for="DiscountValue" type="number" step="0.01" class="form-control" placeholder="مثلاً 10 یا 100000" />
+                    <span asp-validation-for="DiscountValue" class="validation-message"></span>
+                </div>
+
+                <!-- حداکثر مبلغ تخفیف (برای درصدی) -->
+                <div class="form-group">
+                    <label asp-for="MaxDiscountAmount" class="form-label">حداکثر مبلغ تخفیف</label>
+                    <input asp-for="MaxDiscountAmount" type="number" class="form-control" placeholder="فقط برای تخفیف درصدی" />
+                    <span asp-validation-for="MaxDiscountAmount" class="validation-message"></span>
+                </div>
+
+                <!-- حداقل مبلغ سفارش -->
+                <div class="form-group">
+                    <label asp-for="MinOrderAmount" class="form-label">حداقل مبلغ سفارش</label>
+                    <input asp-for="MinOrderAmount" type="number" class="form-control" placeholder="مثلاً 500000" />
+                    <span asp-validation-for="MinOrderAmount" class="validation-message"></span>
+                </div>
+
+                <!-- محدودیت استفاده -->
+                <div class="form-group">
+                    <label asp-for="UsageLimit" class="form-label">محدودیت استفاده کلی</label>
+                    <input asp-for="UsageLimit" type="number" class="form-control" placeholder="خالی = نامحدود" />
+                    <span asp-validation-for="UsageLimit" class="validation-message"></span>
+                </div>
+
+                <!-- محدودیت استفاده هر کاربر -->
+                <div class="form-group">
+                    <label asp-for="UsagePerUser" class="form-label">محدودیت استفاده هر کاربر</label>
+                    <input asp-for="UsagePerUser" type="number" class="form-control" placeholder="خالی = نامحدود" />
+                    <span asp-validation-for="UsagePerUser" class="validation-message"></span>
+                </div>
+
+                <!-- تاریخ شروع -->
+                <div class="form-group">
+                    <label asp-for="StartDate" class="form-label">تاریخ شروع</label>
+                    <input asp-for="StartDate" type="date" class="form-control" />
+                    <span asp-validation-for="StartDate" class="validation-message"></span>
+                </div>
+
+                <!-- تاریخ انقضا -->
+                <div class="form-group">
+                    <label asp-for="EndDate" class="form-label">تاریخ انقضا</label>
+                    <input asp-for="EndDate" type="date" class="form-control" />
+                    <span asp-validation-for="EndDate" class="validation-message"></span>
+                </div>
+            </div>
+
+            <!-- دکمه‌ها -->
+            <div class="flex items-center gap-3 mt-6 pt-6 border-t border-[#D6D3D1]">
+                <button type="submit" class="px-6 py-2 bg-[#C2410C] text-white rounded-lg text-sm font-semibold hover:bg-[#9A3412] transition">
+                    <i class="fas fa-save ml-1"></i> ذخیره کد تخفیف
+                </button>
+                <a asp-action="Index" class="px-6 py-2 border border-[#D6D3D1] rounded-lg text-sm font-semibold text-[#57534E] hover:bg-[#E7E5E4] transition">
+                    انصراف
+                </a>
+            </div>
+        </form>
+    </div>
+</div>
+
+@section Scripts {
+    @await Html.PartialAsync("_ValidationScriptsPartial")
+}

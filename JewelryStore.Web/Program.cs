@@ -1,21 +1,31 @@
-using JewelryStore.Data.Context;
+﻿using JewelryStore.Data.Context;
 using JewelryStore.Infrastructure.Services;
 using JewelryStore.Infrastructure.Services.Payment;
 using JewelryStore.Services.Interfaces;
 using JewelryStore.Services.Services;
+using JewelryStore.Web.Middleware;
+using Microsoft.AspNetCore.Authentication.Cookies;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Options;
 
 var builder = WebApplication.CreateBuilder(args);
 
+// Add services to the container.
+builder.Services.AddControllersWithViews();
 
+// 1️⃣ ثبت DbContext
 builder.Services.AddDbContext<ApplicationDbContext>(options =>
-    options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection"))
-);
+    options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection")));
 
+// 2️⃣ ثبت AutoMapper
+builder.Services.AddAutoMapper(typeof(Program));
+
+// 3️⃣ ثبت سرویس پیامک
+builder.Services.AddScoped<ISmsSender, SmsSender>();
+
+// 4️⃣ ثبت سرویس پرداخت
 builder.Services.AddHttpClient<ZarinPalService>((client) =>
 {
-   
     var isSandbox = builder.Configuration.GetValue<bool>("ZarinPal:IsSandbox", true);
     var baseUrl = isSandbox
         ? "https://sandbox.zarinpal.com/"
@@ -40,25 +50,35 @@ builder.Services.AddScoped<IPaymentService>(serviceProvider =>
     return new ZarinPalService(client, logger, merchantId, isSandbox);
 });
 
-
-builder.Services.AddAutoMapper(typeof(Program));
-
-
-
-builder.Services.AddScoped<INotificationService, NotificationService>();
+// 5️⃣ ثبت سرویس‌های اصلی برنامه
 builder.Services.AddScoped<IUserService, UserService>();
 builder.Services.AddScoped<ICategoryService, CategoryService>();
 builder.Services.AddScoped<IProductService, ProductService>();
 builder.Services.AddScoped<ICartService, CartService>();
-builder.Services.AddScoped<ISmsSender, SmsSender>();
+builder.Services.AddScoped<IOrderService, OrderService>(); // ✅ این خط را اضافه کنید
+builder.Services.AddScoped<IDiscountService, DiscountService>();
+builder.Services.AddScoped<IShippingService, ShippingService>();
+builder.Services.AddScoped<ITaxService, TaxService>();
+builder.Services.AddScoped<INotificationService, NotificationService>();
 builder.Services.AddScoped<IReportService, ReportService>();
 builder.Services.AddScoped<IAdminService, AdminService>();
 builder.Services.AddScoped<IWishlistService, WishlistService>();
 
 
 
-// Add services to the container.
-builder.Services.AddControllersWithViews();
+builder.Services.AddAuthentication(CookieAuthenticationDefaults.AuthenticationScheme)
+    .AddCookie(options =>
+    {
+        options.LoginPath = "/Account/Login";
+        options.LogoutPath = "/Account/Logout";
+        options.AccessDeniedPath = "/Account/AccessDenied";
+        options.ExpireTimeSpan = TimeSpan.FromDays(30);
+        options.SlidingExpiration = true;
+        options.Cookie.Name = "JewelryStoreAuth";
+        options.Cookie.HttpOnly = true;
+        options.Cookie.SecurePolicy = CookieSecurePolicy.SameAsRequest;
+        options.Cookie.SameSite = SameSiteMode.Lax;
+    });
 
 var app = builder.Build();
 
@@ -75,10 +95,20 @@ app.UseStaticFiles();
 
 app.UseRouting();
 
+app.UseAuthentication();
 app.UseAuthorization();
+
+// ✅ ثبت Middleware بررسی نقش
+app.UseMiddleware<RoleMiddleware>();
+
+app.MapControllerRoute(
+    name: "areas",
+    pattern: "{area:exists}/{controller=Dashboard}/{action=Index}/{id?}"
+);
 
 app.MapControllerRoute(
     name: "default",
-    pattern: "{controller=Product}/{action=Index}/{id?}");
+    pattern: "{controller=Product}/{action=Index}/{id?}"
+);
 
 app.Run();

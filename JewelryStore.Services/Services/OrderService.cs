@@ -300,6 +300,12 @@ namespace JewelryStore.Services.Services
             return true;
         }
 
+        public async Task<Order> GetOrderEntityByIdAsync(int orderId)
+        {
+            return await _context.Orders
+                .FirstOrDefaultAsync(o => o.Id == orderId);
+        }
+
         // 🔧 متدهای کمکی خصوصی
         private static string GenerateOrderNumber()
         {
