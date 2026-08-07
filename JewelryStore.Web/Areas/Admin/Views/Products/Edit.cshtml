@@ -89,7 +89,13 @@
                     <label asp-for="CategoryId" class="form-label">دسته‌بندی *</label>
                     <select asp-for="CategoryId" class="form-control">
                         <option value="">انتخاب کنید...</option>
-                        @* در اینجا باید دسته‌بندی‌ها از ViewBag یا ViewData بیایند *@
+                        @if (ViewBag.Categories != null)
+                        {
+                            foreach (var cat in ViewBag.Categories)
+                            {
+                                <option value="@cat.Id" selected="@(Model.CategoryId == cat.Id)">@cat.Name</option>
+                            }
+                        }
                     </select>
                     <span asp-validation-for="CategoryId" class="validation-message"></span>
                 </div>
@@ -197,7 +203,11 @@
                 <p class="text-xs text-[#57534E] mt-1">آپلود تصاویر جدید جایگزین تصاویر قبلی خواهد شد</p>
             </div>
 
-            <!-- چک‌باکس‌ها -->
+            <!-- ==================== بخش وضعیت ==================== -->
+            <h3 class="font-['Playfair_Display'] text-xl font-semibold text-[#1C1917] mb-4 mt-6 border-b border-[#D6D3D1] pb-2">
+                <i class="fas fa-toggle-on text-[#C2410C] ml-2"></i> وضعیت محصول
+            </h3>
+
             <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
                 <div class="flex items-center gap-2">
                     <input type="checkbox" asp-for="IsFeatured" class="w-4 h-4 rounded border-[#D6D3D1] accent-[#C2410C]" />

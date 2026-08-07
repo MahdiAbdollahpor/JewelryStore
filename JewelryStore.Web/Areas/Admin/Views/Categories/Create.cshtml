@@ -1,0 +1,194 @@
+﻿@using JewelryStore.Services.DTOs.Category
+@model CreateCategoryDto
+@{
+    ViewData["Title"] = "ایجاد دسته‌بندی جدید";
+}
+
+<style>
+    :root {
+        --es-primary: #C2410C;
+        --es-surface: #F5F5F4;
+        --es-border: #D6D3D1;
+        --es-text-primary: #1C1917;
+        --es-text-secondary: #57534E;
+    }
+
+    .form-group {
+        margin-bottom: 20px;
+    }
+
+    .form-label {
+        display: block;
+        font-size: 13px;
+        font-weight: 600;
+        color: var(--es-text-secondary);
+        margin-bottom: 4px;
+    }
+
+    .form-control {
+        width: 100%;
+        padding: 10px 12px;
+        border: 1px solid var(--es-border);
+        border-radius: 8px;
+        background: #FFFFFF;
+        font-size: 14px;
+        transition: all 150ms ease;
+        color: var(--es-text-primary);
+    }
+
+        .form-control:focus {
+            outline: none;
+            border-color: var(--es-primary);
+            box-shadow: 0 0 0 3px rgba(194, 65, 12, 0.12);
+        }
+
+        .form-control.error {
+            border-color: #DC2626;
+        }
+
+            .form-control.error:focus {
+                box-shadow: 0 0 0 3px rgba(220, 38, 38, 0.12);
+            }
+
+    .validation-message {
+        color: #DC2626;
+        font-size: 12px;
+        margin-top: 4px;
+    }
+
+    .form-hint {
+        color: var(--es-text-secondary);
+        font-size: 12px;
+        margin-top: 4px;
+    }
+
+    .checkbox-group {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        padding-top: 4px;
+    }
+
+        .checkbox-group input[type="checkbox"] {
+            width: 18px;
+            height: 18px;
+            border-radius: 4px;
+            border: 1.5px solid #D6D3D1;
+            accent-color: #C2410C;
+            cursor: pointer;
+        }
+
+        .checkbox-group label {
+            font-size: 14px;
+            color: #1C1917;
+            cursor: pointer;
+            margin: 0;
+        }
+</style>
+
+<div class="space-y-6">
+    <!-- هدر -->
+    <div>
+        <nav class="text-sm text-[#57534E] mb-2">
+            <a asp-action="Index" class="hover:text-[#C2410C] transition">مدیریت دسته‌بندی‌ها</a>
+            <span class="mx-2">/</span>
+            <span class="text-[#1C1917]">ایجاد دسته‌بندی جدید</span>
+        </nav>
+        <h1 class="font-['Playfair_Display'] text-3xl font-bold text-[#1C1917]">ایجاد دسته‌بندی جدید</h1>
+        <p class="text-[#57534E] mt-1">اطلاعات دسته‌بندی جدید را وارد کنید</p>
+    </div>
+
+    <!-- فرم -->
+    <div class="bg-[#F5F5F4] border border-[#D6D3D1] rounded-xl p-6">
+        <form asp-action="Create" method="post">
+            @Html.AntiForgeryToken()
+
+            <div asp-validation-summary="ModelOnly" class="text-[#DC2626] text-sm mb-4"></div>
+
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <!-- نام -->
+                <div class="form-group">
+                    <label asp-for="Name" class="form-label">نام دسته‌بندی *</label>
+                    <input asp-for="Name" class="form-control" placeholder="مثلاً انگشترها" />
+                    <span asp-validation-for="Name" class="validation-message"></span>
+                    <p class="form-hint">نام دسته‌بندی را وارد کنید</p>
+                </div>
+
+                <!-- دسته والد -->
+                <div class="form-group">
+                    <label asp-for="ParentCategoryId" class="form-label">دسته والد</label>
+                    <select asp-for="ParentCategoryId" class="form-control">
+                        <option value="">بدون والد</option>
+                        @if (ViewBag.Categories != null)
+                        {
+                            foreach (var cat in ViewBag.Categories)
+                            {
+                                <option value="@cat.Id" selected="@(Model.ParentCategoryId == cat.Id)">
+                                    @cat.Name
+                                </option>
+                            }
+                        }
+                    </select>
+                    <p class="form-hint">در صورت انتخاب، این دسته زیرمجموعه دسته والد خواهد بود</p>
+                </div>
+
+                
+
+                <!-- ترتیب نمایش -->
+                <div class="form-group">
+                    <label asp-for="DisplayOrder" class="form-label">ترتیب نمایش</label>
+                    <input asp-for="DisplayOrder" type="number" class="form-control" placeholder="مثلاً 1" />
+                    <span asp-validation-for="DisplayOrder" class="validation-message"></span>
+                    <p class="form-hint">عدد کوچک‌تر، نمایش در ابتدا</p>
+                </div>
+
+
+
+                <!-- Slug -->
+                <div class="form-group">
+                    <label asp-for="Slug" class="form-label">Slug (آدرس SEO)</label>
+                    <input asp-for="Slug" class="form-control" placeholder="در صورت خالی بودن، خودکار تولید می‌شود" />
+                    <span asp-validation-for="Slug" class="validation-message"></span>
+                    <p class="form-hint">آدرس منحصر‌به‌فرد برای این دسته‌بندی</p>
+                </div>
+            </div>
+
+            <!-- چک‌باکس‌ها -->
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mt-4">
+                <!-- نمایش در منو -->
+                <div class="form-group">
+                    <label class="form-label">نمایش در منو</label>
+                    <div class="checkbox-group">
+                        <input type="checkbox" name="ShowInMenu" value="true" checked />
+                        <label>نمایش در منوی اصلی</label>
+                    </div>
+                    <p class="form-hint">اگر فعال باشد، در منوی اصلی سایت نمایش داده می‌شود</p>
+                </div>
+
+                <!-- وضعیت (فعال/غیرفعال) -->
+                <div class="form-group">
+                    <label class="form-label">وضعیت</label>
+                    <div class="checkbox-group">
+                        <input type="checkbox" name="IsActive" value="true" checked />
+                        <label>فعال</label>
+                    </div>
+                    <p class="form-hint">دسته‌بندی‌های غیرفعال در سایت نمایش داده نمی‌شوند</p>
+                </div>
+            </div>
+
+            <!-- دکمه‌ها -->
+            <div class="flex items-center gap-3 mt-6 pt-6 border-t border-[#D6D3D1]">
+                <button type="submit" class="px-6 py-2 bg-[#C2410C] text-white rounded-lg text-sm font-semibold hover:bg-[#9A3412] transition">
+                    <i class="fas fa-save ml-1"></i> ذخیره دسته‌بندی
+                </button>
+                <a asp-action="Index" class="px-6 py-2 border border-[#D6D3D1] rounded-lg text-sm font-semibold text-[#57534E] hover:bg-[#E7E5E4] transition">
+                    انصراف
+                </a>
+            </div>
+        </form>
+    </div>
+</div>
+
+@section Scripts {
+    @await Html.PartialAsync("_ValidationScriptsPartial")
+}

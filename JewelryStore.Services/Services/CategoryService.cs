@@ -4,6 +4,7 @@ using JewelryStore.Domain.Entities;
 using JewelryStore.Services.DTOs.Category;
 using JewelryStore.Services.Interfaces;
 using Microsoft.EntityFrameworkCore;
+using System.Text.RegularExpressions;
 
 namespace JewelryStore.Services.Services
 {
@@ -85,11 +86,15 @@ namespace JewelryStore.Services.Services
             return BuildCategoryTree(rootCategories, allCategories);
         }
 
-        // 6 ایجاد دسته جدید (فقط ادمین)
+        // 6️⃣ ایجاد دسته جدید (فقط ادمین)
         public async Task<CategoryDto> CreateCategoryAsync(CreateCategoryDto createDto)
         {
+            // اگر Slug ارسال نشده، از Name تولید کن
+            var slug = string.IsNullOrWhiteSpace(createDto.Slug)
+                ? GenerateSlug(createDto.Name)
+                : createDto.Slug;
+
             // بررسی یکتا بودن Slug
-            var slug = GenerateSlug(createDto.Name);
             if (await _context.Categories.AnyAsync(c => c.Slug == slug))
                 throw new InvalidOperationException($"Slug '{slug}' قبلاً استفاده شده است.");
 
@@ -193,11 +198,65 @@ namespace JewelryStore.Services.Services
 
         private static string GenerateSlug(string name)
         {
-            // تبدیل به حروف کوچک و جایگزینی فاصله با خط تیره
-            var slug = name.ToLower().Replace(" ", "-");
-            // حذف کاراکترهای غیرمجاز (فقط حروف، اعداد و خط تیره)
-            slug = System.Text.RegularExpressions.Regex.Replace(slug, @"[^a-z0-9-]", "");
+            if (string.IsNullOrWhiteSpace(name))
+                return string.Empty;
+
+            // 1️⃣ تبدیل حروف فارسی به انگلیسی
+            var slug = ConvertPersianToEnglish(name);
+
+            // 2️⃣ تبدیل به حروف کوچک
+            slug = slug.ToLower();
+
+            // 3️⃣ جایگزینی فاصله با خط تیره
+            slug = slug.Replace(" ", "-");
+
+            // 4️⃣ حذف کاراکترهای غیرمجاز (فقط حروف انگلیسی، اعداد و خط تیره)
+            slug = Regex.Replace(slug, @"[^a-z0-9-]", "");
+
+            // 5️⃣ حذف خط تیره‌های اضافی (اگر چندین خط تیره پشت سر هم آمد)
+            slug = Regex.Replace(slug, @"-+", "-");
+
+            // 6️⃣ حذف خط تیره از ابتدا و انتها
+            slug = slug.Trim('-');
+
             return slug;
+        }
+
+        private static string ConvertPersianToEnglish(string input)
+        {
+            if (string.IsNullOrWhiteSpace(input))
+                return input;
+
+            // حروف فارسی به انگلیسی
+            var persianToEnglishMap = new Dictionary<char, char>
+            {
+                // حروف الفبا
+                {'ا', 'a'}, {'ب', 'b'}, {'پ', 'p'}, {'ت', 't'}, {'ث', 's'},
+                {'ج', 'j'}, {'چ', 'c'}, {'ح', 'h'}, {'خ', 'x'}, {'د', 'd'},
+                {'ذ', 'z'}, {'ر', 'r'}, {'ز', 'z'}, {'ژ', 'j'}, {'س', 's'},
+                {'ش', 's'}, {'ص', 's'}, {'ض', 'z'}, {'ط', 't'}, {'ظ', 'z'},
+                {'ع', 'a'}, {'غ', 'g'}, {'ف', 'f'}, {'ق', 'q'}, {'ک', 'k'},
+                {'گ', 'g'}, {'ل', 'l'}, {'م', 'm'}, {'ن', 'n'}, {'و', 'v'},
+                {'ه', 'h'}, {'ی', 'y'},
+                // اعداد فارسی به انگلیسی
+                {'۰', '0'}, {'۱', '1'}, {'۲', '2'}, {'۳', '3'}, {'۴', '4'},
+                {'۵', '5'}, {'۶', '6'}, {'۷', '7'}, {'۸', '8'}, {'۹', '9'}
+            };
+
+            var result = new System.Text.StringBuilder();
+            foreach (var ch in input)
+            {
+                if (persianToEnglishMap.TryGetValue(ch, out var englishChar))
+                {
+                    result.Append(englishChar);
+                }
+                else
+                {
+                    result.Append(ch);
+                }
+            }
+
+            return result.ToString();
         }
 
         private IEnumerable<CategoryTreeDto> BuildCategoryTree(List<Category> rootCategories, List<Category> allCategories)

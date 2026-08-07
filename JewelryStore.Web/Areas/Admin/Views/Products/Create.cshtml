@@ -10,6 +10,8 @@
         --es-primary: #C2410C;
         --es-surface: #F5F5F4;
         --es-border: #D6D3D1;
+        --es-text-primary: #1C1917;
+        --es-text-secondary: #57534E;
     }
 
     .form-group {
@@ -20,7 +22,7 @@
         display: block;
         font-size: 13px;
         font-weight: 600;
-        color: #57534E;
+        color: var(--es-text-secondary);
         margin-bottom: 4px;
     }
 
@@ -32,6 +34,7 @@
         background: #FFFFFF;
         font-size: 14px;
         transition: all 150ms ease;
+        color: var(--es-text-primary);
     }
 
         .form-control:focus {
@@ -53,6 +56,33 @@
         font-size: 12px;
         margin-top: 4px;
     }
+
+    .form-hint {
+        color: var(--es-text-secondary);
+        font-size: 12px;
+        margin-top: 4px;
+    }
+
+    .tag-item {
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        background: #E7E5E4;
+        padding: 4px 12px;
+        border-radius: 9999px;
+        font-size: 13px;
+        color: var(--es-text-primary);
+    }
+
+        .tag-item .remove-tag {
+            cursor: pointer;
+            color: #8E928D;
+            font-weight: bold;
+        }
+
+            .tag-item .remove-tag:hover {
+                color: #DC2626;
+            }
 </style>
 
 <div class="space-y-6">
@@ -64,14 +94,20 @@
             <span class="text-[#1C1917]">ایجاد محصول جدید</span>
         </nav>
         <h1 class="font-['Playfair_Display'] text-3xl font-bold text-[#1C1917]">ایجاد محصول جدید</h1>
+        <p class="text-[#57534E] mt-1">اطلاعات محصول جدید را وارد کنید</p>
     </div>
 
     <!-- فرم -->
     <div class="bg-[#F5F5F4] border border-[#D6D3D1] rounded-xl p-6">
-        <form asp-action="Create" method="post" enctype="multipart/form-data">
+        <form asp-action="Create" method="post" enctype="multipart/form-data" id="productForm">
             @Html.AntiForgeryToken()
 
             <div asp-validation-summary="ModelOnly" class="text-[#DC2626] text-sm mb-4"></div>
+
+            <!-- ==================== بخش اطلاعات پایه ==================== -->
+            <h3 class="font-['Playfair_Display'] text-xl font-semibold text-[#1C1917] mb-4 border-b border-[#D6D3D1] pb-2">
+                <i class="fas fa-info-circle text-[#C2410C] ml-2"></i> اطلاعات پایه
+            </h3>
 
             <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <!-- نام -->
@@ -93,11 +129,45 @@
                     <label asp-for="CategoryId" class="form-label">دسته‌بندی *</label>
                     <select asp-for="CategoryId" class="form-control">
                         <option value="">انتخاب کنید...</option>
-                        @* در اینجا باید دسته‌بندی‌ها از ViewBag یا ViewData بیایند *@
+                        @if (ViewBag.Categories != null)
+                        {
+                            foreach (var cat in ViewBag.Categories)
+                            {
+                                <option value="@cat.Id">@cat.Name</option>
+                            }
+                        }
                     </select>
                     <span asp-validation-for="CategoryId" class="validation-message"></span>
                 </div>
 
+                <!-- موجودی -->
+                <div class="form-group">
+                    <label asp-for="Quantity" class="form-label">موجودی *</label>
+                    <input asp-for="Quantity" type="number" class="form-control" placeholder="مثلاً 5" />
+                    <span asp-validation-for="Quantity" class="validation-message"></span>
+                </div>
+            </div>
+
+            <!-- توضیحات -->
+            <div class="form-group">
+                <label asp-for="Description" class="form-label">توضیحات کامل</label>
+                <textarea asp-for="Description" class="form-control" rows="6" placeholder="توضیحات کامل محصول"></textarea>
+                <span asp-validation-for="Description" class="validation-message"></span>
+            </div>
+
+            <!-- توضیحات کوتاه -->
+            <div class="form-group">
+                <label asp-for="ShortDescription" class="form-label">توضیحات کوتاه</label>
+                <textarea asp-for="ShortDescription" class="form-control" rows="3" placeholder="توضیحات کوتاه برای کارت محصول"></textarea>
+                <span asp-validation-for="ShortDescription" class="validation-message"></span>
+            </div>
+
+            <!-- ==================== بخش قیمت و تخفیف ==================== -->
+            <h3 class="font-['Playfair_Display'] text-xl font-semibold text-[#1C1917] mb-4 mt-6 border-b border-[#D6D3D1] pb-2">
+                <i class="fas fa-dollar-sign text-[#C2410C] ml-2"></i> قیمت و تخفیف
+            </h3>
+
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
                 <!-- قیمت پایه -->
                 <div class="form-group">
                     <label asp-for="BasePrice" class="form-label">قیمت پایه (تومان) *</label>
@@ -110,15 +180,23 @@
                     <label asp-for="DiscountPercentage" class="form-label">درصد تخفیف</label>
                     <input asp-for="DiscountPercentage" type="number" class="form-control" placeholder="مثلاً 10" />
                     <span asp-validation-for="DiscountPercentage" class="validation-message"></span>
+                    <p class="form-hint">مقدار بین ۰ تا ۱۰۰</p>
                 </div>
 
-                <!-- موجودی -->
+                <!-- قیمت نهایی (محاسبه خودکار) -->
                 <div class="form-group">
-                    <label asp-for="Quantity" class="form-label">موجودی *</label>
-                    <input asp-for="Quantity" type="number" class="form-control" placeholder="مثلاً 5" />
-                    <span asp-validation-for="Quantity" class="validation-message"></span>
+                    <label class="form-label">قیمت نهایی (تومان)</label>
+                    <input type="text" id="FinalPriceDisplay" class="form-control" placeholder="به صورت خودکار محاسبه می‌شود" disabled style="background:#F5F5F4;" />
+                    <input type="hidden" id="FinalPriceHidden" name="FinalPrice" value="0" />
                 </div>
+            </div>
 
+            <!-- ==================== بخش مشخصات جواهر ==================== -->
+            <h3 class="font-['Playfair_Display'] text-xl font-semibold text-[#1C1917] mb-4 mt-6 border-b border-[#D6D3D1] pb-2">
+                <i class="fas fa-gem text-[#C2410C] ml-2"></i> مشخصات جواهر
+            </h3>
+
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
                 <!-- وزن -->
                 <div class="form-group">
                     <label asp-for="Weight" class="form-label">وزن (گرم) *</label>
@@ -151,8 +229,16 @@
                     <label asp-for="GoldPriceReference" class="form-label">قیمت مرجع طلا (تومان)</label>
                     <input asp-for="GoldPriceReference" type="number" class="form-control" placeholder="مثلاً 3500000" />
                     <span asp-validation-for="GoldPriceReference" class="validation-message"></span>
+                    <p class="form-hint">قیمت روز طلا در زمان ثبت محصول</p>
                 </div>
+            </div>
 
+            <!-- ==================== بخش سنگ ==================== -->
+            <h3 class="font-['Playfair_Display'] text-xl font-semibold text-[#1C1917] mb-4 mt-6 border-b border-[#D6D3D1] pb-2">
+                <i class="fas fa-diamond text-[#C2410C] ml-2"></i> مشخصات سنگ (اختیاری)
+            </h3>
+
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
                 <!-- نوع سنگ -->
                 <div class="form-group">
                     <label asp-for="StoneType" class="form-label">نوع سنگ</label>
@@ -187,28 +273,92 @@
                 </div>
             </div>
 
-            <!-- توضیحات -->
-            <div class="form-group">
-                <label asp-for="Description" class="form-label">توضیحات</label>
-                <textarea asp-for="Description" class="form-control" rows="6" placeholder="توضیحات کامل محصول"></textarea>
-                <span asp-validation-for="Description" class="validation-message"></span>
+            <!-- ==================== بخش تعداد سفارش ==================== -->
+            <h3 class="font-['Playfair_Display'] text-xl font-semibold text-[#1C1917] mb-4 mt-6 border-b border-[#D6D3D1] pb-2">
+                <i class="fas fa-shopping-cart text-[#C2410C] ml-2"></i> محدودیت‌های سفارش
+            </h3>
+
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div class="form-group">
+                    <label asp-for="MinOrderQuantity" class="form-label">حداقل تعداد سفارش</label>
+                    <input asp-for="MinOrderQuantity" type="number" class="form-control" />
+                    <span asp-validation-for="MinOrderQuantity" class="validation-message"></span>
+                    <p class="form-hint">حداقل تعداد قابل سفارش (پیش‌فرض: ۱)</p>
+                </div>
+
+                <div class="form-group">
+                    <label asp-for="MaxOrderQuantity" class="form-label">حداکثر تعداد سفارش</label>
+                    <input asp-for="MaxOrderQuantity" type="number" class="form-control" />
+                    <span asp-validation-for="MaxOrderQuantity" class="validation-message"></span>
+                    <p class="form-hint">حداکثر تعداد قابل سفارش (پیش‌فرض: ۱۰)</p>
+                </div>
             </div>
 
-            <!-- توضیحات کوتاه -->
+            <!-- ==================== بخش تگ‌ها ==================== -->
+            <h3 class="font-['Playfair_Display'] text-xl font-semibold text-[#1C1917] mb-4 mt-6 border-b border-[#D6D3D1] pb-2">
+                <i class="fas fa-tags text-[#C2410C] ml-2"></i> تگ‌ها
+            </h3>
+
             <div class="form-group">
-                <label asp-for="ShortDescription" class="form-label">توضیحات کوتاه</label>
-                <textarea asp-for="ShortDescription" class="form-control" rows="3" placeholder="توضیحات کوتاه برای کارت محصول"></textarea>
-                <span asp-validation-for="ShortDescription" class="validation-message"></span>
+                <label class="form-label">تگ‌ها</label>
+                <div class="flex gap-2">
+                    <input type="text" id="tagInput" class="form-control" placeholder="نام تگ را وارد کنید و Enter بزنید" />
+                    <button type="button" id="addTagBtn" class="px-4 py-2 bg-[#C2410C] text-white rounded-lg hover:bg-[#9A3412] transition">افزودن</button>
+                </div>
+                <div id="tagsContainer" class="flex flex-wrap gap-2 mt-2">
+                    <!-- تگ‌ها به صورت داینامیک اضافه می‌شوند -->
+                </div>
+                <input type="hidden" id="tagsHidden" name="Tags" value="" />
+                <p class="form-hint">هر تگ را وارد کرده و Enter بزنید یا دکمه افزودن را کلیک کنید</p>
             </div>
 
-            <!-- تصاویر -->
+            <!-- ==================== بخش ویژگی‌های پویا ==================== -->
+            <h3 class="font-['Playfair_Display'] text-xl font-semibold text-[#1C1917] mb-4 mt-6 border-b border-[#D6D3D1] pb-2">
+                <i class="fas fa-list text-[#C2410C] ml-2"></i> ویژگی‌های محصول
+            </h3>
+
+            <div class="form-group" id="attributes-container">
+                <label class="form-label">ویژگی‌ها</label>
+                <div id="attribute-fields">
+                    <!-- ویژگی‌ها به صورت داینامیک اضافه می‌شوند -->
+                </div>
+                <button type="button" id="addAttributeBtn" class="text-sm text-[#C2410C] hover:text-[#9A3412] transition mt-2">
+                    <i class="fas fa-plus"></i> افزودن ویژگی جدید
+                </button>
+            </div>
+
+            <!-- ==================== بخش تنوع‌ها (Variants) ==================== -->
+            <h3 class="font-['Playfair_Display'] text-xl font-semibold text-[#1C1917] mb-4 mt-6 border-b border-[#D6D3D1] pb-2">
+                <i class="fas fa-layer-group text-[#C2410C] ml-2"></i> تنوع‌ها (اختیاری)
+            </h3>
+
+            <div class="form-group" id="variants-container">
+                <label class="form-label">تنوع‌ها</label>
+                <div id="variant-fields">
+                    <!-- تنوع‌ها به صورت داینامیک اضافه می‌شوند -->
+                </div>
+                <button type="button" id="addVariantBtn" class="text-sm text-[#C2410C] hover:text-[#9A3412] transition mt-2">
+                    <i class="fas fa-plus"></i> افزودن تنوع جدید
+                </button>
+                <p class="form-hint">تنوع‌ها برای محصولاتی که در اندازه‌ها یا رنگ‌های مختلف موجود هستند</p>
+            </div>
+
+            <!-- ==================== بخش تصاویر ==================== -->
+            <h3 class="font-['Playfair_Display'] text-xl font-semibold text-[#1C1917] mb-4 mt-6 border-b border-[#D6D3D1] pb-2">
+                <i class="fas fa-images text-[#C2410C] ml-2"></i> تصاویر محصول
+            </h3>
+
             <div class="form-group">
-                <label class="form-label">تصاویر محصول</label>
+                <label class="form-label">آپلود تصاویر</label>
                 <input type="file" name="images" class="form-control" multiple accept="image/*" />
-                <p class="text-xs text-[#57534E] mt-1">حداکثر ۵ تصویر با فرمت JPG, PNG, WEBP</p>
+                <p class="form-hint">حداکثر ۵ تصویر با فرمت JPG, PNG, WEBP</p>
             </div>
 
-            <!-- چک‌باکس‌ها -->
+            <!-- ==================== بخش وضعیت ==================== -->
+            <h3 class="font-['Playfair_Display'] text-xl font-semibold text-[#1C1917] mb-4 mt-6 border-b border-[#D6D3D1] pb-2">
+                <i class="fas fa-toggle-on text-[#C2410C] ml-2"></i> وضعیت محصول
+            </h3>
+
             <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
                 <div class="flex items-center gap-2">
                     <input type="checkbox" asp-for="IsFeatured" class="w-4 h-4 rounded border-[#D6D3D1] accent-[#C2410C]" />
@@ -218,10 +368,13 @@
                     <input type="checkbox" asp-for="IsNew" class="w-4 h-4 rounded border-[#D6D3D1] accent-[#C2410C]" />
                     <label asp-for="IsNew" class="text-sm">محصول جدید</label>
                 </div>
-                
+                <div class="flex items-center gap-2">
+                    <input type="checkbox" asp-for="IsActive" class="w-4 h-4 rounded border-[#D6D3D1] accent-[#C2410C]" checked />
+                    <label asp-for="IsActive" class="text-sm">فعال</label>
+                </div>
             </div>
 
-            <!-- دکمه‌ها -->
+            <!-- ==================== دکمه‌ها ==================== -->
             <div class="flex items-center gap-3 mt-6 pt-6 border-t border-[#D6D3D1]">
                 <button type="submit" class="px-6 py-2 bg-[#C2410C] text-white rounded-lg text-sm font-semibold hover:bg-[#9A3412] transition">
                     <i class="fas fa-save ml-1"></i> ذخیره محصول
@@ -236,4 +389,139 @@
 
 @section Scripts {
     @await Html.PartialAsync("_ValidationScriptsPartial")
+
+    <script>
+        // ==================== 1. محاسبه قیمت نهایی ====================
+        function calculateFinalPrice() {
+            const basePrice = parseFloat(document.querySelector('[name="BasePrice"]').value) || 0;
+            const discount = parseFloat(document.querySelector('[name="DiscountPercentage"]').value) || 0;
+            const finalPrice = basePrice - (basePrice * (discount / 100));
+            document.getElementById('FinalPriceDisplay').value = finalPrice.toLocaleString() + ' تومان';
+            document.getElementById('FinalPriceHidden').value = finalPrice;
+        }
+
+        document.querySelector('[name="BasePrice"]').addEventListener('input', calculateFinalPrice);
+        document.querySelector('[name="DiscountPercentage"]').addEventListener('input', calculateFinalPrice);
+
+        // ==================== 2. مدیریت تگ‌ها ====================
+        const tags = [];
+
+        function renderTags() {
+            const container = document.getElementById('tagsContainer');
+            container.innerHTML = '';
+            tags.forEach((tag, index) => {
+                const tagEl = document.createElement('span');
+                tagEl.className = 'tag-item';
+                tagEl.innerHTML = `
+                    ${tag}
+                    <span class="remove-tag" data-index="${index}">×</span>
+                `;
+                container.appendChild(tagEl);
+            });
+            document.getElementById('tagsHidden').value = tags.join(',');
+        }
+
+        function addTag() {
+            const input = document.getElementById('tagInput');
+            const tag = input.value.trim();
+            if (tag && !tags.includes(tag)) {
+                tags.push(tag);
+                renderTags();
+                input.value = '';
+            }
+            input.focus();
+        }
+
+        document.getElementById('addTagBtn').addEventListener('click', addTag);
+        document.getElementById('tagInput').addEventListener('keydown', function(e) {
+            if (e.key === 'Enter') {
+                e.preventDefault();
+                addTag();
+            }
+        });
+
+        document.getElementById('tagsContainer').addEventListener('click', function(e) {
+            if (e.target.classList.contains('remove-tag')) {
+                const index = parseInt(e.target.dataset.index);
+                tags.splice(index, 1);
+                renderTags();
+            }
+        });
+
+        // ==================== 3. مدیریت ویژگی‌ها (Attributes) ====================
+        let attributeIndex = 0;
+
+        document.getElementById('addAttributeBtn').addEventListener('click', function() {
+            const container = document.getElementById('attribute-fields');
+            const index = attributeIndex++;
+            const row = document.createElement('div');
+            row.className = 'flex items-center gap-3 mb-2';
+            row.innerHTML = `
+                <select name="Attributes[${index}].Key" class="form-control flex-1">
+                    <option value="">انتخاب ویژگی...</option>
+                    @* در اینجا لیست ویژگی‌ها از ViewBag بیاید *@
+                </select>
+                <input type="text" name="Attributes[${index}].Value" class="form-control flex-1" placeholder="مقدار" />
+                <button type="button" class="remove-attribute px-3 py-2 text-red-600 hover:text-red-800 text-xl leading-none">×</button>
+            `;
+            container.appendChild(row);
+        });
+
+        document.getElementById('attribute-fields').addEventListener('click', function(e) {
+            if (e.target.classList.contains('remove-attribute')) {
+                e.target.closest('.flex').remove();
+            }
+        });
+
+        // ==================== 4. مدیریت تنوع‌ها (Variants) ====================
+        let variantIndex = 0;
+
+        document.getElementById('addVariantBtn').addEventListener('click', function() {
+            const container = document.getElementById('variant-fields');
+            const index = variantIndex++;
+            const row = document.createElement('div');
+            row.className = 'grid grid-cols-1 md:grid-cols-4 gap-3 mb-3 p-3 border border-[#D6D3D1] rounded-lg';
+            row.innerHTML = `
+                <div>
+                    <label class="text-xs font-semibold text-[#57534E] block mb-1">نام تنوع</label>
+                    <input type="text" name="Variants[${index}].VariantName" class="form-control" placeholder="مثلاً طلای زرد" />
+                </div>
+                <div>
+                    <label class="text-xs font-semibold text-[#57534E] block mb-1">ویژگی‌ها</label>
+                    <input type="text" name="Variants[${index}].VariantAttributes" class="form-control" placeholder="رنگ: زرد، سایز: 19" />
+                </div>
+                <div>
+                    <label class="text-xs font-semibold text-[#57534E] block mb-1">موجودی</label>
+                    <input type="number" name="Variants[${index}].Quantity" class="form-control" placeholder="5" />
+                </div>
+                <div class="flex items-end justify-between">
+                    <div class="flex-1">
+                        <label class="text-xs font-semibold text-[#57534E] block mb-1">تغییر قیمت</label>
+                        <input type="number" name="Variants[${index}].PriceAdjustment" class="form-control" placeholder="0" />
+                    </div>
+                    <button type="button" class="remove-variant px-3 py-2 text-red-600 hover:text-red-800 text-xl leading-none mb-0">×</button>
+                </div>
+            `;
+            container.appendChild(row);
+        });
+
+        document.getElementById('variant-fields').addEventListener('click', function(e) {
+            if (e.target.classList.contains('remove-variant')) {
+                e.target.closest('.grid').remove();
+            }
+        });
+
+        // ==================== 5. اعتبارسنجی فرم ====================
+        document.getElementById('productForm').addEventListener('submit', function(e) {
+            // اطمینان از اینکه تگ‌ها در hidden field ذخیره شده‌اند
+            document.getElementById('tagsHidden').value = tags.join(',');
+
+            // اعتبارسنجی تصاویر (اختیاری)
+            const imageInput = document.querySelector('input[name="images"]');
+            if (imageInput && imageInput.files.length > 5) {
+                e.preventDefault();
+                alert('حداکثر ۵ تصویر می‌توانید آپلود کنید.');
+            }
+        });
+    </script>
 }

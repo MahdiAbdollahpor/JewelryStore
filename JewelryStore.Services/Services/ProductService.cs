@@ -256,7 +256,16 @@ namespace JewelryStore.Services.Services
                 };
 
                 await _context.Products.AddAsync(product);
-                await _context.SaveChangesAsync();
+                try
+                {
+                    await _context.SaveChangesAsync();
+                }
+                catch (DbUpdateException ex)
+                {
+                    // ✅ نمایش خطای دقیق
+                    var innerMessage = ex.InnerException?.Message ?? ex.Message;
+                    throw new Exception($"خطا در ذخیره محصول: {innerMessage}");
+                }
 
                 // ✅ آپلود و ذخیره تصاویر
                 if (createDto.ImageFiles != null && createDto.ImageFiles.Any())

@@ -29,6 +29,7 @@ namespace JewelryStore.Services.DTOs.Product
         public int MaxOrderQuantity { get; set; } = 10;
         public bool IsFeatured { get; set; } = false;
         public bool IsNew { get; set; } = false;
+        public bool IsActive { get; set; } = true;
         public List<string>? Tags { get; set; }
         public List<CreateProductVariantDto>? Variants { get; set; }
         public Dictionary<int, string>? Attributes { get; set; } // AttributeId -> Value

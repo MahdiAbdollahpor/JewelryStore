@@ -1,0 +1,119 @@
+﻿@using JewelryStore.Services.DTOs.Category
+@model IEnumerable<CategoryDto>
+@{
+    ViewData["Title"] = "مدیریت دسته‌بندی‌ها";
+}
+
+<style>
+    :root {
+        --es-primary: #C2410C;
+        --es-surface: #F5F5F4;
+        --es-surface-raised: #E7E5E4;
+        --es-border: #D6D3D1;
+    }
+
+    .table-container {
+        background: var(--es-surface);
+        border: 1px solid var(--es-border);
+        border-radius: 12px;
+        overflow: hidden;
+    }
+
+        .table-container th {
+            background: var(--es-surface-raised);
+            font-size: 11px;
+            text-transform: uppercase;
+            letter-spacing: 0.08em;
+            color: #57534E;
+            padding: 12px 16px;
+            text-align: right;
+            font-weight: 600;
+        }
+
+        .table-container td {
+            padding: 12px 16px;
+            border-bottom: 1px solid var(--es-border);
+            font-size: 14px;
+        }
+</style>
+
+<div class="space-y-6">
+    <!-- هدر -->
+    <div class="flex items-center justify-between">
+        <div>
+            <h1 class="font-['Playfair_Display'] text-3xl font-bold text-[#1C1917]">مدیریت دسته‌بندی‌ها</h1>
+            <p class="text-[#57534E] mt-1">@Model.Count() دسته‌بندی</p>
+        </div>
+        <a asp-action="Create" class="px-4 py-2 bg-[#C2410C] text-white rounded-lg text-sm font-semibold hover:bg-[#9A3412] transition flex items-center gap-2">
+            <i class="fas fa-plus"></i> دسته‌بندی جدید
+        </a>
+    </div>
+
+    <!-- جدول -->
+    <div class="table-container">
+        <table class="w-full">
+            <thead>
+                <tr>
+                    <th>نام</th>
+                    <th>Slug</th>
+                    <th>دسته والد</th>
+                    <th>نمایش در منو</th>
+                    <th>وضعیت</th>
+                    <th>ترتیب</th>
+                    <th>عملیات</th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach (var cat in Model)
+                {
+                    <tr class="hover:bg-[#E7E5E4]/50 transition">
+                        <td class="font-medium text-[#1C1917]">@cat.Name</td>
+                        <td class="text-[#57534E]">@cat.Slug</td>
+                        <td class="text-[#57534E]">@(cat.ParentCategoryName ?? "-")</td>
+                        <td>
+                            <span class="text-sm @(cat.ShowInMenu ? "text-[#16A34A]" : "text-[#DC2626]")">
+                                @(cat.ShowInMenu ? "بله" : "خیر")
+                            </span>
+                        </td>
+                        <td>
+                            <span class="inline-block px-3 py-1 rounded-full text-xs font-semibold @(cat.IsActive ? "bg-green-100 text-green-700" : "bg-red-100 text-red-700")">
+                                @(cat.IsActive ? "فعال" : "غیرفعال")
+                            </span>
+                        </td>
+                        <td class="text-[#57534E]">@cat.DisplayOrder</td>
+                        <td>
+                            <div class="flex items-center gap-2">
+                                <a asp-action="Edit" asp-route-id="@cat.Id"
+                                   class="px-3 py-1 text-sm border border-[#D6D3D1] rounded-lg hover:bg-[#E7E5E4] transition">
+                                    <i class="fas fa-edit"></i>
+                                </a>
+                                <form asp-action="ToggleStatus" asp-route-id="@cat.Id" method="post" class="inline">
+                                    @Html.AntiForgeryToken()
+                                    <button type="submit" class="px-3 py-1 text-sm border border-[#D6D3D1] rounded-lg hover:bg-[#E7E5E4] transition">
+                                        <i class="fas @(cat.IsActive ? "fa-pause" : "fa-play")"></i>
+                                    </button>
+                                </form>
+                                <form asp-action="Delete" asp-route-id="@cat.Id" method="post" class="inline"
+                                      onsubmit="return confirm('آیا از حذف این دسته‌بندی اطمینان دارید؟')">
+                                    @Html.AntiForgeryToken()
+                                    <button type="submit" class="px-3 py-1 text-sm border border-[#D6D3D1] rounded-lg hover:bg-red-50 hover:border-red-200 transition text-red-600">
+                                        <i class="fas fa-trash"></i>
+                                    </button>
+                                </form>
+                            </div>
+                        </td>
+                    </tr>
+                }
+                @if (!Model.Any())
+                {
+                    <tr>
+                        <td colspan="7" class="text-center text-[#57534E] py-12">
+                            <i class="fas fa-folder text-2xl block mb-2 opacity-30"></i>
+                            هیچ دسته‌بندی یافت نشد
+                        </td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    </div>
+</div>

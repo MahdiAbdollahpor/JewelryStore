@@ -1,29 +1,35 @@
 ﻿using JewelryStore.Services.DTOs.Admin;
 using JewelryStore.Services.DTOs.Product;
 using JewelryStore.Services.Interfaces;
+using JewelryStore.Services.Services;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
 namespace JewelryStore.Web.Areas.Admin.Controllers
 {
-    [Area("Admin")]
+  [Area("Admin")]
     [Authorize(Roles = "Admin")]
     public class ProductsController : Controller
     {
         private readonly IAdminService _adminService;
         private readonly IProductService _productService;
+        private readonly ICategoryService _categoryService;
+
         private readonly ILogger<ProductsController> _logger;
 
         public ProductsController(
             IAdminService adminService,
             IProductService productService,
-            ILogger<ProductsController> logger)
+            ILogger<ProductsController> logger,
+            ICategoryService categoryService)
         {
             _adminService = adminService;
             _productService = productService;
             _logger = logger;
+            _categoryService = categoryService;
         }
 
+        // ✅ لیست محصولات
         [HttpGet]
         public async Task<IActionResult> Index(AdminProductFilterDto filter)
         {
@@ -41,6 +47,7 @@ namespace JewelryStore.Web.Areas.Admin.Controllers
             }
         }
 
+        // ✅ جزئیات محصول
         [HttpGet]
         public async Task<IActionResult> Detail(int id)
         {
@@ -61,11 +68,14 @@ namespace JewelryStore.Web.Areas.Admin.Controllers
         }
 
         [HttpGet]
-        public IActionResult Create()
+        public async Task<IActionResult> Create()
         {
+            // ✅ دریافت لیست دسته‌بندی‌ها برای نمایش در Dropdown
+            ViewBag.Categories = await _categoryService.GetAllCategoriesAsync(true);
             return View(new CreateProductDto());
         }
 
+        // ✅ ذخیره محصول جدید
         [HttpPost]
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> Create(CreateProductDto createDto, List<IFormFile> images)
@@ -97,6 +107,10 @@ namespace JewelryStore.Web.Areas.Admin.Controllers
                 if (product == null)
                     return NotFound();
 
+                // ✅ دریافت لیست دسته‌بندی‌ها برای نمایش در Dropdown
+                ViewBag.Categories = await _categoryService.GetAllCategoriesAsync(true);
+                ViewBag.ProductId = id;
+
                 var updateDto = new UpdateProductDto
                 {
                     Name = product.Name,
@@ -121,7 +135,6 @@ namespace JewelryStore.Web.Areas.Admin.Controllers
                     Tags = product.Tags
                 };
 
-                ViewBag.ProductId = id;
                 return View(updateDto);
             }
             catch (Exception ex)
@@ -132,6 +145,7 @@ namespace JewelryStore.Web.Areas.Admin.Controllers
             }
         }
 
+        // ✅ ذخیره ویرایش محصول
         [HttpPost]
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> Edit(int id, UpdateProductDto updateDto, List<IFormFile> images)
@@ -158,6 +172,7 @@ namespace JewelryStore.Web.Areas.Admin.Controllers
             }
         }
 
+        // ✅ تغییر وضعیت محصول
         [HttpPost]
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> ToggleStatus(int id)
@@ -180,6 +195,7 @@ namespace JewelryStore.Web.Areas.Admin.Controllers
             }
         }
 
+        // ✅ حذف محصول
         [HttpPost]
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> Delete(int id)

@@ -9,6 +9,7 @@ namespace JewelryStore.Services.DTOs.Category
     public class CreateCategoryDto
     {
         public string Name { get; set; }
+        public string? Slug { get; set; }
         public int? ParentCategoryId { get; set; }
         public bool IsActive { get; set; } = true;
         public bool ShowInMenu { get; set; } = true;

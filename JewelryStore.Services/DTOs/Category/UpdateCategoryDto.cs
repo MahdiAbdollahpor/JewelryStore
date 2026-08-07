@@ -13,5 +13,6 @@ namespace JewelryStore.Services.DTOs.Category
         public int? ParentCategoryId { get; set; }
         public bool? ShowInMenu { get; set; }
         public int? DisplayOrder { get; set; }
+        public bool? IsActive { get; set; }
     }
 }

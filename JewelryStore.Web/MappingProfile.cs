@@ -29,6 +29,9 @@ namespace JewelryStore.Web
 
             CreateMap<Category, CategoryTreeDto>();
 
+            CreateMap<UpdateCategoryDto, Category>()
+    .ForAllMembers(opts => opts.Condition((src, dest, srcMember) => srcMember != null));
+
             // ==================== Product Mappings ====================
             CreateMap<Product, ProductDto>()
     .ForMember(dest => dest.MainImageUrl, opt => opt.Ignore())

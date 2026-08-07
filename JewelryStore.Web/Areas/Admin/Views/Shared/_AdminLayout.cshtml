@@ -89,6 +89,9 @@
                 <a asp-area="Admin" asp-controller="Users" asp-action="Index" class="sidebar-item @(ViewContext.RouteData.Values["Controller"].ToString() == "Users" ? "active" : "")">
                     <i class="fas fa-users"></i> کاربران
                 </a>
+                <a asp-area="Admin" asp-controller="Categories" asp-action="Index" class="sidebar-item @(ViewContext.RouteData.Values["Controller"].ToString() == "Categories" ? "active" : "")">
+                    <i class="fas fa-folder"></i> دسته‌بندی‌ها
+                </a>
                 <a asp-area="Admin" asp-controller="Products" asp-action="Index" class="sidebar-item @(ViewContext.RouteData.Values["Controller"].ToString() == "Products" ? "active" : "")">
                     <i class="fas fa-gem"></i> محصولات
                 </a>

@@ -52,7 +52,7 @@
                 @foreach (var user in Model)
                 {
                     <tr class="hover:bg-[#E7E5E4]/50 transition border-b border-[#D6D3D1]">
-                        <td class="px-4 py-3 font-medium text-[#1C1917]">@user.FullName ?? @user.Username</td>
+                        <td class="px-4 py-3 font-medium text-[#1C1917]"> @user.Username @user.FullName </td>
                         <td class="px-4 py-3 text-[#57534E]">@user.PhoneNumber</td>
                         <td class="px-4 py-3"><span class="text-xs font-semibold">@user.Role</span></td>
                         <td class="px-4 py-3">
