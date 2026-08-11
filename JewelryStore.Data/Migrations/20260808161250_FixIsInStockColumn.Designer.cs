@@ -4,6 +4,7 @@ using JewelryStore.Data.Context;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 
 #nullable disable
@@ -11,9 +12,11 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace JewelryStore.Data.Migrations
 {
     [DbContext(typeof(ApplicationDbContext))]
-    partial class ApplicationDbContextModelSnapshot : ModelSnapshot
+    [Migration("20260808161250_FixIsInStockColumn")]
+    partial class FixIsInStockColumn
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -800,6 +803,11 @@ namespace JewelryStore.Data.Migrations
                         .HasColumnType("bit")
                         .HasDefaultValue(false);
 
+                    b.Property<bool>("IsInStock")
+                        .ValueGeneratedOnAddOrUpdate()
+                        .HasColumnType("bit")
+                        .HasComputedColumnSql("CASE WHEN Quantity > 0 THEN 1 ELSE 0 END", true);
+
                     b.Property<bool>("IsNew")
                         .ValueGeneratedOnAdd()
                         .HasColumnType("bit")
@@ -878,12 +886,18 @@ namespace JewelryStore.Data.Migrations
                     b.HasIndex("IsFeatured")
                         .HasDatabaseName("IX_Products_IsFeatured");
 
+                    b.HasIndex("IsInStock")
+                        .HasDatabaseName("IX_Products_IsInStock");
+
                     b.HasIndex("Purity")
                         .HasDatabaseName("IX_Products_Purity");
 
                     b.HasIndex("Slug")
                         .IsUnique()
                         .HasDatabaseName("IX_Products_Slug");
+
+                    b.HasIndex("IsActive", "IsInStock", "IsFeatured")
+                        .HasDatabaseName("IX_Products_Active_Stock_Featured");
 
                     b.ToTable("Products", (string)null);
                 });

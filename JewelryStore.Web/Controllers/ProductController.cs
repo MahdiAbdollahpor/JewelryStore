@@ -38,6 +38,13 @@ namespace JewelryStore.Web.Controllers
             {
                 var product = await _productService.GetProductBySlugAsync(slug);
 
+                // ✅ تصاویر قبلاً در سرویس تنظیم شده‌اند
+                // فقط اگر تصویر اصلی وجود نداشت، تصویر پیش‌فرض نمایش داده شود
+                if (string.IsNullOrEmpty(product.MainImageUrl))
+                {
+                    product.MainImageUrl = "/images/no-image.png";
+                }
+
                 // دریافت محصولات مرتبط (هم‌دسته)
                 var relatedProducts = await _productService.GetRelatedProductsAsync(product.Id, 4);
                 ViewBag.RelatedProducts = relatedProducts;

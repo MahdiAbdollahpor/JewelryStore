@@ -71,12 +71,15 @@ namespace JewelryStore.Domain.Entities
 
         public int MaxOrderQuantity { get; set; } = 10;
 
-        private bool _isInStock;
-        public bool IsInStock
-        {
-            get => _isInStock;
-            private set => _isInStock = value;
-        }
+        //private bool _isInStock;
+        //public bool IsInStock
+        //{
+        //    get => _isInStock;
+        //    private set => _isInStock = value;
+        //}
+
+        [NotMapped]
+        public bool IsInStock => Quantity > 0;
 
         public bool IsActive { get; set; } = true;
 

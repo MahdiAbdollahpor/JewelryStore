@@ -32,12 +32,12 @@ namespace JewelryStore.Data.Configurations
             builder.HasIndex(p => p.Purity)
                 .HasDatabaseName("IX_Products_Purity");
 
-            builder.HasIndex(p => p.IsInStock)
-                .HasDatabaseName("IX_Products_IsInStock");
+            //builder.HasIndex(p => p.IsInStock)
+            //    .HasDatabaseName("IX_Products_IsInStock");
 
-            // ایندکس ترکیبی برای جستجو
-            builder.HasIndex(p => new { p.IsActive, p.IsInStock, p.IsFeatured })
-                .HasDatabaseName("IX_Products_Active_Stock_Featured");
+            //// ایندکس ترکیبی برای جستجو
+            //builder.HasIndex(p => new { p.IsActive, p.IsInStock, p.IsFeatured })
+            //    .HasDatabaseName("IX_Products_Active_Stock_Featured");
 
             // تنظیم فیلدها
             builder.Property(p => p.Name)
@@ -120,10 +120,10 @@ namespace JewelryStore.Data.Configurations
                 .IsRequired()
                 .HasDefaultValue(10);
 
-            // IsInStock به عنوان فیلد محاسباتی
-            builder.Property(p => p.IsInStock)
-                .IsRequired()
-                .HasComputedColumnSql("CASE WHEN Quantity > 0 THEN 1 ELSE 0 END", stored: true);
+            //// IsInStock به عنوان فیلد محاسباتی
+            //builder.Property(p => p.IsInStock)
+            //    .IsRequired()
+            //    .HasComputedColumnSql("CASE WHEN Quantity > 0 THEN 1 ELSE 0 END", stored: true);
 
             builder.Property(p => p.IsActive)
                 .IsRequired()

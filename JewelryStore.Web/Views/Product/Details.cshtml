@@ -101,9 +101,9 @@
             <div class="lg:col-span-7 space-y-4">
                 <div class="relative w-full aspect-[4/3] bg-[#F5EFE3] overflow-hidden border border-[#E3DCC9]">
                     <img src="@(Model.MainImageUrl ?? "/images/no-image.png")"
-                         class="w-full h-full object-cover"
-                         alt="@Model.Name"
-                         id="mainProductImage" />
+                         class="img-fluid rounded-3" alt="@Model.Name"
+                         id="mainProductImage"
+                         style="width: 100%; height: 500px; object-fit: cover; border: 1px solid #E7E5E4; border-radius: 8px;" />
                 </div>
 
                 @if (Model.ImageUrls.Any())

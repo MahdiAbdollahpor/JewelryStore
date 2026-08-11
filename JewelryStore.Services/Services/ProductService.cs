@@ -97,7 +97,14 @@ namespace JewelryStore.Services.Services
 
             var productDtos = _mapper.Map<IEnumerable<ProductListDto>>(products);
 
-            SetMainImages(products, productDtos);
+            foreach (var dto in productDtos)
+            {
+                var product = products.First(p => p.Id == dto.Id);
+                dto.IsInStock = product.Quantity > 0;
+                var mainImage = product.Images.FirstOrDefault(i => i.IsMain) ?? product.Images.FirstOrDefault();
+                if (mainImage != null)
+                    dto.MainImageUrl = mainImage.ImageUrl;
+            }
 
             return (productDtos, totalCount);
         }
@@ -248,7 +255,6 @@ namespace JewelryStore.Services.Services
                     Quantity = createDto.Quantity,
                     MinOrderQuantity = createDto.MinOrderQuantity,
                     MaxOrderQuantity = createDto.MaxOrderQuantity,
-                    IsActive = true,
                     IsFeatured = createDto.IsFeatured,
                     IsNew = createDto.IsNew,
                     CreatedAt = DateTime.Now,
@@ -403,6 +409,11 @@ namespace JewelryStore.Services.Services
 
             if (product == null)
                 throw new KeyNotFoundException("محصول یافت نشد.");
+
+            if (!string.IsNullOrEmpty(imageUrl) && !imageUrl.StartsWith("/"))
+            {
+                imageUrl = "/" + imageUrl;
+            }
 
             var image = new ProductImage
             {
@@ -567,28 +578,62 @@ namespace JewelryStore.Services.Services
         {
             var dto = _mapper.Map<ProductDto>(product);
             dto.CategoryName = product.Category?.Name;
-            dto.ImageUrls = product.Images.OrderBy(i => i.DisplayOrder).Select(i => i.ImageUrl).ToList();
-            var mainImage = product.Images.FirstOrDefault(i => i.IsMain) ?? product.Images.FirstOrDefault();
-            dto.MainImageUrl = mainImage?.ImageUrl;
+
+            var images = product.Images.OrderBy(i => i.DisplayOrder).ToList();
+
+            // ✅ اصلاح: اطمینان از وجود اسلش در تمام تصاویر
+            dto.ImageUrls = images.Select(i =>
+            {
+                var url = i.ImageUrl;
+                if (!string.IsNullOrEmpty(url) && !url.StartsWith("/"))
+                    url = "/" + url;
+                return url;
+            }).ToList();
+
+            var mainImage = images.FirstOrDefault(i => i.IsMain) ?? images.FirstOrDefault();
+
+            if (mainImage != null)
+            {
+                var url = mainImage.ImageUrl;
+                if (!string.IsNullOrEmpty(url) && !url.StartsWith("/"))
+                    url = "/" + url;
+                dto.MainImageUrl = url;
+            }
+            else
+            {
+                dto.MainImageUrl = "/images/no-image.png";
+            }
+
             dto.Variants = _mapper.Map<List<ProductVariantDto>>(product.Variants.Where(v => v.IsActive));
             dto.Tags = product.ProductTags.Select(pt => pt.Tag.Name).ToList();
             dto.Attributes = product.AttributeValues
                 .ToDictionary(av => av.Attribute.Name, av => av.Value);
+            dto.IsInStock = product.Quantity > 0;
+            dto.ViewCount = product.ViewCount;
 
             return dto;
         }
-
         private void SetMainImages(List<Product> products, IEnumerable<ProductListDto> dtos)
         {
             foreach (var dto in dtos)
             {
                 var product = products.First(p => p.Id == dto.Id);
-                var mainImage = product.Images.FirstOrDefault(i => i.IsMain) ?? product.Images.FirstOrDefault();
+                var mainImage = product.Images.OrderBy(i => i.DisplayOrder).FirstOrDefault(i => i.IsMain)
+                                ?? product.Images.OrderBy(i => i.DisplayOrder).FirstOrDefault();
+
                 if (mainImage != null)
-                    dto.MainImageUrl = mainImage.ImageUrl;
+                {
+                    var url = mainImage.ImageUrl;
+                    if (!string.IsNullOrEmpty(url) && !url.StartsWith("/"))
+                        url = "/" + url;
+                    dto.MainImageUrl = url;
+                }
+                else
+                {
+                    dto.MainImageUrl = "/images/no-image.png";
+                }
             }
         }
-
         private static string GenerateSlug(string name)
         {
             var slug = name.ToLower().Replace(" ", "-");
@@ -630,7 +675,7 @@ namespace JewelryStore.Services.Services
                 }
 
                 string relativePath = Path.Combine("Images", folder, uniqueFileName).Replace("\\", "/");
-
+                relativePath = "/" + relativePath;
                 return new UploadResult
                 {
                     Status = true,

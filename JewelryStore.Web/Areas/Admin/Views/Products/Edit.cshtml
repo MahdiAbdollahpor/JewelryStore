@@ -210,16 +210,22 @@
 
             <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
                 <div class="flex items-center gap-2">
-                    <input type="checkbox" asp-for="IsFeatured" class="w-4 h-4 rounded border-[#D6D3D1] accent-[#C2410C]" />
-                    <label asp-for="IsFeatured" class="text-sm">محصول ویژه</label>
+                    <input type="checkbox" name="IsFeatured" value="true"
+                           @(Model.IsFeatured == true ? "checked" : "")
+                           class="w-4 h-4 rounded border-[#D6D3D1] accent-[#C2410C]" />
+                    <label class="text-sm">محصول ویژه</label>
                 </div>
                 <div class="flex items-center gap-2">
-                    <input type="checkbox" asp-for="IsNew" class="w-4 h-4 rounded border-[#D6D3D1] accent-[#C2410C]" />
-                    <label asp-for="IsNew" class="text-sm">محصول جدید</label>
+                    <input type="checkbox" name="IsNew" value="true"
+                           @(Model.IsNew == true ? "checked" : "")
+                           class="w-4 h-4 rounded border-[#D6D3D1] accent-[#C2410C]" />
+                    <label class="text-sm">محصول جدید</label>
                 </div>
                 <div class="flex items-center gap-2">
-                    <input type="checkbox" asp-for="IsActive" class="w-4 h-4 rounded border-[#D6D3D1] accent-[#C2410C]" />
-                    <label asp-for="IsActive" class="text-sm">فعال</label>
+                    <input type="checkbox" name="IsActive" value="true"
+                           @(Model.IsActive == true ? "checked" : "")
+                           class="w-4 h-4 rounded border-[#D6D3D1] accent-[#C2410C]" />
+                    <label class="text-sm">فعال</label>
                 </div>
             </div>
 
