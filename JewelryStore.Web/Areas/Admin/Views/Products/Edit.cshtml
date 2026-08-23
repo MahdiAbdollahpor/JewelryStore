@@ -77,6 +77,14 @@
                     <span asp-validation-for="Name" class="validation-message"></span>
                 </div>
 
+                <!-- ✅ Slug -->
+                <div class="form-group">
+                    <label asp-for="Slug" class="form-label">Slug (آدرس SEO)</label>
+                    <input asp-for="Slug" class="form-control" placeholder="در صورت خالی بودن، خودکار تولید می‌شود" />
+                    <span asp-validation-for="Slug" class="validation-message"></span>
+                    <p class="form-hint">آدرس منحصر‌به‌فرد برای این محصول</p>
+                </div>
+
                 <!-- برند -->
                 <div class="form-group">
                     <label asp-for="Brand" class="form-label">برند</label>

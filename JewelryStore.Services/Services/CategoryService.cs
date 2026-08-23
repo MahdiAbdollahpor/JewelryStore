@@ -157,6 +157,17 @@ namespace JewelryStore.Services.Services
             return _mapper.Map<CategoryDto>(category);
         }
 
+        public async Task<IEnumerable<CategoryAttributeDto>> GetAllAttributesAsync()
+        {
+            var attributes = await _context.CategoryAttributes
+                .Include(a => a.Category)
+                .OrderBy(a => a.Category.Name)
+                .ThenBy(a => a.Name)
+                .ToListAsync();
+
+            return _mapper.Map<IEnumerable<CategoryAttributeDto>>(attributes);
+        }
+
         // 8 حذف دسته (فقط ادمین - حذف نرم)
         public async Task<bool> DeleteCategoryAsync(int id)
         {

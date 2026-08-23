@@ -72,6 +72,10 @@ namespace JewelryStore.Web.Areas.Admin.Controllers
         {
             // ✅ دریافت لیست دسته‌بندی‌ها برای نمایش در Dropdown
             ViewBag.Categories = await _categoryService.GetAllCategoriesAsync(true);
+
+            var attributes = await _categoryService.GetAllAttributesAsync();
+            ViewBag.Attributes = attributes;
+
             return View(new CreateProductDto());
         }
 
@@ -81,7 +85,11 @@ namespace JewelryStore.Web.Areas.Admin.Controllers
         public async Task<IActionResult> Create(CreateProductDto createDto, List<IFormFile> images)
         {
             if (!ModelState.IsValid)
+            {
+                ViewBag.Categories = await _categoryService.GetAllCategoriesAsync(true);
+                ViewBag.Attributes = await _categoryService.GetAllAttributesAsync();
                 return View(createDto);
+            }
 
             try
             {
@@ -94,6 +102,8 @@ namespace JewelryStore.Web.Areas.Admin.Controllers
             {
                 _logger.LogError(ex, "خطا در ایجاد محصول");
                 ModelState.AddModelError("", ex.Message);
+                ViewBag.Categories = await _categoryService.GetAllCategoriesAsync(true);
+                ViewBag.Attributes = await _categoryService.GetAllAttributesAsync();
                 return View(createDto);
             }
         }
@@ -114,6 +124,7 @@ namespace JewelryStore.Web.Areas.Admin.Controllers
                 var updateDto = new UpdateProductDto
                 {
                     Name = product.Name,
+                    Slug = product.Slug,
                     CategoryId = product.CategoryId,
                     Brand = product.Brand,
                     Description = product.Description,

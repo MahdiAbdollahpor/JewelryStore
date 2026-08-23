@@ -117,6 +117,14 @@
                     <span asp-validation-for="Name" class="validation-message"></span>
                 </div>
 
+                <!-- ✅ Slug (اختیاری) -->
+                <div class="form-group">
+                    <label asp-for="Slug" class="form-label">Slug (آدرس SEO)</label>
+                    <input asp-for="Slug" class="form-control" placeholder="در صورت خالی بودن، خودکار تولید می‌شود" />
+                    <span asp-validation-for="Slug" class="validation-message"></span>
+                    <p class="form-hint">آدرس منحصر‌به‌فرد برای این محصول (مثلاً gold-ring-123)</p>
+                </div>
+
                 <!-- برند -->
                 <div class="form-group">
                     <label asp-for="Brand" class="form-label">برند</label>
@@ -449,17 +457,28 @@
         });
 
         // ==================== 3. مدیریت ویژگی‌ها (Attributes) ====================
+                // ==================== 3. مدیریت ویژگی‌ها (Attributes) ====================
         let attributeIndex = 0;
 
-        document.getElementById('addAttributeBtn').addEventListener('click', function() {
+        // ✅ دریافت لیست ویژگی‌ها از ViewBag و تبدیل به JSON
+        const attributesList = @Html.Raw(Json.Serialize(ViewBag.Attributes));
+
+                document.getElementById('addAttributeBtn').addEventListener('click', function() {
             const container = document.getElementById('attribute-fields');
             const index = attributeIndex++;
             const row = document.createElement('div');
             row.className = 'flex items-center gap-3 mb-2';
+
+            let optionsHtml = '<option value="">انتخاب ویژگی...</option>';
+            if (attributesList) {
+                attributesList.forEach(function(attr) {
+                    optionsHtml += `<option value="${attr.id}">${attr.categoryName} - ${attr.name}</option>`;
+                });
+            }
+
             row.innerHTML = `
                 <select name="Attributes[${index}].Key" class="form-control flex-1">
-                    <option value="">انتخاب ویژگی...</option>
-                    @* در اینجا لیست ویژگی‌ها از ViewBag بیاید *@
+                    ${optionsHtml}
                 </select>
                 <input type="text" name="Attributes[${index}].Value" class="form-control flex-1" placeholder="مقدار" />
                 <button type="button" class="remove-attribute px-3 py-2 text-red-600 hover:text-red-800 text-xl leading-none">×</button>

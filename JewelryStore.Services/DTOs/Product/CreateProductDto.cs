@@ -11,6 +11,7 @@ namespace JewelryStore.Services.DTOs.Product
     public class CreateProductDto
     {
         public string Name { get; set; }
+        public string? Slug { get; set; }
         public int CategoryId { get; set; }
         public string? Brand { get; set; }
         public string Description { get; set; }
@@ -32,10 +33,17 @@ namespace JewelryStore.Services.DTOs.Product
         public bool IsActive { get; set; } = true;
         public List<string>? Tags { get; set; }
         public List<CreateProductVariantDto>? Variants { get; set; }
-        public Dictionary<int, string>? Attributes { get; set; } // AttributeId -> Value
+        public List<AttributeValueDto>? Attributes { get; set; } // AttributeId -> Value
         public List<string>? ImageUrls { get; set; } // لیست آدرس تصاویر
 
         public List<IFormFile>? ImageFiles { get; set; }
+    }
+
+
+    public class AttributeValueDto
+    {
+        public int Key { get; set; }   // AttributeId
+        public string Value { get; set; }
     }
 
     public class CreateProductVariantDto

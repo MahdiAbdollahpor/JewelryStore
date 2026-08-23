@@ -11,6 +11,7 @@ namespace JewelryStore.Services.DTOs.Product
     public class UpdateProductDto
     {
         public string? Name { get; set; }
+        public string? Slug { get; set; }
         public int? CategoryId { get; set; }
         public string? Brand { get; set; }
         public string? Description { get; set; }
@@ -32,7 +33,7 @@ namespace JewelryStore.Services.DTOs.Product
         public List<string>? Tags { get; set; } // تگ‌های جدید
         public List<IFormFile>? ImageFiles { get; set; }
         public List<UpdateProductVariantDto>? Variants { get; set; }
-        public Dictionary<int, string>? Attributes { get; set; } // AttributeId -> Value
+        public List<AttributeValueDto>? Attributes { get; set; } // AttributeId -> Value
     }
 
     public class UpdateProductVariantDto

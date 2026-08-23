@@ -228,19 +228,44 @@ namespace JewelryStore.Services.Services
             using var transaction = await _context.Database.BeginTransactionAsync();
             try
             {
-                var slug = GenerateSlug(createDto.Name);
-                if (await _context.Products.AnyAsync(p => p.Slug == slug))
-                    throw new InvalidOperationException($"Slug '{slug}' قبلاً استفاده شده است.");
+                // 1️⃣ اعتبارسنجی اولیه
+                if (string.IsNullOrWhiteSpace(createDto.Name))
+                    throw new ArgumentException("نام محصول الزامی است.");
 
+                if (createDto.CategoryId <= 0)
+                    throw new ArgumentException("دسته‌بندی محصول الزامی است.");
+
+                if (createDto.BasePrice <= 0)
+                    throw new ArgumentException("قیمت محصول باید بیشتر از صفر باشد.");
+
+                // 2️⃣ تولید Slug
+                string slug;
+                if (!string.IsNullOrWhiteSpace(createDto.Slug))
+                {
+                    slug = GenerateSlug(createDto.Slug);
+                }
+                else
+                {
+                    slug = GenerateSlug(createDto.Name);
+                }
+
+                // 3️⃣ بررسی یکتا بودن Slug
+                if (await _context.Products.AnyAsync(p => p.Slug == slug))
+                {
+                    slug = $"{slug}-{Guid.NewGuid().ToString().Substring(0, 6)}";
+                }
+
+                // 4️⃣ محاسبه قیمت نهایی
                 var finalPrice = CalculateFinalPrice(createDto.BasePrice, createDto.DiscountPercentage);
 
+                // 5️⃣ ایجاد محصول
                 var product = new Product
                 {
                     Name = createDto.Name,
                     Slug = slug,
                     CategoryId = createDto.CategoryId,
                     Brand = createDto.Brand,
-                    Description = createDto.Description,
+                    Description = createDto.Description ?? string.Empty,
                     ShortDescription = createDto.ShortDescription,
                     BasePrice = createDto.BasePrice,
                     DiscountPercentage = createDto.DiscountPercentage,
@@ -255,6 +280,7 @@ namespace JewelryStore.Services.Services
                     Quantity = createDto.Quantity,
                     MinOrderQuantity = createDto.MinOrderQuantity,
                     MaxOrderQuantity = createDto.MaxOrderQuantity,
+                    IsActive = true,
                     IsFeatured = createDto.IsFeatured,
                     IsNew = createDto.IsNew,
                     CreatedAt = DateTime.Now,
@@ -262,48 +288,82 @@ namespace JewelryStore.Services.Services
                 };
 
                 await _context.Products.AddAsync(product);
-                try
-                {
-                    await _context.SaveChangesAsync();
-                }
-                catch (DbUpdateException ex)
-                {
-                    // ✅ نمایش خطای دقیق
-                    var innerMessage = ex.InnerException?.Message ?? ex.Message;
-                    throw new Exception($"خطا در ذخیره محصول: {innerMessage}");
-                }
+                await _context.SaveChangesAsync();
 
-                // ✅ آپلود و ذخیره تصاویر
+                // 6️⃣ افزودن تصاویر
                 if (createDto.ImageFiles != null && createDto.ImageFiles.Any())
                 {
                     var productImages = new List<ProductImage>();
                     foreach (var imageFile in createDto.ImageFiles)
                     {
-                        var uploadedResult = UploadFile(imageFile, "Products");
-                        if (uploadedResult.Status)
+                        if (imageFile != null && imageFile.Length > 0)
                         {
-                            productImages.Add(new ProductImage
+                            var uploadedResult = UploadFile(imageFile, "Products");
+                            if (uploadedResult.Status)
                             {
-                                ProductId = product.Id,
-                                ImageUrl = uploadedResult.FileNameAddress!,
-                                IsMain = productImages.Count == 0,
-                                DisplayOrder = productImages.Count,
-                                CreatedAt = DateTime.Now
-                            });
+                                productImages.Add(new ProductImage
+                                {
+                                    ProductId = product.Id,
+                                    ImageUrl = uploadedResult.FileNameAddress!,
+                                    IsMain = productImages.Count == 0,
+                                    DisplayOrder = productImages.Count,
+                                    CreatedAt = DateTime.Now
+                                });
+                            }
                         }
                     }
 
                     if (productImages.Any())
                     {
                         await _context.ProductImages.AddRangeAsync(productImages);
+                        await _context.SaveChangesAsync();
                     }
                 }
 
-                // ... بقیه کد (تگ‌ها، تنوع‌ها، ویژگی‌ها) ...
+                // 7️⃣ افزودن تگ‌ها
+                if (createDto.Tags != null && createDto.Tags.Any())
+                {
+                    await AddTagsToProduct(product.Id, createDto.Tags);
+                }
 
-                await _context.SaveChangesAsync();
+                // 8️⃣ افزودن تنوع‌ها (Variants)
+                if (createDto.Variants != null && createDto.Variants.Any())
+                {
+                    var variants = createDto.Variants.Select(v => new ProductVariant
+                    {
+                        ProductId = product.Id,
+                        VariantName = v.VariantName,
+                        VariantAttributes = v.VariantAttributes,
+                        Quantity = v.Quantity,
+                        PriceAdjustment = v.PriceAdjustment,
+                        IsActive = true,
+                        CreatedAt = DateTime.Now
+                    });
+                    await _context.ProductVariants.AddRangeAsync(variants);
+                    await _context.SaveChangesAsync();
+                }
+
+                // 9️⃣ افزودن ویژگی‌های پویا (Attributes)
+                if (createDto.Attributes != null && createDto.Attributes.Any())
+                {
+                    var attributeValues = createDto.Attributes
+                        .Where(a => a.Key > 0 && !string.IsNullOrWhiteSpace(a.Value))
+                        .Select(a => new ProductAttributeValue
+                        {
+                            ProductId = product.Id,
+                            AttributeId = a.Key,
+                            Value = a.Value,
+                            CreatedAt = DateTime.Now
+                        });
+
+                    if (attributeValues.Any())
+                    {
+                        await _context.ProductAttributeValues.AddRangeAsync(attributeValues);
+                        await _context.SaveChangesAsync();
+                    }
+                }
+
                 await transaction.CommitAsync();
-
                 return await GetProductByIdAsync(product.Id);
             }
             catch
@@ -328,15 +388,165 @@ namespace JewelryStore.Services.Services
             using var transaction = await _context.Database.BeginTransactionAsync();
             try
             {
-                // ... به‌روزرسانی فیلدها (همان کد قبلی) ...
-
-                // ✅ به‌روزرسانی تصاویر (اگر تصاویر جدید ارسال شده باشد)
-                if (updateDto.ImageFiles != null && updateDto.ImageFiles.Any())
+                // 1️⃣ به‌روزرسانی فیلدهای اصلی
+                if (!string.IsNullOrWhiteSpace(updateDto.Name))
                 {
-                    await UpdateProductImages(product, updateDto.ImageFiles);
+                    product.Name = updateDto.Name;
+                    if (!string.IsNullOrWhiteSpace(updateDto.Slug))
+                    {
+                        var newSlug = GenerateSlug(updateDto.Slug);
+                        if (await _context.Products.AnyAsync(p => p.Slug == newSlug && p.Id != id))
+                            throw new InvalidOperationException($"Slug '{newSlug}' قبلاً استفاده شده است.");
+                        product.Slug = newSlug;
+                    }
+                    else
+                    {
+                        product.Slug = GenerateSlug(updateDto.Name);
+                    }
                 }
 
-                // ... بقیه کد ...
+                if (updateDto.CategoryId.HasValue)
+                    product.CategoryId = updateDto.CategoryId.Value;
+
+                if (!string.IsNullOrWhiteSpace(updateDto.Brand))
+                    product.Brand = updateDto.Brand;
+
+                if (!string.IsNullOrWhiteSpace(updateDto.Description))
+                    product.Description = updateDto.Description;
+
+                if (!string.IsNullOrWhiteSpace(updateDto.ShortDescription))
+                    product.ShortDescription = updateDto.ShortDescription;
+
+                if (updateDto.BasePrice.HasValue)
+                {
+                    product.BasePrice = updateDto.BasePrice.Value;
+                    product.FinalPrice = CalculateFinalPrice(updateDto.BasePrice.Value, product.DiscountPercentage);
+                }
+
+                if (updateDto.DiscountPercentage.HasValue)
+                {
+                    product.DiscountPercentage = updateDto.DiscountPercentage.Value;
+                    product.FinalPrice = CalculateFinalPrice(product.BasePrice, updateDto.DiscountPercentage.Value);
+                }
+
+                if (updateDto.Weight.HasValue)
+                    product.Weight = updateDto.Weight.Value;
+
+                if (updateDto.Purity.HasValue)
+                    product.Purity = updateDto.Purity.Value;
+
+                if (updateDto.CraftsmanshipFee.HasValue)
+                    product.CraftsmanshipFee = updateDto.CraftsmanshipFee.Value;
+
+                if (updateDto.StoneType.HasValue)
+                    product.StoneType = updateDto.StoneType.Value;
+
+                if (updateDto.StoneWeight.HasValue)
+                    product.StoneWeight = updateDto.StoneWeight.Value;
+
+                if (updateDto.StoneQuality.HasValue)
+                    product.StoneQuality = updateDto.StoneQuality.Value;
+
+                if (updateDto.Quantity.HasValue)
+                    product.Quantity = updateDto.Quantity.Value;
+
+                if (updateDto.MinOrderQuantity.HasValue)
+                    product.MinOrderQuantity = updateDto.MinOrderQuantity.Value;
+
+                if (updateDto.MaxOrderQuantity.HasValue)
+                    product.MaxOrderQuantity = updateDto.MaxOrderQuantity.Value;
+
+                if (updateDto.IsActive.HasValue)
+                    product.IsActive = updateDto.IsActive.Value;
+
+                if (updateDto.IsFeatured.HasValue)
+                    product.IsFeatured = updateDto.IsFeatured.Value;
+
+                if (updateDto.IsNew.HasValue)
+                    product.IsNew = updateDto.IsNew.Value;
+
+                product.UpdatedAt = DateTime.Now;
+
+                // 2️⃣ به‌روزرسانی تگ‌ها
+                if (updateDto.Tags != null)
+                {
+                    // حذف تگ‌های قبلی
+                    _context.ProductTags.RemoveRange(product.ProductTags);
+
+                    // افزودن تگ‌های جدید
+                    var validTags = updateDto.Tags.Where(t => !string.IsNullOrWhiteSpace(t)).ToList();
+                    if (validTags.Any())
+                    {
+                        await AddTagsToProduct(product.Id, validTags);
+                    }
+                }
+
+                // 3️⃣ به‌روزرسانی تنوع‌ها (Variants)
+                if (updateDto.Variants != null)
+                {
+                    await UpdateVariants(product.Id, updateDto.Variants);
+                }
+
+                // 4️⃣ به‌روزرسانی ویژگی‌های پویا (Attributes)
+                if (updateDto.Attributes != null)
+                {
+                    // حذف ویژگی‌های قبلی
+                    _context.ProductAttributeValues.RemoveRange(product.AttributeValues);
+
+                    // افزودن ویژگی‌های جدید
+                    var attributeValues = updateDto.Attributes
+                        .Where(a => a.Key > 0 && !string.IsNullOrWhiteSpace(a.Value))
+                        .Select(a => new ProductAttributeValue
+                        {
+                            ProductId = product.Id,
+                            AttributeId = a.Key,
+                            Value = a.Value,
+                            CreatedAt = DateTime.Now
+                        });
+
+                    if (attributeValues.Any())
+                    {
+                        await _context.ProductAttributeValues.AddRangeAsync(attributeValues);
+                    }
+                }
+
+                // 5️⃣ به‌روزرسانی تصاویر (اگر تصاویر جدید ارسال شده باشد)
+                if (updateDto.ImageFiles != null && updateDto.ImageFiles.Any())
+                {
+                    // حذف تصاویر قدیمی
+                    var oldImages = product.Images.ToList();
+                    foreach (var oldImage in oldImages)
+                    {
+                        DeleteFile(oldImage.ImageUrl);
+                        _context.ProductImages.Remove(oldImage);
+                    }
+
+                    // افزودن تصاویر جدید
+                    var productImages = new List<ProductImage>();
+                    foreach (var imageFile in updateDto.ImageFiles)
+                    {
+                        if (imageFile != null && imageFile.Length > 0)
+                        {
+                            var uploadedResult = UploadFile(imageFile, "Products");
+                            if (uploadedResult.Status)
+                            {
+                                productImages.Add(new ProductImage
+                                {
+                                    ProductId = product.Id,
+                                    ImageUrl = uploadedResult.FileNameAddress!,
+                                    IsMain = productImages.Count == 0,
+                                    DisplayOrder = productImages.Count,
+                                    CreatedAt = DateTime.Now
+                                });
+                            }
+                        }
+                    }
+
+                    if (productImages.Any())
+                    {
+                        await _context.ProductImages.AddRangeAsync(productImages);
+                    }
+                }
 
                 await _context.SaveChangesAsync();
                 await transaction.CommitAsync();
@@ -636,9 +846,65 @@ namespace JewelryStore.Services.Services
         }
         private static string GenerateSlug(string name)
         {
-            var slug = name.ToLower().Replace(" ", "-");
+            if (string.IsNullOrWhiteSpace(name))
+                return string.Empty;
+
+            // 1️⃣ تبدیل حروف فارسی به انگلیسی
+            var slug = ConvertPersianToEnglish(name);
+
+            // 2️⃣ تبدیل به حروف کوچک
+            slug = slug.ToLower();
+
+            // 3️⃣ جایگزینی فاصله با خط تیره
+            slug = slug.Replace(" ", "-");
+
+            // 4️⃣ حذف کاراکترهای غیرمجاز (فقط حروف انگلیسی، اعداد و خط تیره)
             slug = System.Text.RegularExpressions.Regex.Replace(slug, @"[^a-z0-9-]", "");
+
+            // 5️⃣ حذف خط تیره‌های اضافی
+            slug = System.Text.RegularExpressions.Regex.Replace(slug, @"-+", "-");
+
+            // 6️⃣ حذف خط تیره از ابتدا و انتها
+            slug = slug.Trim('-');
+
             return slug;
+        }
+
+        private static string ConvertPersianToEnglish(string input)
+        {
+            if (string.IsNullOrWhiteSpace(input))
+                return input;
+
+            // حروف فارسی به انگلیسی
+            var persianToEnglishMap = new Dictionary<char, char>
+            {
+                // حروف الفبا
+                {'ا', 'a'}, {'ب', 'b'}, {'پ', 'p'}, {'ت', 't'}, {'ث', 's'},
+                {'ج', 'j'}, {'چ', 'c'}, {'ح', 'h'}, {'خ', 'x'}, {'د', 'd'},
+                {'ذ', 'z'}, {'ر', 'r'}, {'ز', 'z'}, {'ژ', 'j'}, {'س', 's'},
+                {'ش', 's'}, {'ص', 's'}, {'ض', 'z'}, {'ط', 't'}, {'ظ', 'z'},
+                {'ع', 'a'}, {'غ', 'g'}, {'ف', 'f'}, {'ق', 'q'}, {'ک', 'k'},
+                {'گ', 'g'}, {'ل', 'l'}, {'م', 'm'}, {'ن', 'n'}, {'و', 'v'},
+                {'ه', 'h'}, {'ی', 'y'},
+                // اعداد فارسی به انگلیسی
+                {'۰', '0'}, {'۱', '1'}, {'۲', '2'}, {'۳', '3'}, {'۴', '4'},
+                {'۵', '5'}, {'۶', '6'}, {'۷', '7'}, {'۸', '8'}, {'۹', '9'}
+            };
+
+            var result = new System.Text.StringBuilder();
+            foreach (var ch in input)
+            {
+                if (persianToEnglishMap.TryGetValue(ch, out var englishChar))
+                {
+                    result.Append(englishChar);
+                }
+                else
+                {
+                    result.Append(ch);
+                }
+            }
+
+            return result.ToString();
         }
 
         private static decimal CalculateFinalPrice(decimal basePrice, decimal discountPercentage)

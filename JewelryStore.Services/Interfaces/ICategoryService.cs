@@ -13,6 +13,7 @@ namespace JewelryStore.Services.Interfaces
 
         // عملیات ادمین
         Task<CategoryDto> CreateCategoryAsync(CreateCategoryDto createDto);
+        Task<IEnumerable<CategoryAttributeDto>> GetAllAttributesAsync();
         Task<CategoryDto> UpdateCategoryAsync(int id, UpdateCategoryDto updateDto);
         Task<bool> DeleteCategoryAsync(int id);
         Task<bool> ToggleCategoryStatusAsync(int id);
