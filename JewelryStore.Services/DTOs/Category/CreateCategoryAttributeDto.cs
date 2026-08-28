@@ -7,16 +7,14 @@ using System.Threading.Tasks;
 
 namespace JewelryStore.Services.DTOs.Category
 {
-    public class CategoryAttributeDto
+    public class CreateCategoryAttributeDto
     {
-        public int Id { get; set; }
-        public string Name { get; set; }
         public int CategoryId { get; set; }
-        public string CategoryName { get; set; }
+        public string Name { get; set; }
         public AttributeType Type { get; set; }     
-        public bool IsRequired { get; set; }         
-        public bool IsFilterable { get; set; }
+        public bool IsRequired { get; set; } = false; 
+        public bool IsFilterable { get; set; } = true;
         public string? Options { get; set; }
-        public bool IsActive { get; set; }
+        public bool IsActive { get; set; } = true;
     }
 }

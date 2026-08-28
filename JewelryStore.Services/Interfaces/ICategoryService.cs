@@ -17,5 +17,10 @@ namespace JewelryStore.Services.Interfaces
         Task<CategoryDto> UpdateCategoryAsync(int id, UpdateCategoryDto updateDto);
         Task<bool> DeleteCategoryAsync(int id);
         Task<bool> ToggleCategoryStatusAsync(int id);
+
+        Task<CategoryAttributeDto> GetAttributeByIdAsync(int id);
+        Task<CategoryAttributeDto> CreateAttributeAsync(CreateCategoryAttributeDto createDto);
+        Task<CategoryAttributeDto> UpdateAttributeAsync(int id, UpdateCategoryAttributeDto updateDto);
+        Task<bool> DeleteAttributeAsync(int id);
     }
 }

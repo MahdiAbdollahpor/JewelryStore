@@ -72,6 +72,10 @@ namespace JewelryStore.Web
             CreateMap<OrderItem, OrderItemDetailDto>();
 
             // ==================== Admin Mappings ====================
+
+            CreateMap<CategoryAttribute, CategoryAttributeDto>()
+     .ForMember(dest => dest.CategoryName, opt => opt.MapFrom(src => src.Category != null ? src.Category.Name : ""));
+
             CreateMap<DiscountCode, DiscountListDto>();
             CreateMap<DiscountCode, DiscountDto>();
             CreateMap<CreateDiscountDto, DiscountCode>()

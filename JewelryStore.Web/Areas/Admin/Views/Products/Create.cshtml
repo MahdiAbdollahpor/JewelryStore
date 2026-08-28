@@ -456,24 +456,38 @@
             }
         });
 
-        // ==================== 3. مدیریت ویژگی‌ها (Attributes) ====================
                 // ==================== 3. مدیریت ویژگی‌ها (Attributes) ====================
         let attributeIndex = 0;
 
         // ✅ دریافت لیست ویژگی‌ها از ViewBag و تبدیل به JSON
         const attributesList = @Html.Raw(Json.Serialize(ViewBag.Attributes));
 
-                document.getElementById('addAttributeBtn').addEventListener('click', function() {
+        // ✅ برای دیباگ: محتوای attributesList را در کنسول چاپ کنید
+        console.log('attributesList:', attributesList);
+        console.log('تعداد ویژگی‌ها:', attributesList ? attributesList.length : 0);
+
+        document.getElementById('addAttributeBtn').addEventListener('click', function() {
             const container = document.getElementById('attribute-fields');
             const index = attributeIndex++;
             const row = document.createElement('div');
             row.className = 'flex items-center gap-3 mb-2';
 
             let optionsHtml = '<option value="">انتخاب ویژگی...</option>';
-            if (attributesList) {
+
+            // ✅ بررسی اینکه attributesList وجود دارد و آرایه است
+            if (attributesList && Array.isArray(attributesList) && attributesList.length > 0) {
                 attributesList.forEach(function(attr) {
-                    optionsHtml += `<option value="${attr.id}">${attr.categoryName} - ${attr.name}</option>`;
+                    // ✅ مطمئن شوید که attr.id عدد است
+                    const id = attr.id || attr.Id || 0;
+                    const name = attr.name || attr.Name || 'نامشخص';
+                    const categoryName = attr.categoryName || attr.CategoryName || '';
+                    const displayName = categoryName ? `${categoryName} - ${name}` : name;
+
+                    optionsHtml += `<option value="${id}">${displayName}</option>`;
                 });
+            } else {
+                // ✅ اگر ویژگی وجود نداشت، یک گزینه نمایش دهید
+                optionsHtml += `<option value="" disabled>هیچ ویژگی‌ای یافت نشد</option>`;
             }
 
             row.innerHTML = `

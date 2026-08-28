@@ -290,7 +290,7 @@ namespace JewelryStore.Services.Services
                 await _context.Products.AddAsync(product);
                 await _context.SaveChangesAsync();
 
-                // 6️⃣ افزودن تصاویر
+                // ==================== افزودن تصاویر ====================
                 if (createDto.ImageFiles != null && createDto.ImageFiles.Any())
                 {
                     var productImages = new List<ProductImage>();
@@ -320,13 +320,14 @@ namespace JewelryStore.Services.Services
                     }
                 }
 
-                // 7️⃣ افزودن تگ‌ها
+                // ==================== افزودن تگ‌ها ====================
                 if (createDto.Tags != null && createDto.Tags.Any())
                 {
                     await AddTagsToProduct(product.Id, createDto.Tags);
+                    await _context.SaveChangesAsync(); // ✅ ذخیره تگ‌ها و ProductTag
                 }
 
-                // 8️⃣ افزودن تنوع‌ها (Variants)
+                // ==================== افزودن تنوع‌ها (Variants) ====================
                 if (createDto.Variants != null && createDto.Variants.Any())
                 {
                     var variants = createDto.Variants.Select(v => new ProductVariant
@@ -343,7 +344,7 @@ namespace JewelryStore.Services.Services
                     await _context.SaveChangesAsync();
                 }
 
-                // 9️⃣ افزودن ویژگی‌های پویا (Attributes)
+                // ==================== افزودن ویژگی‌های پویا (Attributes) ====================
                 if (createDto.Attributes != null && createDto.Attributes.Any())
                 {
                     var attributeValues = createDto.Attributes
@@ -474,11 +475,13 @@ namespace JewelryStore.Services.Services
                     _context.ProductTags.RemoveRange(product.ProductTags);
 
                     // افزودن تگ‌های جدید
-                    var validTags = updateDto.Tags.Where(t => !string.IsNullOrWhiteSpace(t)).ToList();
+                    var validTags = updateDto.Tags.Where(t => !string.IsNullOrWhiteSpace(t)).Distinct().ToList();
                     if (validTags.Any())
                     {
                         await AddTagsToProduct(product.Id, validTags);
                     }
+
+                    await _context.SaveChangesAsync();
                 }
 
                 // 3️⃣ به‌روزرسانی تنوع‌ها (Variants)
@@ -711,32 +714,45 @@ namespace JewelryStore.Services.Services
 
         private async Task AddTagsToProduct(int productId, List<string> tagNames)
         {
+            var validTags = tagNames.Where(t => !string.IsNullOrWhiteSpace(t)).Distinct().ToList();
+            if (!validTags.Any()) return;
+
+            // 1️⃣ دریافت تگ‌های موجود
             var existingTags = await _context.Tags
-                .Where(t => tagNames.Contains(t.Name))
+                .Where(t => validTags.Contains(t.Name))
                 .ToListAsync();
 
-            var newTagNames = tagNames.Except(existingTags.Select(t => t.Name)).ToList();
+            // 2️⃣ پیدا کردن تگ‌های جدید
+            var newTagNames = validTags.Except(existingTags.Select(t => t.Name)).ToList();
 
-            foreach (var name in newTagNames)
+            // 3️⃣ ایجاد تگ‌های جدید
+            var newTags = newTagNames.Select(name => new Tag
             {
-                var tag = new Tag
-                {
-                    Name = name,
-                    Slug = GenerateSlug(name),
-                    CreatedAt = DateTime.Now
-                };
-                await _context.Tags.AddAsync(tag);
-                existingTags.Add(tag);
+                Name = name,
+                Slug = GenerateSlug(name),
+                CreatedAt = DateTime.Now
+            }).ToList();
+
+            if (newTags.Any())
+            {
+                await _context.Tags.AddRangeAsync(newTags);
+                await _context.SaveChangesAsync(); // ✅ ذخیره تگ‌های جدید برای دریافت Id
             }
 
-            foreach (var tag in existingTags)
+            // 4️⃣ ترکیب تگ‌های موجود و جدید
+            var allTags = existingTags.Concat(newTags).ToList();
+
+            // 5️⃣ ایجاد ProductTag برای هر تگ
+            var productTags = allTags.Select(tag => new ProductTag
             {
-                var productTag = new ProductTag
-                {
-                    ProductId = productId,
-                    TagId = tag.Id
-                };
-                await _context.ProductTags.AddAsync(productTag);
+                ProductId = productId,
+                TagId = tag.Id
+            }).ToList();
+
+            if (productTags.Any())
+            {
+                await _context.ProductTags.AddRangeAsync(productTags);
+                // ❌ اینجا SaveChanges صدا نزنید، چون در متد اصلی صدا زده می‌شود
             }
         }
 

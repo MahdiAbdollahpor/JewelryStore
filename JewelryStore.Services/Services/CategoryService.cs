@@ -165,6 +165,12 @@ namespace JewelryStore.Services.Services
                 .ThenBy(a => a.Name)
                 .ToListAsync();
 
+            // ✅ اگر هیچ ویژگی وجود ندارد، یک لیست خالی برگردان
+            if (attributes == null || !attributes.Any())
+            {
+                return new List<CategoryAttributeDto>();
+            }
+
             return _mapper.Map<IEnumerable<CategoryAttributeDto>>(attributes);
         }
 
@@ -203,6 +209,104 @@ namespace JewelryStore.Services.Services
             await _context.SaveChangesAsync();
 
             return category.IsActive;
+        }
+
+        // ==================== مدیریت ویژگی‌ها ====================
+
+        
+
+        public async Task<CategoryAttributeDto> GetAttributeByIdAsync(int id)
+        {
+            var attribute = await _context.CategoryAttributes
+                .Include(a => a.Category)
+                .FirstOrDefaultAsync(a => a.Id == id);
+
+            if (attribute == null)
+                throw new KeyNotFoundException("ویژگی یافت نشد.");
+
+            return _mapper.Map<CategoryAttributeDto>(attribute);
+        }
+
+        public async Task<CategoryAttributeDto> CreateAttributeAsync(CreateCategoryAttributeDto createDto)
+        {
+            // بررسی وجود دسته‌بندی
+            var category = await _context.Categories.FindAsync(createDto.CategoryId);
+            if (category == null)
+                throw new InvalidOperationException("دسته‌بندی یافت نشد.");
+
+            // بررسی تکراری نبودن نام ویژگی در همان دسته
+            var exists = await _context.CategoryAttributes
+                .AnyAsync(a => a.CategoryId == createDto.CategoryId && a.Name == createDto.Name);
+            if (exists)
+                throw new InvalidOperationException($"ویژگی '{createDto.Name}' قبلاً در این دسته‌بندی وجود دارد.");
+
+            var attribute = new CategoryAttribute
+            {
+                CategoryId = createDto.CategoryId,
+                Name = createDto.Name,
+                Type = createDto.Type,
+                IsRequired = createDto.IsRequired,
+                IsFilterable = createDto.IsFilterable,
+                Options = createDto.Options,
+                IsActive = createDto.IsActive,
+                CreatedAt = DateTime.Now
+            };
+
+            await _context.CategoryAttributes.AddAsync(attribute);
+            await _context.SaveChangesAsync();
+
+            return _mapper.Map<CategoryAttributeDto>(attribute);
+        }
+
+        public async Task<CategoryAttributeDto> UpdateAttributeAsync(int id, UpdateCategoryAttributeDto updateDto)
+        {
+            var attribute = await _context.CategoryAttributes
+                .FirstOrDefaultAsync(a => a.Id == id);
+
+            if (attribute == null)
+                throw new KeyNotFoundException("ویژگی یافت نشد.");
+
+            if (!string.IsNullOrWhiteSpace(updateDto.Name))
+                attribute.Name = updateDto.Name;
+
+            if (updateDto.CategoryId.HasValue)
+                attribute.CategoryId = updateDto.CategoryId.Value;
+
+            if (updateDto.Type.HasValue)
+                attribute.Type = updateDto.Type.Value;
+
+            if (updateDto.IsRequired.HasValue)
+                attribute.IsRequired = updateDto.IsRequired.Value;
+
+            if (updateDto.IsFilterable.HasValue)
+                attribute.IsFilterable = updateDto.IsFilterable.Value;
+
+            if (updateDto.Options != null)
+                attribute.Options = updateDto.Options;
+
+            attribute.UpdatedAt = DateTime.Now;
+            await _context.SaveChangesAsync();
+
+            return _mapper.Map<CategoryAttributeDto>(attribute);
+        }
+
+        public async Task<bool> DeleteAttributeAsync(int id)
+        {
+            var attribute = await _context.CategoryAttributes
+                .FirstOrDefaultAsync(a => a.Id == id);
+
+            if (attribute == null)
+                return false;
+
+            // بررسی اینکه ویژگی در محصولات استفاده نشده باشد
+            var isUsed = await _context.ProductAttributeValues
+                .AnyAsync(pav => pav.AttributeId == id);
+            if (isUsed)
+                throw new InvalidOperationException("این ویژگی در محصولات استفاده شده است و قابل حذف نیست.");
+
+            _context.CategoryAttributes.Remove(attribute);
+            await _context.SaveChangesAsync();
+            return true;
         }
 
         // 🔧 متدهای کمکی خصوصی

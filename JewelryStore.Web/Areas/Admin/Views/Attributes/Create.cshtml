@@ -1,0 +1,181 @@
+﻿@using JewelryStore.Services.DTOs.Category
+@using JewelryStore.Domain.Enums
+@model CreateCategoryAttributeDto
+@{
+    ViewData["Title"] = "ایجاد ویژگی جدید";
+}
+
+<style>
+    :root {
+        --es-primary: #C2410C;
+        --es-surface: #F5F5F4;
+        --es-border: #D6D3D1;
+    }
+
+    .form-group {
+        margin-bottom: 20px;
+    }
+
+    .form-label {
+        display: block;
+        font-size: 13px;
+        font-weight: 600;
+        color: #57534E;
+        margin-bottom: 4px;
+    }
+
+    .form-control {
+        width: 100%;
+        padding: 10px 12px;
+        border: 1px solid var(--es-border);
+        border-radius: 8px;
+        background: #FFFFFF;
+        font-size: 14px;
+        transition: all 150ms ease;
+    }
+
+        .form-control:focus {
+            outline: none;
+            border-color: var(--es-primary);
+            box-shadow: 0 0 0 3px rgba(194, 65, 12, 0.12);
+        }
+
+    .checkbox-group {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        padding-top: 4px;
+    }
+
+        .checkbox-group input[type="checkbox"] {
+            width: 18px;
+            height: 18px;
+            border-radius: 4px;
+            border: 1.5px solid #D6D3D1;
+            accent-color: #C2410C;
+            cursor: pointer;
+        }
+</style>
+
+<div class="space-y-6">
+    <!-- هدر -->
+    <div>
+        <nav class="text-sm text-[#57534E] mb-2">
+            <a asp-action="Index" class="hover:text-[#C2410C] transition">مدیریت ویژگی‌ها</a>
+            <span class="mx-2">/</span>
+            <span class="text-[#1C1917]">ایجاد ویژگی جدید</span>
+        </nav>
+        <h1 class="font-['Playfair_Display'] text-3xl font-bold text-[#1C1917]">ایجاد ویژگی جدید</h1>
+        <p class="text-[#57534E] mt-1">ویژگی جدید را برای محصولات تعریف کنید</p>
+    </div>
+
+    <!-- فرم -->
+    <div class="bg-[#F5F5F4] border border-[#D6D3D1] rounded-xl p-6">
+        <form asp-action="Create" method="post">
+            @Html.AntiForgeryToken()
+
+            <div asp-validation-summary="ModelOnly" class="text-[#DC2626] text-sm mb-4"></div>
+
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <!-- نام -->
+                <div class="form-group">
+                    <label asp-for="Name" class="form-label">نام ویژگی *</label>
+                    <input asp-for="Name" class="form-control" placeholder="مثلاً رنگ، سایز، جنس" />
+                    <span asp-validation-for="Name" class="text-[#DC2626] text-xs"></span>
+                </div>
+
+                <!-- دسته‌بندی -->
+                <div class="form-group">
+                    <label asp-for="CategoryId" class="form-label">دسته‌بندی *</label>
+                    <select asp-for="CategoryId" class="form-control">
+                        <option value="">انتخاب کنید...</option>
+                        @if (ViewBag.Categories != null)
+                        {
+                            foreach (var cat in ViewBag.Categories)
+                            {
+                                <option value="@cat.Id">@cat.Name</option>
+                            }
+                        }
+                    </select>
+                    <span asp-validation-for="CategoryId" class="text-[#DC2626] text-xs"></span>
+                </div>
+
+                <!-- نوع -->
+                <div class="form-group">
+                    <label asp-for="Type" class="form-label">نوع ویژگی *</label>
+                    <select asp-for="Type" class="form-control">
+                        @foreach (AttributeType type in Enum.GetValues(typeof(AttributeType)))
+                        {
+                            <option value="@type">@GetAttributeTypeName(type)</option>
+                        }
+                    </select>
+                    <span asp-validation-for="Type" class="text-[#DC2626] text-xs"></span>
+                </div>
+
+                <!-- گزینه‌ها (برای نوع Dropdown) -->
+                <div class="form-group">
+                    <label asp-for="Options" class="form-label">گزینه‌ها</label>
+                    <input asp-for="Options" class="form-control" placeholder="مقادیر را با کاما جدا کنید..." />
+                    <p class="text-xs text-[#57534E] mt-1">فقط برای نوع "انتخابی" - مقادیر را با کاما جدا کنید</p>
+                    <span asp-validation-for="Options" class="text-[#DC2626] text-xs"></span>
+                </div>
+            </div>
+
+            <!-- چک‌باکس‌ها -->
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mt-4">
+                <div class="form-group">
+                    <label class="form-label">قابل فیلتر</label>
+                    <div class="checkbox-group">
+                        <input type="checkbox" asp-for="IsFilterable" checked />
+                        <label>در فیلترهای جستجو نمایش داده شود</label>
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label class="form-label">اجباری</label>
+                    <div class="checkbox-group">
+                        <input type="checkbox" asp-for="IsRequired" />
+                        <label>این ویژگی برای محصولات اجباری باشد</label>
+                    </div>
+                </div>
+
+                <!-- ✅ اضافه کردن IsActive -->
+                <div class="form-group">
+                    <label class="form-label">وضعیت</label>
+                    <div class="checkbox-group">
+                        <input type="checkbox" asp-for="IsActive" checked />
+                        <label>فعال</label>
+                    </div>
+                </div>
+            </div>
+
+            <!-- دکمه‌ها -->
+            <div class="flex items-center gap-3 mt-6 pt-6 border-t border-[#D6D3D1]">
+                <button type="submit" class="px-6 py-2 bg-[#C2410C] text-white rounded-lg text-sm font-semibold hover:bg-[#9A3412] transition">
+                    <i class="fas fa-save ml-1"></i> ذخیره ویژگی
+                </button>
+                <a asp-action="Index" class="px-6 py-2 border border-[#D6D3D1] rounded-lg text-sm font-semibold text-[#57534E] hover:bg-[#E7E5E4] transition">
+                    انصراف
+                </a>
+            </div>
+        </form>
+    </div>
+</div>
+
+@functions {
+    private string GetAttributeTypeName(AttributeType type)
+    {
+        return type switch
+        {
+            AttributeType.String => "متن",
+            AttributeType.Number => "عدد",
+            AttributeType.Boolean => "بله/خیر",
+            AttributeType.Color => "رنگ",
+            AttributeType.Dropdown => "انتخابی",
+            _ => "نامشخص"
+        };
+    }
+}
+
+@section Scripts {
+    @await Html.PartialAsync("_ValidationScriptsPartial")
+}

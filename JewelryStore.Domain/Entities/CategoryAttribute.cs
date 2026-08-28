@@ -21,7 +21,7 @@ namespace JewelryStore.Domain.Entities
         public AttributeType Type { get; set; }
 
         public bool IsRequired { get; set; }
-
+        public bool IsActive { get; set; } = true;
         public bool IsFilterable { get; set; }
 
         [MaxLength(500)]

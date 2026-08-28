@@ -104,6 +104,10 @@
                 <a asp-area="Admin" asp-controller="Settings" asp-action="Index" class="sidebar-item @(ViewContext.RouteData.Values["Controller"].ToString() == "Settings" ? "active" : "")">
                     <i class="fas fa-cog"></i> تنظیمات
                 </a>
+                <a asp-area="Admin" asp-controller="Attributes" asp-action="Index"
+                   class="sidebar-item @(ViewContext.RouteData.Values["Controller"].ToString() == "Attributes" ? "active" : "")">
+                    <i class="fas fa-list-ul"></i> ویژگی‌ها
+                </a>
             </nav>
 
             <div class="pt-4 border-t border-[#D6D3D1]">
