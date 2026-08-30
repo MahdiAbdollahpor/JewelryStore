@@ -74,7 +74,7 @@ namespace JewelryStore.Web
             // ==================== Admin Mappings ====================
 
             CreateMap<CategoryAttribute, CategoryAttributeDto>()
-     .ForMember(dest => dest.CategoryName, opt => opt.MapFrom(src => src.Category != null ? src.Category.Name : ""));
+     .ForMember(dest => dest.CategoryName, opt => opt.MapFrom(src => src.Category != null ? src.Category.Name : ""));   
 
             CreateMap<DiscountCode, DiscountListDto>();
             CreateMap<DiscountCode, DiscountDto>();

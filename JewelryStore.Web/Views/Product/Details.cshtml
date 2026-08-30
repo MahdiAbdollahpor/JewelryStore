@@ -9,7 +9,6 @@
         : Model.FinalPrice;
 }
 
-<!-- تعریف متغیرهای CSS اختصاصی Hearthstone برای این صفحه -->
 <style>
     :root {
         --hs-bg: #FBF7F0;
@@ -21,7 +20,7 @@
         --hs-ink: #1A1F1B;
         --hs-ink-muted: #5C625C;
         --hs-outline: #E3DCC9;
-        --hs-font-display: 'IranNastaliq', 'Cormorant Garamond', serif; /* معادل سریف لوکس */
+        --hs-font-display: 'Cormorant Garamond', 'IranNastaliq', serif;
         --hs-font-body: 'Vazirmatn', 'Source Serif 4', sans-serif;
     }
 
@@ -72,13 +71,72 @@
     .hs-transition {
         transition: all 320ms cubic-bezier(0.22, 0.61, 0.36, 1);
     }
+
+    /* تب‌ها */
+    .tab-btn {
+        font-family: var(--hs-font-body);
+        font-size: 0.75rem;
+        text-transform: uppercase;
+        letter-spacing: 0.18em;
+        padding: 0.75rem 0;
+        border-bottom: 2px solid transparent;
+        color: var(--hs-ink-muted);
+        background: transparent;
+        cursor: pointer;
+        transition: all 320ms cubic-bezier(0.22, 0.61, 0.36, 1);
+    }
+
+        .tab-btn:hover {
+            color: var(--hs-forest);
+        }
+
+        .tab-btn.active {
+            border-bottom-color: var(--hs-forest);
+            color: var(--hs-forest);
+        }
+
+    .tab-panel {
+        display: none;
+    }
+
+        .tab-panel.active {
+            display: block;
+        }
+
+    /* استایل مشخصات */
+    .spec-item {
+        display: flex;
+        justify-content: space-between;
+        padding: 12px 0;
+        border-bottom: 1px solid var(--hs-outline);
+    }
+
+        .spec-item:last-child {
+            border-bottom: none;
+        }
+
+    .spec-label {
+        color: var(--hs-ink-muted);
+        font-size: 14px;
+    }
+
+    .spec-value {
+        font-weight: 500;
+        color: var(--hs-ink);
+    }
+
+    @@media (max-width: 768px) {
+        .hs-container {
+            padding: 0 20px;
+        }
+    }
 </style>
 
-<div class="bg-[#FBF7F0] min-h-screen text-[#1A1F1B]">
+<div class="min-h-screen" style="background-color: #FBF7F0; color: #1A1F1B;">
 
     <!-- ✅ هدر مینیمال و لوکس -->
     <div class="border-b border-[#E3DCC9] py-6">
-        <div class="hs-container flex justify-between items-center">
+        <div class="hs-container flex justify-between items-center flex-wrap gap-4">
             <nav class="hs-sans text-xs uppercase tracking-[0.18em] text-[#5C625C]">
                 <a asp-action="Index" class="hover:text-[#1F3D2E] hs-transition">کلکسیون</a>
                 <span class="mx-4 text-[#C2A878]">/</span>
@@ -97,13 +155,13 @@
     <section class="hs-container py-16 md:py-24">
         <div class="grid grid-cols-1 lg:grid-cols-12 gap-16 lg:gap-24">
 
-            <!-- گالری تصاویر (سمت راست در RTL) -->
+            <!-- گالری تصاویر -->
             <div class="lg:col-span-7 space-y-4">
                 <div class="relative w-full aspect-[4/3] bg-[#F5EFE3] overflow-hidden border border-[#E3DCC9]">
                     <img src="@(Model.MainImageUrl ?? "/images/no-image.png")"
-                         class="img-fluid rounded-3" alt="@Model.Name"
-                         id="mainProductImage"
-                         style="width: 100%; height: 500px; object-fit: cover; border: 1px solid #E7E5E4; border-radius: 8px;" />
+                         class="w-full h-full object-cover"
+                         alt="@Model.Name"
+                         id="mainProductImage" />
                 </div>
 
                 @if (Model.ImageUrls.Any())
@@ -120,7 +178,7 @@
                 }
             </div>
 
-            <!-- اطلاعات محصول (سمت چپ در RTL) -->
+            <!-- اطلاعات محصول -->
             <div class="lg:col-span-5 flex flex-col justify-center">
                 <h1 class="hs-display text-4xl md:text-5xl lg:text-6xl text-[#1A1F1B] mb-6 leading-tight">
                     @Model.Name
@@ -191,7 +249,7 @@
                     <div class="flex items-stretch gap-4 pt-2">
                         <div class="w-24">
                             <label class="hs-sans text-[10px] uppercase tracking-[0.18em] text-[#5C625C] block mb-3">تعداد</label>
-                            <input type="number" name="Quantity" value="1" min="1"
+                            <input type="number" name="Quantity" value="1" min="@Model.MinOrderQuantity" max="@Model.MaxOrderQuantity"
                                    class="w-full bg-transparent border-b border-[#C9C0AA] py-3 hs-sans text-center tabular-nums focus:outline-none focus:border-[#1F3D2E] focus:border-b-2 hs-transition" />
                         </div>
 
@@ -233,30 +291,43 @@
         <div class="hs-container">
             <div class="hs-editorial-col">
                 <div class="flex justify-center gap-8 mb-16 border-b border-[#E3DCC9]">
-                    <button onclick="switchTab('desc', this)" class="tab-btn active hs-sans text-xs uppercase tracking-[0.18em] pb-4 border-b-2 border-[#1F3D2E] text-[#1F3D2E] hs-transition">
-                        شرح اثر
-                    </button>
-                    <button onclick="switchTab('specs', this)" class="tab-btn hs-sans text-xs uppercase tracking-[0.18em] pb-4 border-b-2 border-transparent text-[#5C625C] hover:text-[#1F3D2E] hs-transition">
-                        مشخصات فنی
-                    </button>
+                    <button onclick="switchTab('desc', this)" class="tab-btn active">شرح اثر</button>
+                    <button onclick="switchTab('specs', this)" class="tab-btn">مشخصات فنی</button>
                 </div>
 
-                <div id="panel-desc" class="tab-panel prose prose-lg prose-stone font-serif text-[#1A1F1B] leading-relaxed">
+                <!-- تب شرح اثر -->
+                <div id="panel-desc" class="tab-panel active prose prose-lg prose-stone font-serif text-[#1A1F1B] leading-relaxed">
                     @Html.Raw(Model.Description)
                 </div>
 
-                <div id="panel-specs" class="tab-panel hidden">
+                <!-- تب مشخصات فنی -->
+                <div id="panel-specs" class="tab-panel">
                     <table class="w-full hs-sans text-sm">
                         <tbody class="divide-y divide-[#E3DCC9]">
+                            <!-- مشخصات پایه -->
                             <tr><td class="py-4 text-[#5C625C] uppercase tracking-widest text-[10px] w-1/3">وزن خالص</td><td class="py-4 tabular-nums font-medium">@Model.Weight.ToString("N2") گرم</td></tr>
                             <tr><td class="py-4 text-[#5C625C] uppercase tracking-widest text-[10px]">عیار طلا</td><td class="py-4 font-medium">@Model.Purity</td></tr>
                             <tr><td class="py-4 text-[#5C625C] uppercase tracking-widest text-[10px]">اجرت ساخت</td><td class="py-4 tabular-nums font-medium">@Model.CraftsmanshipFee.ToString("N0") تومان</td></tr>
                             <tr><td class="py-4 text-[#5C625C] uppercase tracking-widest text-[10px]">قیمت مرجع</td><td class="py-4 tabular-nums font-medium">@Model.GoldPriceReference.ToString("N0") تومان</td></tr>
+
+                            <!-- مشخصات سنگ (در صورت وجود) -->
                             @if (Model.StoneType.HasValue)
                             {
                                 <tr><td class="py-4 text-[#5C625C] uppercase tracking-widest text-[10px]">نوع سنگ</td><td class="py-4 font-medium">@Model.StoneType</td></tr>
                                 <tr><td class="py-4 text-[#5C625C] uppercase tracking-widest text-[10px]">وزن سنگ</td><td class="py-4 tabular-nums font-medium">@Model.StoneWeight?.ToString("N2") قیراط</td></tr>
                                 <tr><td class="py-4 text-[#5C625C] uppercase tracking-widest text-[10px]">کیفیت سنگ</td><td class="py-4 font-medium">@Model.StoneQuality</td></tr>
+                            }
+
+                            <!-- ✅ ویژگی‌های پویا -->
+                            @if (Model.Attributes != null && Model.Attributes.Any())
+                            {
+                                foreach (var attr in Model.Attributes)
+                                {
+                                    <tr>
+                                        <td class="py-4 text-[#5C625C] uppercase tracking-widest text-[10px]">@attr.Key</td>
+                                        <td class="py-4 font-medium">@attr.Value</td>
+                                    </tr>
+                                }
                             }
                         </tbody>
                     </table>
@@ -291,70 +362,85 @@
     }
 </div>
 
-<script>
-    // تب‌های ادیتوریال
-    function switchTab(tabName, btnElement) {
-        document.querySelectorAll('.tab-panel').forEach(el => el.classList.add('hidden'));
-        document.getElementById(`panel-${tabName}`).classList.remove('hidden');
+@section Scripts {
+    <script>
+        // ==================== 1. مدیریت تب‌ها ====================
+        function switchTab(tabName, btnElement) {
+            // مخفی کردن همه تب‌ها
+            document.querySelectorAll('.tab-panel').forEach(el => el.classList.remove('active'));
 
-        document.querySelectorAll('.tab-btn').forEach(btn => {
-            btn.classList.remove('border-[#1F3D2E]', 'text-[#1F3D2E]');
-            btn.classList.add('border-transparent', 'text-[#5C625C]');
-        });
+            // نمایش تب انتخاب‌شده
+            document.getElementById(`panel-${tabName}`).classList.add('active');
 
-        btnElement.classList.remove('border-transparent', 'text-[#5C625C]');
-        btnElement.classList.add('border-[#1F3D2E]', 'text-[#1F3D2E]');
-    }
+            // به‌روزرسانی دکمه‌های تب
+            document.querySelectorAll('.tab-btn').forEach(btn => btn.classList.remove('active'));
+            btnElement.classList.add('active');
+        }
 
-    // افزودن به سبد خرید با حفظ استایل Hearthstone
-    document.getElementById('addToCartBtn')?.addEventListener('click', async function() {
-        const form = document.getElementById('addToCartForm');
-        const formData = new FormData(form);
-        const data = {
-            productId: parseInt(formData.get('ProductId')),
-            variantId: formData.get('VariantId') ? parseInt(formData.get('VariantId')) : null,
-            quantity: parseInt(formData.get('Quantity'))
-        };
+        // ==================== 2. افزودن به سبد خرید ====================
+        document.getElementById('addToCartBtn')?.addEventListener('click', async function() {
+            const form = document.getElementById('addToCartForm');
+            const formData = new FormData(form);
+            const data = {
+                productId: parseInt(formData.get('ProductId')),
+                variantId: formData.get('VariantId') ? parseInt(formData.get('VariantId')) : null,
+                quantity: parseInt(formData.get('Quantity'))
+            };
 
-        const originalText = this.innerText;
-        this.innerHTML = '<span class="inline-block animate-spin mr-2">⟳</span> در حال پردازش';
-        this.disabled = true;
-        this.style.opacity = '0.7';
+            const originalText = this.innerText;
+            this.innerHTML = '<span class="inline-block animate-spin mr-2">⟳</span> در حال پردازش';
+            this.disabled = true;
+            this.style.opacity = '0.7';
 
-        try {
-            const response = await fetch('/Cart/AddToCart', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'RequestVerificationToken': document.querySelector('input[name="__RequestVerificationToken"]')?.value || ''
-                },
-                body: JSON.stringify(data)
-            });
+            try {
+                const response = await fetch('/Cart/AddToCart', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'RequestVerificationToken': document.querySelector('input[name="__RequestVerificationToken"]')?.value || ''
+                    },
+                    body: JSON.stringify(data)
+                });
 
-            const result = await response.json();
-            if (result.success) {
-                this.innerHTML = '✓ افزوده شد';
-                this.style.backgroundColor = '#4A7C59'; // Success Green
-                if (typeof updateCartWidget === 'function') updateCartWidget();
-                setTimeout(() => {
-                    this.innerHTML = originalText;
-                    this.style.backgroundColor = '';
-                    this.disabled = false;
-                    this.style.opacity = '1';
-                }, 2500);
-            } else {
-                alert(result.message);
+                const result = await response.json();
+                if (result.success) {
+                    this.innerHTML = '✓ افزوده شد';
+                    this.style.backgroundColor = '#4A7C59';
+                    if (typeof updateCartWidget === 'function') updateCartWidget();
+                    setTimeout(() => {
+                        this.innerHTML = originalText;
+                        this.style.backgroundColor = '';
+                        this.disabled = false;
+                        this.style.opacity = '1';
+                    }, 2500);
+                } else {
+                    alert(result.message);
+                    resetButton(this, originalText);
+                }
+            } catch (error) {
+                alert('خطا در ارتباط با سرور');
                 resetButton(this, originalText);
             }
-        } catch (error) {
-            alert('خطا در ارتباط با سرور');
-            resetButton(this, originalText);
-        }
-    });
+        });
 
-    function resetButton(btn, text) {
-        btn.innerHTML = text;
-        btn.disabled = false;
-        btn.style.opacity = '1';
-    }
-</script>
+        function resetButton(btn, text) {
+            btn.innerHTML = text;
+            btn.disabled = false;
+            btn.style.opacity = '1';
+        }
+
+        // ==================== 3. به‌روزرسانی ویجت‌ها ====================
+        async function updateCartWidget() {
+            try {
+                const response = await fetch('/Cart/CartWidget');
+                const data = await response.json();
+                const countEl = document.querySelector('#cart-item-count');
+                const totalEl = document.querySelector('#cart-total');
+                if (countEl) countEl.textContent = data.itemCount;
+                if (totalEl) totalEl.textContent = data.total;
+            } catch (error) {
+                console.error('Error updating cart widget:', error);
+            }
+        }
+    </script>
+}
