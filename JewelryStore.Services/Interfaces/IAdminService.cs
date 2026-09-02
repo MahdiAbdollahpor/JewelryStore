@@ -23,6 +23,9 @@ namespace JewelryStore.Services.Interfaces
         Task<bool> ChangeUserRoleAsync(int userId, string newRole);
         Task<bool> ToggleUserStatusAsync(int userId);
         Task<bool> DeleteUserAsync(int userId);
+        Task<int> GetTotalUsersCountAsync(UserFilterDto filter);
+        Task<UserProfileDto> CreateUserByAdminAsync(AdminCreateUserDto createDto);
+
 
         // 📦 مدیریت محصولات
         Task<IEnumerable<ProductListDto>> GetAllProductsAsync(AdminProductFilterDto filter);

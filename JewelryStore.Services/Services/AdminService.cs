@@ -77,6 +77,48 @@ namespace JewelryStore.Services.Services
         {
             return await _userService.ToggleUserStatusAsync(userId);
         }
+        public async Task<UserProfileDto> CreateUserByAdminAsync(AdminCreateUserDto createDto)
+        {
+            // 1️⃣ بررسی یکتا بودن نام کاربری
+            if (await _context.Users.AnyAsync(u => u.Username == createDto.Username))
+                throw new InvalidOperationException("نام کاربری قبلاً ثبت شده است.");
+
+            // 2️⃣ بررسی یکتا بودن شماره موبایل
+            if (await _context.Users.AnyAsync(u => u.PhoneNumber == createDto.PhoneNumber))
+                throw new InvalidOperationException("شماره موبایل قبلاً ثبت شده است.");
+
+            // 3️⃣ هش کردن رمز عبور
+            var passwordHash = HashPassword(createDto.Password);
+
+            // 4️⃣ نقش کاربر
+            var role = createDto.Role == "Admin" ? UserRole.Admin : UserRole.User;
+
+            // 5️⃣ ایجاد کاربر جدید
+            var user = new User
+            {
+                Username = createDto.Username,
+                PhoneNumber = createDto.PhoneNumber,
+                PasswordHash = passwordHash,
+                FullName = createDto.FullName,
+                Address = createDto.Address,
+                Role = role,
+                IsPhoneVerified = true,   // ✅ تایید شده
+                IsActive = true,          // ✅ فعال
+                CreatedAt = DateTime.Now
+            };
+
+            await _context.Users.AddAsync(user);
+            await _context.SaveChangesAsync();
+
+            return _mapper.Map<UserProfileDto>(user);
+        }
+
+        private static string HashPassword(string password)
+        {
+            using var sha256 = System.Security.Cryptography.SHA256.Create();
+            var hashedBytes = sha256.ComputeHash(System.Text.Encoding.UTF8.GetBytes(password));
+            return Convert.ToBase64String(hashedBytes);
+        }
 
         public async Task<bool> DeleteUserAsync(int userId)
         {
@@ -269,6 +311,27 @@ namespace JewelryStore.Services.Services
 
             var discounts = await query.ToListAsync();
             return _mapper.Map<IEnumerable<DiscountListDto>>(discounts);
+        }
+        public async Task<int> GetTotalUsersCountAsync(UserFilterDto filter)
+        {
+            var query = _context.Users.AsQueryable();
+
+            if (!string.IsNullOrWhiteSpace(filter.SearchTerm))
+            {
+                var search = filter.SearchTerm.Trim();
+                query = query.Where(u => u.Username.Contains(search) || u.PhoneNumber.Contains(search) || (u.FullName != null && u.FullName.Contains(search)));
+            }
+
+            if (!string.IsNullOrWhiteSpace(filter.Role) && Enum.TryParse<UserRole>(filter.Role, true, out var role))
+                query = query.Where(u => u.Role == role);
+
+            if (filter.IsActive.HasValue)
+                query = query.Where(u => u.IsActive == filter.IsActive.Value);
+
+            if (filter.IsPhoneVerified.HasValue)
+                query = query.Where(u => u.IsPhoneVerified == filter.IsPhoneVerified.Value);
+
+            return await query.CountAsync();
         }
 
         public async Task<DiscountDto> CreateDiscountAsync(CreateDiscountDto createDto)

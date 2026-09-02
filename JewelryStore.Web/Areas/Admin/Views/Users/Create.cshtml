@@ -1,0 +1,166 @@
+﻿@using JewelryStore.Services.DTOs.Admin
+@model AdminCreateUserDto
+@{
+    ViewData["Title"] = "ایجاد کاربر جدید";
+}
+
+<style>
+    :root {
+        --es-primary: #C2410C;
+        --es-surface: #F5F5F4;
+        --es-border: #D6D3D1;
+        --es-text-primary: #1C1917;
+        --es-text-secondary: #57534E;
+    }
+
+    .form-group {
+        margin-bottom: 20px;
+    }
+
+    .form-label {
+        display: block;
+        font-size: 13px;
+        font-weight: 600;
+        color: var(--es-text-secondary);
+        margin-bottom: 4px;
+    }
+
+    .form-control {
+        width: 100%;
+        padding: 10px 12px;
+        border: 1px solid var(--es-border);
+        border-radius: 8px;
+        background: #FFFFFF;
+        font-size: 14px;
+        transition: all 150ms ease;
+        color: var(--es-text-primary);
+    }
+
+        .form-control:focus {
+            outline: none;
+            border-color: var(--es-primary);
+            box-shadow: 0 0 0 3px rgba(194, 65, 12, 0.12);
+        }
+
+    .validation-message {
+        color: #DC2626;
+        font-size: 12px;
+        margin-top: 4px;
+    }
+
+    .form-hint {
+        color: var(--es-text-secondary);
+        font-size: 12px;
+        margin-top: 4px;
+    }
+
+    .checkbox-group {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        padding-top: 4px;
+    }
+
+        .checkbox-group input[type="checkbox"] {
+            width: 18px;
+            height: 18px;
+            border-radius: 4px;
+            border: 1.5px solid #D6D3D1;
+            accent-color: #C2410C;
+            cursor: pointer;
+        }
+</style>
+
+<div class="space-y-6">
+    <!-- هدر -->
+    <div>
+        <nav class="text-sm text-[#57534E] mb-2">
+            <a asp-action="Index" class="hover:text-[#C2410C] transition">مدیریت کاربران</a>
+            <span class="mx-2">/</span>
+            <span class="text-[#1C1917]">ایجاد کاربر جدید</span>
+        </nav>
+        <h1 class="font-['Playfair_Display'] text-3xl font-bold text-[#1C1917]">ایجاد کاربر جدید</h1>
+        <p class="text-[#57534E] mt-1">کاربر جدید را بدون نیاز به تایید کد ایجاد کنید</p>
+    </div>
+
+    <!-- فرم -->
+    <div class="bg-[#F5F5F4] border border-[#D6D3D1] rounded-xl p-6">
+        <form asp-action="Create" method="post">
+            @Html.AntiForgeryToken()
+
+            <div asp-validation-summary="ModelOnly" class="text-[#DC2626] text-sm mb-4"></div>
+
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <!-- نام کاربری -->
+                <div class="form-group">
+                    <label asp-for="Username" class="form-label">نام کاربری *</label>
+                    <input asp-for="Username" class="form-control" placeholder="نام کاربری را وارد کنید" />
+                    <span asp-validation-for="Username" class="validation-message"></span>
+                </div>
+
+                <!-- شماره موبایل -->
+                <div class="form-group">
+                    <label asp-for="PhoneNumber" class="form-label">شماره موبایل *</label>
+                    <input asp-for="PhoneNumber" class="form-control" placeholder="09xxxxxxxxx" dir="ltr" />
+                    <span asp-validation-for="PhoneNumber" class="validation-message"></span>
+                </div>
+
+                <!-- نام کامل -->
+                <div class="form-group">
+                    <label asp-for="FullName" class="form-label">نام کامل</label>
+                    <input asp-for="FullName" class="form-control" placeholder="نام و نام خانوادگی" />
+                    <span asp-validation-for="FullName" class="validation-message"></span>
+                </div>
+
+                <!-- رمز عبور -->
+                <div class="form-group">
+                    <label asp-for="Password" class="form-label">رمز عبور *</label>
+                    <input asp-for="Password" type="password" class="form-control" placeholder="حداقل ۶ کاراکتر" />
+                    <span asp-validation-for="Password" class="validation-message"></span>
+                    <p class="form-hint">رمز عبور باید حداقل ۶ کاراکتر باشد</p>
+                </div>
+
+                <!-- آدرس -->
+                <div class="form-group">
+                    <label asp-for="Address" class="form-label">آدرس</label>
+                    <input asp-for="Address" class="form-control" placeholder="آدرس کامل" />
+                    <span asp-validation-for="Address" class="validation-message"></span>
+                </div>
+
+                <!-- نقش -->
+                <div class="form-group">
+                    <label asp-for="Role" class="form-label">نقش کاربر</label>
+                    <select asp-for="Role" class="form-control">
+                        <option value="User">کاربر عادی</option>
+                        <option value="Admin">مدیر</option>
+                    </select>
+                    <span asp-validation-for="Role" class="validation-message"></span>
+                    <p class="form-hint">کاربران با نقش مدیر به پنل مدیریت دسترسی دارند</p>
+                </div>
+            </div>
+
+            <!-- توضیح -->
+            <div class="bg-[#F5EFE3] border border-[#C9C0AA] rounded-lg p-4 mb-4">
+                <p class="text-sm text-[#57534E]">
+                    <i class="fas fa-info-circle text-[#C2410C] ml-2"></i>
+                    کاربر ایجاد شده به صورت خودکار <strong>تایید شده</strong> و <strong>فعال</strong> خواهد بود.
+                    نیازی به ارسال کد تایید نیست.
+                </p>
+            </div>
+
+            <!-- دکمه‌ها -->
+            <div class="flex items-center gap-3 mt-6 pt-6 border-t border-[#D6D3D1]">
+                <button type="submit" class="px-6 py-2 bg-[#C2410C] text-white rounded-lg text-sm font-semibold hover:bg-[#9A3412] transition">
+                    <i class="fas fa-user-plus ml-1"></i> ایجاد کاربر
+                </button>
+                <a asp-action="Index" class="px-6 py-2 border border-[#D6D3D1] rounded-lg text-sm font-semibold text-[#57534E] hover:bg-[#E7E5E4] transition">
+                    انصراف
+                </a>
+            </div>
+        </form>
+    </div>
+</div>
+
+@section Scripts {
+    @await Html.PartialAsync("_ValidationScriptsPartial")
+}

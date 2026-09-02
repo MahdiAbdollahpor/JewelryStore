@@ -33,10 +33,23 @@ namespace JewelryStore.Web.Areas.Admin.Controllers
         [HttpGet]
         public async Task<IActionResult> Index(AdminProductFilterDto filter)
         {
+            // ✅ تنظیم مقادیر پیش‌فرض
+            if (filter.Page < 1) filter.Page = 1;
+            if (filter.PageSize < 1) filter.PageSize = 10; // 10 محصول در هر صفحه
+
             try
             {
                 var products = await _adminService.GetAllProductsAsync(filter);
+
+                // ✅ دریافت تعداد کل محصولات برای صفحه‌بندی
+                var totalCount = await _productService.GetTotalProductsCountAsync(filter);
+
                 ViewBag.CurrentFilter = filter;
+                ViewBag.TotalCount = totalCount;
+                ViewBag.CurrentPage = filter.Page;
+                ViewBag.TotalPages = (int)Math.Ceiling((double)totalCount / filter.PageSize);
+                ViewBag.PageSize = filter.PageSize;
+
                 return View(products);
             }
             catch (Exception ex)

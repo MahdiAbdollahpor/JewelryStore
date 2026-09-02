@@ -254,7 +254,7 @@
                         @ViewBag.TotalCount <span class="text-[#C2A878]">اثر</span>
                     </span>
                     <span class="hs-sans hs-uppercase text-[#8E928D]">
-                        صفحه @filter?.Page
+                        صفحه @ViewBag.CurrentPage از @ViewBag.TotalPages
                     </span>
                 </div>
 
@@ -361,15 +361,117 @@
                     </div>
 
                     <!-- Pagination -->
+                    <!-- ✅ صفحه‌بندی -->
                     @if (ViewBag.TotalPages > 1)
                     {
-                        <div class="flex justify-center gap-2 mt-16 pt-8 border-t border-[#E3DCC9]">
-                            @for (int i = 1; i <= ViewBag.TotalPages; i++)
+                        <div class="flex justify-center items-center gap-2 mt-16 pt-8 border-t border-[#E3DCC9]">
+                            <!-- دکمه قبلی -->
+                            @if (ViewBag.CurrentPage > 1)
                             {
-                                <a asp-action="Index" asp-route-page="@i"
-                                   class="hs-sans w-10 h-10 flex items-center justify-center tabular-nums text-sm border border-[#E3DCC9] rounded-[2px] hs-transition @(filter?.Page == i ? "bg-[#1F3D2E] text-[#FBF7F0] border-[#1F3D2E]" : "text-[#5C625C] hover:border-[#1F3D2E]")">
-                                    @i
+                                <a asp-action="Index"
+                                   asp-route-page="@(ViewBag.CurrentPage - 1)"
+                                   asp-route-SearchTerm="@ViewBag.CurrentFilter?.SearchTerm"
+                                   asp-route-CategoryId="@ViewBag.CurrentFilter?.CategoryId"
+                                   asp-route-MinPrice="@ViewBag.CurrentFilter?.MinPrice"
+                                   asp-route-MaxPrice="@ViewBag.CurrentFilter?.MaxPrice"
+                                   asp-route-OnlyInStock="@ViewBag.CurrentFilter?.OnlyInStock"
+                                   asp-route-OnlyDiscounted="@ViewBag.CurrentFilter?.OnlyDiscounted"
+                                   asp-route-SortBy="@ViewBag.CurrentFilter?.SortBy"
+                                   class="px-4 py-2 border border-[#E3DCC9] rounded-[2px] hs-sans text-sm text-[#5C625C] hover:border-[#1F3D2E] hs-transition">
+                                    <i class="fas fa-chevron-right ml-1"></i> قبلی
                                 </a>
+                            }
+                            else
+                            {
+                                <span class="px-4 py-2 border border-[#E3DCC9] rounded-[2px] hs-sans text-sm text-[#8E928D] cursor-not-allowed">
+                                    <i class="fas fa-chevron-right ml-1"></i> قبلی
+                                </span>
+                            }
+
+                            <!-- شماره صفحات -->
+                            @{
+                                int startPage = Math.Max(1, ViewBag.CurrentPage - 2);
+                                int endPage = Math.Min(ViewBag.TotalPages, ViewBag.CurrentPage + 2);
+
+                                if (startPage > 1)
+                                {
+                                    <a asp-action="Index"
+                                       asp-route-page="1"
+                                       asp-route-SearchTerm="@ViewBag.CurrentFilter?.SearchTerm"
+                                       asp-route-CategoryId="@ViewBag.CurrentFilter?.CategoryId"
+                                       asp-route-MinPrice="@ViewBag.CurrentFilter?.MinPrice"
+                                       asp-route-MaxPrice="@ViewBag.CurrentFilter?.MaxPrice"
+                                       asp-route-OnlyInStock="@ViewBag.CurrentFilter?.OnlyInStock"
+                                       asp-route-OnlyDiscounted="@ViewBag.CurrentFilter?.OnlyDiscounted"
+                                       asp-route-SortBy="@ViewBag.CurrentFilter?.SortBy"
+                                       class="w-10 h-10 flex items-center justify-center border border-[#E3DCC9] rounded-[2px] hs-sans text-sm text-[#5C625C] hover:border-[#1F3D2E] hs-transition">
+                                        1
+                                    </a>
+                                    if (startPage > 2)
+                                    {
+                                        <span class="w-10 h-10 flex items-center justify-center hs-sans text-sm text-[#8E928D]">…</span>
+                                    }
+                                }
+
+                                for (int i = startPage; i <= endPage; i++)
+                                {
+                                    var isActive = i == ViewBag.CurrentPage;
+                                    <a asp-action="Index"
+                                       asp-route-page="@i"
+                                       asp-route-SearchTerm="@ViewBag.CurrentFilter?.SearchTerm"
+                                       asp-route-CategoryId="@ViewBag.CurrentFilter?.CategoryId"
+                                       asp-route-MinPrice="@ViewBag.CurrentFilter?.MinPrice"
+                                       asp-route-MaxPrice="@ViewBag.CurrentFilter?.MaxPrice"
+                                       asp-route-OnlyInStock="@ViewBag.CurrentFilter?.OnlyInStock"
+                                       asp-route-OnlyDiscounted="@ViewBag.CurrentFilter?.OnlyDiscounted"
+                                       asp-route-SortBy="@ViewBag.CurrentFilter?.SortBy"
+                                       class="w-10 h-10 flex items-center justify-center border rounded-[2px] hs-sans text-sm hs-transition @(isActive ? "border-[#1F3D2E] bg-[#1F3D2E] text-[#FBF7F0]" : "border-[#E3DCC9] text-[#5C625C] hover:border-[#1F3D2E]")">
+                                        @i
+                                    </a>
+                                }
+
+                                if (endPage < ViewBag.TotalPages)
+                                {
+                                    if (endPage < ViewBag.TotalPages - 1)
+                                    {
+                                        <span class="w-10 h-10 flex items-center justify-center hs-sans text-sm text-[#8E928D]">…</span>
+                                    }
+                                    <a asp-action="Index"
+                                       asp-route-page="@ViewBag.TotalPages"
+                                       asp-route-SearchTerm="@ViewBag.CurrentFilter?.SearchTerm"
+                                       asp-route-CategoryId="@ViewBag.CurrentFilter?.CategoryId"
+                                       asp-route-MinPrice="@ViewBag.CurrentFilter?.MinPrice"
+                                       asp-route-MaxPrice="@ViewBag.CurrentFilter?.MaxPrice"
+                                       asp-route-OnlyInStock="@ViewBag.CurrentFilter?.OnlyInStock"
+                                       asp-route-OnlyDiscounted="@ViewBag.CurrentFilter?.OnlyDiscounted"
+                                       asp-route-SortBy="@ViewBag.CurrentFilter?.SortBy"
+                                       class="w-10 h-10 flex items-center justify-center border border-[#E3DCC9] rounded-[2px] hs-sans text-sm text-[#5C625C] hover:border-[#1F3D2E] hs-transition">
+                                        @ViewBag.TotalPages
+                                    </a>
+                                }
+                            }
+
+                            <!-- دکمه بعدی -->
+                            @if (ViewBag.CurrentPage < ViewBag.TotalPages)
+                            {
+                                <a asp-action="Index"
+                                   asp-route-page="@(ViewBag.CurrentPage + 1)"
+                                   asp-route-SearchTerm="@ViewBag.CurrentFilter?.SearchTerm"
+                                   asp-route-CategoryId="@ViewBag.CurrentFilter?.CategoryId"
+                                   asp-route-MinPrice="@ViewBag.CurrentFilter?.MinPrice"
+                                   asp-route-MaxPrice="@ViewBag.CurrentFilter?.MaxPrice"
+                                   asp-route-OnlyInStock="@ViewBag.CurrentFilter?.OnlyInStock"
+                                   asp-route-OnlyDiscounted="@ViewBag.CurrentFilter?.OnlyDiscounted"
+                                   asp-route-SortBy="@ViewBag.CurrentFilter?.SortBy"
+                                   class="px-4 py-2 border border-[#E3DCC9] rounded-[2px] hs-sans text-sm text-[#5C625C] hover:border-[#1F3D2E] hs-transition">
+                                    بعدی <i class="fas fa-chevron-left mr-1"></i>
+                                </a>
+                            }
+                            else
+                            {
+                                <span class="px-4 py-2 border border-[#E3DCC9] rounded-[2px] hs-sans text-sm text-[#8E928D] cursor-not-allowed">
+                                    بعدی <i class="fas fa-chevron-left mr-1"></i>
+                                </span>
                             }
                         </div>
                     }

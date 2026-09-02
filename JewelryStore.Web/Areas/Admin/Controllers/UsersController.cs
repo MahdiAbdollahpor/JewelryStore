@@ -1,5 +1,7 @@
-﻿using JewelryStore.Services.DTOs.User;
+﻿using JewelryStore.Services.DTOs.Admin;
+using JewelryStore.Services.DTOs.User;
 using JewelryStore.Services.Interfaces;
+using JewelryStore.Services.Services;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
@@ -21,10 +23,23 @@ namespace JewelryStore.Web.Areas.Admin.Controllers
         [HttpGet]
         public async Task<IActionResult> Index(UserFilterDto filter)
         {
+            // ✅ تنظیم مقادیر پیش‌فرض
+            if (filter.Page < 1) filter.Page = 1;
+            if (filter.PageSize < 1) filter.PageSize = 10; // 10 کاربر در هر صفحه
+
             try
             {
                 var users = await _adminService.GetAllUsersAsync(filter);
+
+                // ✅ دریافت تعداد کل کاربران
+                var totalCount = await _adminService.GetTotalUsersCountAsync(filter);
+
                 ViewBag.CurrentFilter = filter;
+                ViewBag.TotalCount = totalCount;
+                ViewBag.CurrentPage = filter.Page;
+                ViewBag.TotalPages = (int)Math.Ceiling((double)totalCount / filter.PageSize);
+                ViewBag.PageSize = filter.PageSize;
+
                 return View(users);
             }
             catch (Exception ex)
@@ -117,6 +132,36 @@ namespace JewelryStore.Web.Areas.Admin.Controllers
                 _logger.LogError(ex, "خطا در حذف کاربر");
                 TempData["Error"] = "خطا در حذف کاربر.";
                 return RedirectToAction("Index");
+            }
+        }
+
+
+        // ==================== افزودن کاربر جدید توسط ادمین ====================
+
+        [HttpGet]
+        public IActionResult Create()
+        {
+            return View(new AdminCreateUserDto());
+        }
+
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> Create(AdminCreateUserDto createDto)
+        {
+            if (!ModelState.IsValid)
+                return View(createDto);
+
+            try
+            {
+                var user = await _adminService.CreateUserByAdminAsync(createDto);
+                TempData["Success"] = $"کاربر {user.Username} با موفقیت ایجاد شد.";
+                return RedirectToAction("Index");
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "خطا در ایجاد کاربر توسط ادمین");
+                ModelState.AddModelError("", ex.Message);
+                return View(createDto);
             }
         }
     }

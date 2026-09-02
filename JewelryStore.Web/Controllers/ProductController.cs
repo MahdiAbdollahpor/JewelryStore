@@ -19,13 +19,19 @@ namespace JewelryStore.Web.Controllers
         [HttpGet]
         public async Task<IActionResult> Index(ProductFilterDto filter)
         {
+            // تنظیم مقادیر پیش‌فرض
+            if (filter.Page < 1) filter.Page = 1;
+            if (filter.PageSize < 1) filter.PageSize = 6; // 12 محصول در هر صفحه
+
             var (products, totalCount) = await _productService.GetProductsAsync(filter);
 
-            // دریافت لیست دسته‌بندی‌ها برای فیلتر (با استفاده از ICategoryService)
             var categories = await _categoryService.GetAllCategoriesAsync(true);
             ViewBag.Categories = categories;
             ViewBag.TotalCount = totalCount;
             ViewBag.CurrentFilter = filter;
+            ViewBag.PageSize = filter.PageSize;
+            ViewBag.CurrentPage = filter.Page;
+            ViewBag.TotalPages = (int)Math.Ceiling((double)totalCount / filter.PageSize);
 
             return View(products);
         }

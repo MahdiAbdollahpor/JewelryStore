@@ -1,4 +1,5 @@
 ﻿using JewelryStore.Domain.Entities;
+using JewelryStore.Services.DTOs.Admin;
 using JewelryStore.Services.DTOs.Product;
 using Microsoft.AspNetCore.Http;
 
@@ -17,6 +18,7 @@ namespace JewelryStore.Services.Interfaces
 
         // عملیات ادمین
         Task<ProductDto> CreateProductAsync(CreateProductDto createDto);
+        Task<int> GetTotalProductsCountAsync(AdminProductFilterDto filter);
         Task<ProductDto> UpdateProductAsync(int id, UpdateProductDto updateDto);
         Task<bool> DeleteProductAsync(int id);
         Task<bool> ToggleProductStatusAsync(int id);

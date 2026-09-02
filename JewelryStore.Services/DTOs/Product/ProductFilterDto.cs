@@ -24,6 +24,6 @@ namespace JewelryStore.Services.DTOs.Product
         public bool? OnlyNew { get; set; }
         public string? SortBy { get; set; } // Newest, PriceLowToHigh, PriceHighToLow, Popularity, Rating
         public int Page { get; set; } = 1;
-        public int PageSize { get; set; } = 20;
+        public int PageSize { get; set; } = 6;
     }
 }

@@ -204,4 +204,99 @@
             </tbody>
         </table>
     </div>
+    <!-- ✅ صفحه‌بندی -->
+    @if (ViewBag.TotalPages > 1)
+    {
+        <div class="flex flex-wrap justify-center items-center gap-2 mt-6 pt-6 border-t border-[#D6D3D1]">
+            <!-- دکمه قبلی -->
+            @if (ViewBag.CurrentPage > 1)
+            {
+                <a asp-action="Index"
+                   asp-route-page="@(ViewBag.CurrentPage - 1)"
+                   asp-route-SearchTerm="@ViewBag.CurrentFilter?.SearchTerm"
+                   asp-route-CategoryId="@ViewBag.CurrentFilter?.CategoryId"
+                   asp-route-IsActive="@ViewBag.CurrentFilter?.IsActive"
+                   asp-route-IsInStock="@ViewBag.CurrentFilter?.IsInStock"
+                   class="px-3 py-1 border border-[#D6D3D1] rounded-lg text-sm hover:bg-[#E7E5E4] transition">
+                    قبلی
+                </a>
+            }
+            else
+            {
+                <span class="px-3 py-1 border border-[#D6D3D1] rounded-lg text-sm text-[#57534E] cursor-not-allowed">قبلی</span>
+            }
+
+            <!-- شماره صفحات -->
+            @{
+                int startPage = Math.Max(1, ViewBag.CurrentPage - 2);
+                int endPage = Math.Min(ViewBag.TotalPages, ViewBag.CurrentPage + 2);
+
+                if (startPage > 1)
+                {
+                    <a asp-action="Index"
+                       asp-route-page="1"
+                       asp-route-SearchTerm="@ViewBag.CurrentFilter?.SearchTerm"
+                       asp-route-CategoryId="@ViewBag.CurrentFilter?.CategoryId"
+                       asp-route-IsActive="@ViewBag.CurrentFilter?.IsActive"
+                       asp-route-IsInStock="@ViewBag.CurrentFilter?.IsInStock"
+                       class="px-3 py-1 border border-[#D6D3D1] rounded-lg text-sm hover:bg-[#E7E5E4] transition">
+                        1
+                    </a>
+                    if (startPage > 2)
+                    {
+                        <span class="px-3 py-1 text-[#57534E]">…</span>
+                    }
+                }
+
+                for (int i = startPage; i <= endPage; i++)
+                {
+                    var isActive = i == ViewBag.CurrentPage;
+                    <a asp-action="Index"
+                       asp-route-page="@i"
+                       asp-route-SearchTerm="@ViewBag.CurrentFilter?.SearchTerm"
+                       asp-route-CategoryId="@ViewBag.CurrentFilter?.CategoryId"
+                       asp-route-IsActive="@ViewBag.CurrentFilter?.IsActive"
+                       asp-route-IsInStock="@ViewBag.CurrentFilter?.IsInStock"
+                       class="px-3 py-1 border border-[#D6D3D1] rounded-lg text-sm transition @(isActive ? "bg-[#C2410C] text-white border-[#C2410C]" : "hover:bg-[#E7E5E4]")">
+                        @i
+                    </a>
+                }
+
+                if (endPage < ViewBag.TotalPages)
+                {
+                    if (endPage < ViewBag.TotalPages - 1)
+                    {
+                        <span class="px-3 py-1 text-[#57534E]">…</span>
+                    }
+                    <a asp-action="Index"
+                       asp-route-page="@ViewBag.TotalPages"
+                       asp-route-SearchTerm="@ViewBag.CurrentFilter?.SearchTerm"
+                       asp-route-CategoryId="@ViewBag.CurrentFilter?.CategoryId"
+                       asp-route-IsActive="@ViewBag.CurrentFilter?.IsActive"
+                       asp-route-IsInStock="@ViewBag.CurrentFilter?.IsInStock"
+                       class="px-3 py-1 border border-[#D6D3D1] rounded-lg text-sm hover:bg-[#E7E5E4] transition">
+                        @ViewBag.TotalPages
+                    </a>
+                }
+            }
+
+            <!-- دکمه بعدی -->
+            @if (ViewBag.CurrentPage < ViewBag.TotalPages)
+            {
+                <a asp-action="Index"
+                   asp-route-page="@(ViewBag.CurrentPage + 1)"
+                   asp-route-SearchTerm="@ViewBag.CurrentFilter?.SearchTerm"
+                   asp-route-CategoryId="@ViewBag.CurrentFilter?.CategoryId"
+                   asp-route-IsActive="@ViewBag.CurrentFilter?.IsActive"
+                   asp-route-IsInStock="@ViewBag.CurrentFilter?.IsInStock"
+                   class="px-3 py-1 border border-[#D6D3D1] rounded-lg text-sm hover:bg-[#E7E5E4] transition">
+                    بعدی
+                </a>
+            }
+            else
+            {
+                <span class="px-3 py-1 border border-[#D6D3D1] rounded-lg text-sm text-[#57534E] cursor-not-allowed">بعدی</span>
+            }
+        </div>
+    }
 </div>

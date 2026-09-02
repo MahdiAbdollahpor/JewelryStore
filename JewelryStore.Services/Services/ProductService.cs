@@ -1,6 +1,7 @@
 ﻿using AutoMapper;
 using JewelryStore.Data.Context;
 using JewelryStore.Domain.Entities;
+using JewelryStore.Services.DTOs.Admin;
 using JewelryStore.Services.DTOs.Product;
 using JewelryStore.Services.Interfaces;
 using Microsoft.AspNetCore.Http;
@@ -199,6 +200,28 @@ namespace JewelryStore.Services.Services
             var productDtos = _mapper.Map<IEnumerable<ProductListDto>>(relatedProducts);
             SetMainImages(relatedProducts, productDtos);
             return productDtos;
+        }
+
+        public async Task<int> GetTotalProductsCountAsync(AdminProductFilterDto filter)
+        {
+            var query = _context.Products.AsQueryable();
+
+            if (!string.IsNullOrWhiteSpace(filter.SearchTerm))
+            {
+                var search = filter.SearchTerm.Trim();
+                query = query.Where(p => p.Name.Contains(search) || (p.Brand != null && p.Brand.Contains(search)));
+            }
+
+            if (filter.CategoryId.HasValue)
+                query = query.Where(p => p.CategoryId == filter.CategoryId.Value);
+
+            if (filter.IsActive.HasValue)
+                query = query.Where(p => p.IsActive == filter.IsActive.Value);
+
+            if (filter.IsInStock.HasValue)
+                query = filter.IsInStock.Value ? query.Where(p => p.Quantity > 0) : query.Where(p => p.Quantity <= 0);
+
+            return await query.CountAsync();
         }
 
         // 7️⃣ جستجوی محصولات
