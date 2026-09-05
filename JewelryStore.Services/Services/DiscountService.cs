@@ -18,71 +18,98 @@ namespace JewelryStore.Services.Services
 
         // 1️⃣ اعتبارسنجی و اعمال کد تخفیف
         public async Task<DiscountValidationResult> ValidateAndApplyDiscountAsync(
-            string code, int userId, decimal orderAmount)
+    string code, int userId, decimal orderAmount)
         {
-            var discountCode = await _context.DiscountCodes
-                .FirstOrDefaultAsync(d => d.Code == code && d.IsActive);
-
-            if (discountCode == null)
-                return new DiscountValidationResult { IsValid = false, Message = "کد تخفیف نامعتبر است." };
-
-            // بررسی تاریخ انقضا
-            if (discountCode.EndDate.HasValue && discountCode.EndDate.Value < DateTime.Now)
-                return new DiscountValidationResult { IsValid = false, Message = "کد تخفیف منقضی شده است." };
-
-            if (discountCode.StartDate.HasValue && discountCode.StartDate.Value > DateTime.Now)
-                return new DiscountValidationResult { IsValid = false, Message = "کد تخفیف هنوز فعال نشده است." };
-
-            // بررسی حداقل مبلغ سفارش
-            if (discountCode.MinOrderAmount.HasValue && orderAmount < discountCode.MinOrderAmount.Value)
-                return new DiscountValidationResult
-                {
-                    IsValid = false,
-                    Message = $"حداقل مبلغ سفارش برای این کد تخفیف {discountCode.MinOrderAmount.Value:N0} تومان است."
-                };
-
-            // بررسی محدودیت تعداد استفاده کلی
-            if (discountCode.UsageLimit.HasValue && discountCode.UsedCount >= discountCode.UsageLimit.Value)
-                return new DiscountValidationResult { IsValid = false, Message = "تعداد استفاده از این کد تخفیف به پایان رسیده است." };
-
-            // بررسی محدودیت استفاده برای هر کاربر
-            if (discountCode.UsagePerUser.HasValue)
+            try
             {
-                var userUsageCount = await _context.DiscountUsages
-                    .CountAsync(u => u.UserId == userId && u.DiscountCodeId == discountCode.Id);
+                // ✅ بررسی وجود کد تخفیف
+                var discountCode = await _context.DiscountCodes
+                    .FirstOrDefaultAsync(d => d.Code == code && d.IsActive);
 
-                if (userUsageCount >= discountCode.UsagePerUser.Value)
+                if (discountCode == null)
                     return new DiscountValidationResult
                     {
                         IsValid = false,
-                        Message = "شما قبلاً از این کد تخفیف استفاده کرده‌اید."
+                        Message = "کد تخفیف نامعتبر است."
                     };
-            }
 
-            // محاسبه مبلغ تخفیف
-            decimal discountAmount = 0;
-            if (discountCode.DiscountType == DiscountType.Percentage)
-            {
-                discountAmount = orderAmount * (discountCode.DiscountValue / 100);
-                if (discountCode.MaxDiscountAmount.HasValue)
+                // بررسی تاریخ انقضا
+                if (discountCode.EndDate.HasValue && discountCode.EndDate.Value < DateTime.Now)
+                    return new DiscountValidationResult
+                    {
+                        IsValid = false,
+                        Message = "کد تخفیف منقضی شده است."
+                    };
+
+                if (discountCode.StartDate.HasValue && discountCode.StartDate.Value > DateTime.Now)
+                    return new DiscountValidationResult
+                    {
+                        IsValid = false,
+                        Message = "کد تخفیف هنوز فعال نشده است."
+                    };
+
+                // بررسی حداقل مبلغ سفارش
+                if (discountCode.MinOrderAmount.HasValue && orderAmount < discountCode.MinOrderAmount.Value)
+                    return new DiscountValidationResult
+                    {
+                        IsValid = false,
+                        Message = $"حداقل مبلغ سفارش برای این کد تخفیف {discountCode.MinOrderAmount.Value:N0} تومان است."
+                    };
+
+                // بررسی محدودیت تعداد استفاده کلی
+                if (discountCode.UsageLimit.HasValue && discountCode.UsedCount >= discountCode.UsageLimit.Value)
+                    return new DiscountValidationResult
+                    {
+                        IsValid = false,
+                        Message = "تعداد استفاده از این کد تخفیف به پایان رسیده است."
+                    };
+
+                // بررسی محدودیت استفاده برای هر کاربر
+                if (discountCode.UsagePerUser.HasValue)
                 {
-                    discountAmount = Math.Min(discountAmount, discountCode.MaxDiscountAmount.Value);
-                }
-            }
-            else // FixedAmount
-            {
-                discountAmount = discountCode.DiscountValue;
-                if (discountAmount > orderAmount)
-                    discountAmount = orderAmount; // تخفیف نباید از مبلغ سفارش بیشتر شود
-            }
+                    var userUsageCount = await _context.DiscountUsages
+                        .CountAsync(u => u.UserId == userId && u.DiscountCodeId == discountCode.Id);
 
-            return new DiscountValidationResult
+                    if (userUsageCount >= discountCode.UsagePerUser.Value)
+                        return new DiscountValidationResult
+                        {
+                            IsValid = false,
+                            Message = "شما قبلاً از این کد تخفیف استفاده کرده‌اید."
+                        };
+                }
+
+                // محاسبه مبلغ تخفیف
+                decimal discountAmount = 0;
+                if (discountCode.DiscountType == DiscountType.Percentage)
+                {
+                    discountAmount = orderAmount * (discountCode.DiscountValue / 100);
+                    if (discountCode.MaxDiscountAmount.HasValue)
+                        discountAmount = Math.Min(discountAmount, discountCode.MaxDiscountAmount.Value);
+                }
+                else // FixedAmount
+                {
+                    discountAmount = discountCode.DiscountValue;
+                    if (discountAmount > orderAmount)
+                        discountAmount = orderAmount;
+                }
+
+                return new DiscountValidationResult
+                {
+                    IsValid = true,
+                    Message = "کد تخفیف با موفقیت اعمال شد.",
+                    DiscountCode = discountCode,
+                    DiscountAmount = discountAmount
+                };
+            }
+            catch (Exception ex)
             {
-                IsValid = true,
-                Message = "کد تخفیف با موفقیت اعمال شد.",
-                DiscountCode = discountCode,
-                DiscountAmount = discountAmount
-            };
+                // ✅ لاگ خطا
+                return new DiscountValidationResult
+                {
+                    IsValid = false,
+                    Message = $"خطا در اعتبارسنجی کد تخفیف: {ex.Message}"
+                };
+            }
         }
 
         // 2️⃣ ثبت استفاده از کد تخفیف

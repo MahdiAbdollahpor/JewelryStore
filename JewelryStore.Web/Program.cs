@@ -23,7 +23,7 @@ builder.Services.AddAutoMapper(typeof(Program));
 // 3️⃣ ثبت سرویس پیامک
 builder.Services.AddScoped<ISmsSender, SmsSender>();
 
-// 4️⃣ ثبت سرویس پرداخت
+// ثبت سرویس پرداخت
 builder.Services.AddHttpClient<ZarinPalService>((client) =>
 {
     var isSandbox = builder.Configuration.GetValue<bool>("ZarinPal:IsSandbox", true);
@@ -49,7 +49,6 @@ builder.Services.AddScoped<IPaymentService>(serviceProvider =>
 
     return new ZarinPalService(client, logger, merchantId, isSandbox);
 });
-
 // 5️⃣ ثبت سرویس‌های اصلی برنامه
 builder.Services.AddScoped<IUserService, UserService>();
 builder.Services.AddScoped<ICategoryService, CategoryService>();
@@ -63,6 +62,8 @@ builder.Services.AddScoped<INotificationService, NotificationService>();
 builder.Services.AddScoped<IReportService, ReportService>();
 builder.Services.AddScoped<IAdminService, AdminService>();
 builder.Services.AddScoped<IWishlistService, WishlistService>();
+builder.Services.AddScoped<IDiscountService, DiscountService>(); // ✅ این خط باید باشد
+
 
 
 

@@ -19,7 +19,6 @@ namespace JewelryStore.Infrastructure.Services.Payment
             _merchantId = merchantId;
             _isSandbox = isSandbox;
 
-            // تنظیم BaseAddress بر اساس محیط
             var baseUrl = _isSandbox
                 ? "https://sandbox.zarinpal.com/"
                 : "https://api.zarinpal.com/";
@@ -28,9 +27,7 @@ namespace JewelryStore.Infrastructure.Services.Payment
             _httpClient.DefaultRequestHeaders.Add("Accept", "application/json");
         }
 
-        /// <summary>
-        /// درخواست پرداخت جدید
-        /// </summary>
+        // ==================== درخواست پرداخت ====================
         public async Task<PaymentResult> RequestPaymentAsync(
             int amount,
             string description,
@@ -105,7 +102,6 @@ namespace JewelryStore.Infrastructure.Services.Payment
                     };
                 }
 
-                // ساخت آدرس پرداخت
                 var paymentBaseUrl = _isSandbox
                     ? "https://sandbox.zarinpal.com/pg/StartPay/"
                     : "https://www.zarinpal.com/pg/StartPay/";
@@ -134,9 +130,7 @@ namespace JewelryStore.Infrastructure.Services.Payment
             }
         }
 
-        /// <summary>
-        /// تایید پرداخت
-        /// </summary>
+        // ==================== تایید پرداخت ====================
         public async Task<PaymentResult> VerifyPaymentAsync(string authority, int amount)
         {
             try
@@ -185,7 +179,6 @@ namespace JewelryStore.Infrastructure.Services.Payment
                     };
                 }
 
-                // کدهای موفقیت: 100 (پرداخت تایید شد) یا 101 (پرداخت قبلاً تایید شده)
                 if (result.Data.Code == 100 || result.Data.Code == 101)
                 {
                     _logger.LogInformation($"پرداخت با موفقیت تایید شد. RefId: {result.Data.RefId}");
@@ -223,9 +216,193 @@ namespace JewelryStore.Infrastructure.Services.Payment
             }
         }
 
+        // ==================== برگشت وجه (Refund) ====================
+        public async Task<PaymentResult> RefundPaymentAsync(string authority, int amount)
+        {
+            try
+            {
+                _logger.LogInformation($"درخواست برگشت وجه (Reverse) برای Authority: {authority} به مبلغ {amount}");
+
+                // ✅ اگر در حالت Sandbox هستیم، برگشت وجه را شبیه‌سازی کنید
+                if (_isSandbox)
+                {
+                    _logger.LogWarning("حالت Sandbox: برگشت وجه به صورت شبیه‌سازی انجام می‌شود.");
+                    return new PaymentResult
+                    {
+                        IsSuccess = true,
+                        Message = "برگشت وجه با موفقیت انجام شد (Sandbox).",
+                        Authority = authority,
+                        RefId = DateTime.Now.Ticks
+                    };
+                }
+
+                // ✅ استفاده از متد reverse.json (نه refund.json)
+                var requestData = new
+                {
+                    merchant_id = _merchantId,
+                    authority = authority
+                };
+
+                var content = new StringContent(
+                    JsonConvert.SerializeObject(requestData),
+                    Encoding.UTF8,
+                    "application/json"
+                );
+
+                // ✅ آدرس صحیح: reverse.json
+                var response = await _httpClient.PostAsync("pg/v4/payment/reverse.json", content);
+                var responseString = await response.Content.ReadAsStringAsync();
+
+                _logger.LogInformation($"پاسخ برگشت وجه (Reverse): {responseString}");
+
+                // بررسی وضعیت پاسخ
+                if (!response.IsSuccessStatusCode)
+                {
+                    _logger.LogError($"خطا در برگشت وجه: {response.StatusCode} - {responseString}");
+                    return new PaymentResult
+                    {
+                        IsSuccess = false,
+                        Message = $"خطا در برگشت وجه: {response.StatusCode}",
+                        Authority = authority,
+                        ErrorCode = response.StatusCode.ToString()
+                    };
+                }
+
+                // Parse پاسخ
+                try
+                {
+                    var result = JsonConvert.DeserializeObject<ZarinPalReverseResponse>(responseString);
+
+                    if (result?.Data != null)
+                    {
+                        // ✅ کد 100 به معنای موفقیت است (پیام "Reversed")
+                        if (result.Data.Code == 100)
+                        {
+                            _logger.LogInformation($"برگشت وجه با موفقیت انجام شد. Authority: {authority}");
+                            return new PaymentResult
+                            {
+                                IsSuccess = true,
+                                Message = "برگشت وجه با موفقیت انجام شد.",
+                                Authority = authority,
+                                RefId = DateTime.Now.Ticks
+                            };
+                        }
+
+                        // خطا از سمت زرین‌پال
+                        var errorMessage = result.Data.Message ?? GetReverseErrorMessage(result.Data.Code);
+                        _logger.LogWarning($"خطا در برگشت وجه: کد {result.Data.Code} - {errorMessage}");
+
+                        return new PaymentResult
+                        {
+                            IsSuccess = false,
+                            Message = $"خطا در برگشت وجه: {errorMessage}",
+                            Authority = authority,
+                            ErrorCode = result.Data.Code.ToString()
+                        };
+                    }
+
+                    // اگر خطاهای ارسالی وجود داشته باشد
+                    if (result?.Errors != null)
+                    {
+                        var errorMessage = GetReverseErrorMessageFromErrors(result.Errors);
+                        return new PaymentResult
+                        {
+                            IsSuccess = false,
+                            Message = errorMessage,
+                            Authority = authority,
+                            ErrorCode = "ERRORS"
+                        };
+                    }
+
+                    return new PaymentResult
+                    {
+                        IsSuccess = false,
+                        Message = "پاسخ نامعتبر از درگاه پرداخت.",
+                        Authority = authority,
+                        ErrorCode = "INVALID_RESPONSE"
+                    };
+                }
+                catch (Exception ex)
+                {
+                    _logger.LogError(ex, "خطا در Parse پاسخ برگشت وجه");
+                    return new PaymentResult
+                    {
+                        IsSuccess = false,
+                        Message = $"خطا در برگشت وجه: {ex.Message}",
+                        Authority = authority,
+                        ErrorCode = "PARSE_ERROR"
+                    };
+                }
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "خطا در برگشت وجه");
+                return new PaymentResult
+                {
+                    IsSuccess = false,
+                    Message = $"خطا در برگشت وجه: {ex.Message}",
+                    Authority = authority,
+                    ErrorCode = "EXCEPTION"
+                };
+            }
+        }
+
         /// <summary>
-        /// ترجمه کد خطا به پیام فارسی
+        /// ترجمه کدهای خطای متد Reverse
         /// </summary>
+        private string GetReverseErrorMessage(int code)
+        {
+            return code switch
+            {
+                -60 => "تراکنش قابل برگشت نیست. (ممکن است بیش از ۳۰ دقیقه از پرداخت گذشته باشد)",
+                -61 => "تراکنش قبلاً برگشت خورده است.",
+                -62 => "آی‌پی سرور مجاز نیست. لطفاً آی‌پی سرور را در تنظیمات درگاه ثبت کنید.",
+                -63 => "اطلاعات ارسال شده ناقص است.",
+                _ => $"خطای ناشناخته (کد: {code})"
+            };
+        }
+
+        private string GetReverseErrorMessageFromErrors(object errors)
+        {
+            try
+            {
+                var errorJson = JsonConvert.SerializeObject(errors);
+                dynamic errorObj = JsonConvert.DeserializeObject(errorJson);
+                return errorObj?.message?.ToString() ?? "خطا در برگشت وجه.";
+            }
+            catch
+            {
+                return "خطا در برگشت وجه.";
+            }
+        }
+
+        // ==================== بررسی وضعیت پرداخت ====================
+        public async Task<PaymentStatusResult> GetPaymentStatusAsync(string authority)
+        {
+            try
+            {
+                // در زرین‌پال، بررسی وضعیت از طریق API موجود است
+                // فعلاً یک پاسخ ساده برمی‌گردانیم
+                return new PaymentStatusResult
+                {
+                    IsSuccess = true,
+                    Status = "Paid",
+                    Message = "وضعیت پرداخت: پرداخت شده"
+                };
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "خطا در بررسی وضعیت پرداخت");
+                return new PaymentStatusResult
+                {
+                    IsSuccess = false,
+                    Status = "Failed",
+                    Message = ex.Message
+                };
+            }
+        }
+
+        // ==================== متدهای کمکی ====================
         private string GetErrorMessage(int code, string defaultMessage = null)
         {
             return code switch

@@ -32,5 +32,11 @@ namespace JewelryStore.Services.Interfaces
         /// افزودن کد رهگیری به سفارش (فقط ادمین)
         Task<bool> AddTrackingCodeAsync(int orderId, string trackingCode);
         Task<Order> GetOrderEntityByIdAsync(int orderId);
+
+        /// برگشت وجه سفارش (فقط برای سفارشات پرداخت‌شده)
+        Task<bool> RefundOrderAsync(int orderId, string reason);
+
+        /// تغییر وضعیت پرداخت سفارش
+        Task<bool> UpdatePaymentStatusAsync(int orderId, PaymentStatus newStatus);
     }
 }

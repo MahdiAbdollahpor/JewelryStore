@@ -13,6 +13,30 @@
         --es-border: #D6D3D1;
         --es-text-primary: #1C1917;
         --es-text-secondary: #57534E;
+        --es-success: #16A34A;
+        --es-warning: #D97706;
+        --es-error: #DC2626;
+    }
+
+    .info-row {
+        display: flex;
+        justify-content: space-between;
+        padding: 8px 0;
+        border-bottom: 1px solid var(--es-border);
+    }
+
+        .info-row:last-child {
+            border-bottom: none;
+        }
+
+    .info-label {
+        color: var(--es-text-secondary);
+        font-size: 13px;
+    }
+
+    .info-value {
+        font-weight: 500;
+        color: var(--es-text-primary);
     }
 
     .status-badge {
@@ -58,28 +82,58 @@
         background: rgba(220, 38, 38, 0.1);
         color: #DC2626;
     }
+
+    .status-refunded {
+        background: rgba(220, 38, 38, 0.1);
+        color: #DC2626;
+    }
+
+    .badge-payment-paid {
+        background: rgba(22, 163, 74, 0.1);
+        color: #16A34A;
+    }
+
+    .badge-payment-pending {
+        background: rgba(245, 158, 11, 0.1);
+        color: #D97706;
+    }
+
+    .badge-payment-failed {
+        background: rgba(220, 38, 38, 0.1);
+        color: #DC2626;
+    }
+
+    .badge-payment-refunded {
+        background: rgba(220, 38, 38, 0.1);
+        color: #DC2626;
+    }
 </style>
 
 <div class="space-y-6">
-    <!-- هدر -->
+    <!-- ==================== هدر ==================== -->
     <div>
         <nav class="text-sm text-[#57534E] mb-2">
             <a asp-action="Index" class="hover:text-[#C2410C] transition">مدیریت سفارشات</a>
             <span class="mx-2">/</span>
             <span class="text-[#1C1917]">@Model.OrderNumber</span>
         </nav>
-        <div class="flex items-center justify-between">
+        <div class="flex items-center justify-between flex-wrap gap-4">
             <div>
                 <h1 class="font-['Playfair_Display'] text-3xl font-bold text-[#1C1917]">سفارش @Model.OrderNumber</h1>
                 <p class="text-[#57534E] mt-1">ثبت شده در @Model.CreatedAt.ToString("yyyy/MM/dd HH:mm")</p>
             </div>
-            <span class="status-badge status-@(Model.OrderStatus.ToString().ToLower())">
-                @GetStatusName(Model.OrderStatus)
-            </span>
+            <div class="flex items-center gap-3">
+                <span class="status-badge status-@(Model.OrderStatus.ToString().ToLower())">
+                    @GetStatusName(Model.OrderStatus)
+                </span>
+                <span class="status-badge badge-payment-@(Model.PaymentStatus.ToString().ToLower())">
+                    @GetPaymentStatusName(Model.PaymentStatus)
+                </span>
+            </div>
         </div>
     </div>
 
-    <!-- اطلاعات -->
+    <!-- ==================== اطلاعات اصلی ==================== -->
     <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
         <!-- آیتم‌های سفارش -->
         <div class="lg:col-span-2 bg-[#F5F5F4] border border-[#D6D3D1] rounded-xl p-6">
@@ -111,34 +165,34 @@
             <h3 class="font-['Playfair_Display'] text-xl font-semibold text-[#1C1917] mb-4">خلاصه سفارش</h3>
 
             <div class="space-y-2 text-sm">
-                <div class="flex justify-between">
-                    <span class="text-[#57534E]">جمع کل</span>
+                <div class="info-row">
+                    <span class="info-label">جمع کل</span>
                     <span>@Model.SubTotal.ToString("N0") تومان</span>
                 </div>
                 @if (Model.DiscountTotal > 0)
                 {
-                    <div class="flex justify-between text-[#16A34A]">
+                    <div class="info-row text-[#16A34A]">
                         <span>تخفیف</span>
                         <span>-@Model.DiscountTotal.ToString("N0") تومان</span>
                     </div>
                 }
-                <div class="flex justify-between">
-                    <span class="text-[#57534E]">هزینه ارسال</span>
+                <div class="info-row">
+                    <span class="info-label">هزینه ارسال</span>
                     <span>@Model.ShippingCost.ToString("N0") تومان</span>
                 </div>
-                <div class="flex justify-between">
-                    <span class="text-[#57534E]">مالیات</span>
+                <div class="info-row">
+                    <span class="info-label">مالیات</span>
                     <span>@Model.TaxAmount.ToString("N0") تومان</span>
                 </div>
                 @if (Model.DiscountCodeAmount > 0)
                 {
-                    <div class="flex justify-between text-[#16A34A]">
+                    <div class="info-row text-[#16A34A]">
                         <span>تخفیف کد</span>
                         <span>-@Model.DiscountCodeAmount.ToString("N0") تومان</span>
                     </div>
                 }
-                <div class="flex justify-between font-semibold text-lg pt-2 border-t border-[#D6D3D1]">
-                    <span>قابل پرداخت</span>
+                <div class="info-row font-semibold text-lg pt-2 border-t border-[#D6D3D1]">
+                    <span class="text-[#1C1917]">قابل پرداخت</span>
                     <span class="text-[#C2410C]">@Model.TotalAmount.ToString("N0") تومان</span>
                 </div>
             </div>
@@ -146,7 +200,7 @@
             <!-- اطلاعات گیرنده -->
             <div class="mt-4 pt-4 border-t border-[#D6D3D1]">
                 <h4 class="text-xs font-semibold text-[#57534E] uppercase tracking-wider mb-2">اطلاعات تحویل</h4>
-                <p class="text-sm">@Model.RecipientName</p>
+                <p class="text-sm font-medium text-[#1C1917]">@Model.RecipientName</p>
                 <p class="text-sm text-[#57534E]">@Model.RecipientPhone</p>
                 <p class="text-sm text-[#57534E] mt-1">@Model.ShippingAddress</p>
             </div>
@@ -156,7 +210,7 @@
                 <h4 class="text-xs font-semibold text-[#57534E] uppercase tracking-wider mb-2">کد رهگیری</h4>
                 @if (!string.IsNullOrEmpty(Model.TrackingCode))
                 {
-                    <p class="font-mono text-sm font-medium">@Model.TrackingCode</p>
+                    <p class="font-mono text-sm font-medium text-[#1F3D2E]">@Model.TrackingCode</p>
                 }
                 else
                 {
@@ -166,11 +220,12 @@
         </div>
     </div>
 
-    <!-- عملیات -->
+    <!-- ==================== عملیات ==================== -->
     <div class="bg-[#F5F5F4] border border-[#D6D3D1] rounded-xl p-6">
         <h3 class="font-['Playfair_Display'] text-xl font-semibold text-[#1C1917] mb-4">عملیات</h3>
         <div class="flex flex-wrap gap-4">
-            <!-- تغییر وضعیت -->
+
+            <!-- 1️⃣ تغییر وضعیت -->
             <form asp-action="UpdateStatus" asp-route-id="@Model.Id" method="post" class="flex items-center gap-3">
                 @Html.AntiForgeryToken()
                 <select name="status" class="px-3 py-2 border border-[#D6D3D1] rounded-lg bg-white text-sm focus:outline-none focus:ring-2 focus:ring-[#C2410C]/20 focus:border-[#C2410C]">
@@ -185,7 +240,7 @@
                 </button>
             </form>
 
-            <!-- افزودن کد رهگیری -->
+            <!-- 2️⃣ افزودن کد رهگیری -->
             <form asp-action="AddTracking" asp-route-id="@Model.Id" method="post" class="flex items-center gap-3">
                 @Html.AntiForgeryToken()
                 <input type="text" name="trackingCode" class="px-3 py-2 border border-[#D6D3D1] rounded-lg bg-white text-sm w-48 focus:outline-none focus:ring-2 focus:ring-[#C2410C]/20 focus:border-[#C2410C]" placeholder="کد رهگیری" />
@@ -194,19 +249,28 @@
                 </button>
             </form>
 
-            <!-- لغو سفارش -->
+            <!-- ❌ دکمه برگشت وجه حذف شد (با لغو ادغام شده) -->
+            <!-- 3️⃣ لغو سفارش (با برگشت وجه خودکار) -->
             @if (Model.OrderStatus == OrderStatus.Pending || Model.OrderStatus == OrderStatus.Paid)
             {
-                <form asp-action="Cancel" asp-route-id="@Model.Id" method="post"
-                      onsubmit="return confirm('آیا از لغو این سفارش اطمینان دارید؟')">
+                <form asp-action="Cancel" asp-route-id="@Model.Id" method="post" class="flex items-center gap-3"
+                      onsubmit="return confirm('آیا از لغو این سفارش اطمینان دارید؟\n@(Model.PaymentStatus == PaymentStatus.Paid ? "وجه سفارش به صورت خودکار برگشت داده خواهد شد." : "")')">
                     @Html.AntiForgeryToken()
-                    <input type="text" name="reason" class="px-3 py-2 border border-[#D6D3D1] rounded-lg bg-white text-sm w-48 focus:outline-none focus:ring-2 focus:ring-[#C2410C]/20 focus:border-[#C2410C]" placeholder="دلیل لغو" />
-                    <button type="submit" class="px-4 py-2 bg-red-600 text-white rounded-lg text-sm font-semibold hover:bg-red-700 transition">
-                        <i class="fas fa-times ml-1"></i> لغو سفارش
+                    <input type="text" name="reason" class="px-3 py-2 border border-[#D6D3D1] rounded-lg bg-white text-sm w-48 focus:outline-none focus:ring-2 focus:ring-[#C2410C]/20 focus:border-[#C2410C]" placeholder="دلیل لغو" required />
+                    <button type="submit" class="px-4 py-2 bg-[#DC2626] text-white rounded-lg text-sm font-semibold hover:bg-[#B91C1C] transition">
+                        <i class="fas fa-times ml-1"></i>
+                        @(Model.PaymentStatus == PaymentStatus.Paid ? "لغو و برگشت وجه" : "لغو سفارش")
                     </button>
                 </form>
             }
         </div>
+    </div>
+
+    <!-- ==================== تاریخچه وضعیت ==================== -->
+    @* TODO: نمایش تاریخچه وضعیت‌ها از OrderStatusHistory *@
+    <div class="bg-[#F5F5F4] border border-[#D6D3D1] rounded-xl p-6">
+        <h3 class="font-['Playfair_Display'] text-xl font-semibold text-[#1C1917] mb-4">تاریخچه وضعیت</h3>
+        <p class="text-[#57534E] text-sm">به زودی...</p>
     </div>
 </div>
 
@@ -222,6 +286,18 @@
             OrderStatus.Delivered => "تحویل داده شده",
             OrderStatus.Cancelled => "لغو شده",
             OrderStatus.Returned => "مرجوع شده",
+            _ => "نامشخص"
+        };
+    }
+
+    private string GetPaymentStatusName(PaymentStatus status)
+    {
+        return status switch
+        {
+            PaymentStatus.Pending => "در انتظار پرداخت",
+            PaymentStatus.Paid => "پرداخت شده",
+            PaymentStatus.Failed => "ناموفق",
+            PaymentStatus.Refunded => "برگشت وجه",
             _ => "نامشخص"
         };
     }

@@ -67,7 +67,9 @@ namespace JewelryStore.Web
                 .ForMember(dest => dest.PaymentDate, opt => opt.MapFrom(src => src.PaymentDate))
                 .ForMember(dest => dest.ShippingDate, opt => opt.MapFrom(src => src.ShippingDate))
                 .ForMember(dest => dest.DeliveryDate, opt => opt.MapFrom(src => src.DeliveryDate))
-                .ForMember(dest => dest.UpdatedAt, opt => opt.MapFrom(src => src.UpdatedAt));
+                .ForMember(dest => dest.UpdatedAt, opt => opt.MapFrom(src => src.UpdatedAt))
+                .ForMember(dest => dest.PaymentMethod, opt => opt.MapFrom(src => src.PaymentMethod))
+                .ForMember(dest => dest.PaymentReference, opt => opt.MapFrom(src => src.PaymentReference));
 
             CreateMap<OrderItem, OrderItemDetailDto>();
 

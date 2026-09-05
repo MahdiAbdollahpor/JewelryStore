@@ -1,23 +1,363 @@
-﻿@{
+﻿@using JewelryStore.Services.DTOs.Cart
+@using JewelryStore.Services.DTOs.Order
+@model CreateOrderDto
+@{
     ViewData["Title"] = "تکمیل سفارش";
+    var cart = ViewBag.Cart as CartDto;
 }
 
-<div class="min-h-screen flex items-center justify-center" style="background-color: #FBF7F0;">
-    <div class="max-w-2xl w-full mx-4 p-12 bg-white border border-[#E3DCC9] rounded-[4px]">
-        <div class="text-center">
-            <i class="fas fa-credit-card text-4xl text-[#C2A878] mb-4 block"></i>
-            <h1 class="font-['Cormorant_Garamond'] text-4xl text-[#1A1F1B] mb-4">تکمیل سفارش</h1>
-            <p class="font-['Vazirmatn'] text-[#5C625C] mb-8">
-                این صفحه به درگاه پرداخت متصل خواهد شد.
+<style>
+    :root {
+        --hs-bg: #FBF7F0;
+        --hs-forest: #1F3D2E;
+        --hs-forest-deep: #142A1F;
+        --hs-tan: #C2A878;
+        --hs-ink: #1A1F1B;
+        --hs-ink-muted: #5C625C;
+        --hs-ink-subtle: #8E928D;
+        --hs-outline: #E3DCC9;
+        --hs-outline-strong: #C9C0AA;
+        --hs-display: 'Cormorant Garamond', 'IranNastaliq', serif;
+        --hs-sans: 'Vazirmatn', 'Inter', sans-serif;
+    }
+
+    .hs-display {
+        font-family: var(--hs-display);
+        letter-spacing: -0.02em;
+        line-height: 1.1;
+    }
+
+    .hs-sans {
+        font-family: var(--hs-sans);
+    }
+
+    .hs-uppercase {
+        text-transform: uppercase;
+        letter-spacing: 0.18em;
+        font-size: 0.7rem;
+    }
+
+    .hs-transition {
+        transition: all 320ms cubic-bezier(0.22, 0.61, 0.36, 1);
+    }
+
+    .hs-card {
+        background: #FFFFFF;
+        border: 1px solid var(--hs-outline);
+        border-radius: 4px;
+    }
+
+    .hs-input {
+        width: 100%;
+        background: transparent;
+        border: none;
+        border-bottom: 1px solid #C9C0AA;
+        padding: 0.75rem 0;
+        font-family: var(--hs-sans);
+        color: var(--hs-ink);
+        transition: all 320ms cubic-bezier(0.22, 0.61, 0.36, 1);
+    }
+
+        .hs-input:focus {
+            outline: none;
+            border-bottom: 2px solid var(--hs-forest);
+        }
+
+        .hs-input::placeholder {
+            color: #8E928D;
+        }
+
+    .btn-hs-primary {
+        background: var(--hs-forest);
+        color: #FBF7F0;
+        border-radius: 2px;
+        font-weight: 500;
+        text-transform: uppercase;
+        letter-spacing: 0.12em;
+        transition: all 320ms cubic-bezier(0.22, 0.61, 0.36, 1);
+        font-family: var(--hs-sans);
+    }
+
+        .btn-hs-primary:hover {
+            background: var(--hs-forest-deep);
+        }
+
+    .btn-hs-outline {
+        background: transparent;
+        border: 1px solid var(--hs-forest);
+        color: var(--hs-forest);
+        border-radius: 2px;
+        font-weight: 500;
+        text-transform: uppercase;
+        letter-spacing: 0.12em;
+        transition: all 320ms cubic-bezier(0.22, 0.61, 0.36, 1);
+        font-family: var(--hs-sans);
+    }
+
+        .btn-hs-outline:hover {
+            background: var(--hs-forest);
+            color: #FBF7F0;
+        }
+
+    .cart-item {
+        display: flex;
+        align-items: center;
+        gap: 16px;
+        padding: 12px 0;
+        border-bottom: 1px solid var(--hs-outline);
+    }
+
+        .cart-item:last-child {
+            border-bottom: none;
+        }
+
+        .cart-item img {
+            width: 60px;
+            height: 60px;
+            object-fit: cover;
+            border: 1px solid var(--hs-outline);
+            border-radius: 4px;
+        }
+
+    .discount-box {
+        background-color: #F5EFE3;
+        border: 1px solid #C2A878;
+        border-radius: 4px;
+        padding: 12px 16px;
+    }
+</style>
+
+<div class="min-h-screen" style="background-color: #FBF7F0; color: #1A1F1B;">
+
+    <!-- ✅ هدر صفحه -->
+    <div class="border-b border-[#E3DCC9] py-20">
+        <div class="max-w-[1440px] mx-auto px-6 md:px-12">
+            <h1 class="hs-display text-4xl md:text-5xl text-[#1A1F1B]">
+                <i class="fas fa-credit-card text-[#C2A878] text-3xl ml-4"></i>
+                تکمیل سفارش
+            </h1>
+            <p class="hs-sans text-lg text-[#5C625C] mt-2">
+                @(cart?.Items.Count ?? 0) اثر در کلکسیون شما
             </p>
-            <div class="flex gap-4 justify-center">
-                <a asp-action="Index" class="px-6 py-2 border border-[#1F3D2E] text-[#1F3D2E] rounded-[2px] text-sm uppercase tracking-[0.12em] hover:bg-[#1F3D2E] hover:text-white transition-all">
-                    بازگشت به کلکسیون
-                </a>
-                <a href="#" class="px-6 py-2 bg-[#1F3D2E] text-white rounded-[2px] text-sm uppercase tracking-[0.12em] hover:bg-[#142A1F] transition-all">
-                    پرداخت
-                </a>
+        </div>
+
+
+        <!-- ✅ نمایش خطاهای اعتبارسنجی -->
+        @if (TempData["Error"] != null)
+        {
+            <div class="mb-6 p-4 border border-[#DC2626] bg-[#FEE2E2] rounded">
+                <p class="hs-sans text-sm text-[#991B1B]">
+                    <i class="fas fa-exclamation-circle ml-2"></i>
+                    @TempData["Error"]
+                </p>
+            </div>
+        }
+
+        @if (ViewBag.Error != null)
+        {
+            <div class="mb-6 p-4 border border-[#DC2626] bg-[#FEE2E2] rounded">
+                <p class="hs-sans text-sm text-[#991B1B]">
+                    <i class="fas fa-exclamation-circle ml-2"></i>
+                    @ViewBag.Error
+                </p>
+            </div>
+        }
+    </div>
+
+    <!-- ✅ محتوای اصلی -->
+    <div class="max-w-[1440px] mx-auto px-6 md:px-12 py-16">
+        <div class="grid grid-cols-1 lg:grid-cols-3 gap-12">
+
+            <!-- ==================== فرم اطلاعات کاربر ==================== -->
+            <div class="lg:col-span-2">
+                <div class="hs-card p-8">
+                    <h3 class="hs-display text-2xl text-[#1A1F1B] mb-6">اطلاعات تحویل</h3>
+
+                    <!-- ✅ فرم اصلی ثبت سفارش -->
+                    <form asp-action="CreateOrder" asp-controller="Order" method="post" id="checkoutForm">
+                        @Html.AntiForgeryToken()
+
+                        <div asp-validation-summary="ModelOnly" class="text-[#DC2626] hs-sans text-sm mb-4"></div>
+
+                        <!-- نام گیرنده -->
+                        <div class="space-y-6">
+                            <div>
+                                <label asp-for="RecipientName" class="hs-sans text-xs uppercase tracking-[0.18em] text-[#5C625C] block mb-2">
+                                    نام گیرنده *
+                                </label>
+                                <input asp-for="RecipientName" class="hs-input" placeholder="نام کامل گیرنده را وارد کنید" />
+                                <span asp-validation-for="RecipientName" class="hs-sans text-xs text-[#DC2626] block mt-1"></span>
+                            </div>
+
+                            <!-- شماره تماس گیرنده -->
+                            <div>
+                                <label asp-for="RecipientPhone" class="hs-sans text-xs uppercase tracking-[0.18em] text-[#5C625C] block mb-2">
+                                    شماره تماس *
+                                </label>
+                                <input asp-for="RecipientPhone" class="hs-input" placeholder="09xxxxxxxxx" dir="ltr" />
+                                <span asp-validation-for="RecipientPhone" class="hs-sans text-xs text-[#DC2626] block mt-1"></span>
+                            </div>
+
+                            <!-- آدرس تحویل -->
+                            <div>
+                                <label asp-for="ShippingAddress" class="hs-sans text-xs uppercase tracking-[0.18em] text-[#5C625C] block mb-2">
+                                    آدرس تحویل *
+                                </label>
+                                <input asp-for="ShippingAddress" class="hs-input" rows="3"
+                                       placeholder="آدرس کامل تحویل را وارد کنید" required />
+                                <span asp-validation-for="ShippingAddress" class="hs-sans text-xs text-[#DC2626] block mt-1"></span>
+                            </div>
+
+                            <!-- روش پرداخت -->
+                            <div>
+                                <label asp-for="PaymentMethod" class="hs-sans text-xs uppercase tracking-[0.18em] text-[#5C625C] block mb-2">
+                                    روش پرداخت *
+                                </label>
+                                <select asp-for="PaymentMethod" class="hs-input appearance-none cursor-pointer">
+                                    <option value="Online">پرداخت آنلاین (زرین‌پال)</option>
+                                    <option value="CardToCard">کارت به کارت</option>
+                                    <option value="CashOnDelivery">پرداخت در محل</option>
+                                </select>
+                                <span asp-validation-for="PaymentMethod" class="hs-sans text-xs text-[#DC2626] block mt-1"></span>
+                            </div>
+
+                            <!-- یادداشت مشتری -->
+                            <div>
+                                <label asp-for="CustomerNote" class="hs-sans text-xs uppercase tracking-[0.18em] text-[#5C625C] block mb-2">
+                                    یادداشت (اختیاری)
+                                </label>
+                                <textarea asp-for="CustomerNote" class="hs-input" rows="2" placeholder="یادداشت خود را وارد کنید..."></textarea>
+                            </div>
+                        </div>
+                    </form>
+                </div>
+            </div>
+
+            <!-- ==================== خلاصه سفارش و کد تخفیف ==================== -->
+            <div class="lg:col-span-1">
+                <div class="bg-[#F5EFE3] border border-[#E3DCC9] rounded-[4px] p-8 sticky top-8">
+
+                    <h3 class="hs-display text-2xl text-[#1A1F1B] mb-6">خلاصه سفارش</h3>
+
+                    <!-- آیتم‌ها -->
+                    <div class="space-y-2 max-h-48 overflow-y-auto">
+                        @if (cart?.Items != null)
+                        {
+                            foreach (var item in cart.Items)
+                            {
+                                <div class="cart-item">
+                                    <img src="@(item.ProductImage ?? "/images/no-image.png")" alt="@item.ProductName" />
+                                    <div class="flex-1">
+                                        <p class="hs-sans text-sm font-medium text-[#1A1F1B] line-clamp-1">@item.ProductName</p>
+                                        <p class="hs-sans text-xs text-[#5C625C]">@item.Quantity × @item.FinalUnitPrice.ToString("N0")</p>
+                                    </div>
+                                    <p class="hs-sans text-sm font-semibold text-[#1F3D2E] tabular-nums">@item.TotalPrice.ToString("N0")</p>
+                                </div>
+                            }
+                        }
+                        else
+                        {
+                            <p class="hs-sans text-sm text-[#5C625C]">سبد خرید خالی است</p>
+                        }
+                    </div>
+
+                    <!-- محاسبه قیمت -->
+                    <div class="mt-4 pt-4 border-t border-[#E3DCC9] space-y-2 text-sm">
+                        <div class="flex justify-between hs-sans">
+                            <span class="text-[#5C625C]">جمع کل</span>
+                            <span class="tabular-nums" id="subtotal">@(cart?.SubTotal.ToString("N0") ?? "۰") تومان</span>
+                        </div>
+
+                        @if (cart?.TotalDiscount > 0)
+                        {
+                            <div class="flex justify-between hs-sans text-[#4A7C59]">
+                                <span>تخفیف</span>
+                                <span class="tabular-nums" id="discount">-@cart.TotalDiscount.ToString("N0") تومان</span>
+                            </div>
+                        }
+
+                        <div class="flex justify-between hs-sans">
+                            <span class="text-[#5C625C]">هزینه ارسال</span>
+                            <span class="tabular-nums" id="shipping">@(cart?.TotalPrice > 1000000 ? "رایگان" : "۵۰,۰۰۰ تومان")</span>
+                        </div>
+
+                        @if (!string.IsNullOrEmpty(ViewBag.DiscountCode))
+                        {
+                            <div class="flex justify-between hs-sans text-[#4A7C59]">
+                                <span>تخفیف کد</span>
+                                <span class="tabular-nums">-@(ViewBag.DiscountAmount?.ToString("N0") ?? "۰") تومان</span>
+                            </div>
+                        }
+
+                        <div class="flex justify-between hs-sans font-semibold text-lg pt-3 border-t border-[#E3DCC9]">
+                            <span class="text-[#1A1F1B]">قابل پرداخت</span>
+                            <span class="text-[#1F3D2E] tabular-nums" id="total">
+                                @{
+                                    var finalTotal = cart?.TotalPrice ?? 0;
+                                    if (ViewBag.DiscountAmount != null)
+                                    {
+                                        finalTotal -= (decimal)ViewBag.DiscountAmount;
+                                    }
+                                }
+                                @finalTotal.ToString("N0") تومان
+                            </span>
+                        </div>
+                    </div>
+
+                    <!-- ✅ بخش کد تخفیف (فرم جداگانه) -->
+                    <div class="mt-6 pt-6 border-t border-[#E3DCC9]">
+                        <h4 class="hs-sans text-xs uppercase tracking-[0.18em] text-[#5C625C] mb-3">کد تخفیف</h4>
+
+                        @if (!string.IsNullOrEmpty(ViewBag.DiscountCode))
+                        {
+                            <div class="discount-box mb-3">
+                                <p class="hs-sans text-sm text-[#1F3D2E]">
+                                    <i class="fas fa-check-circle text-[#16A34A] ml-1"></i>
+                                    کد تخفیف <strong>@ViewBag.DiscountCode</strong> اعمال شد.
+                                </p>
+                            </div>
+                        }
+
+                        <form asp-action="ApplyDiscount" asp-controller="Cart" method="post" class="flex gap-3">
+                            @Html.AntiForgeryToken()
+                            <input type="text" name="discountCode" class="hs-input flex-1"
+                                   placeholder="کد تخفیف را وارد کنید"
+                                   value="@ViewBag.DiscountCode" />
+                            <button type="submit" class="btn-hs-outline px-4 py-2 text-sm whitespace-nowrap">
+                                اعمال کد
+                            </button>
+                        </form>
+
+                        @if (TempData["DiscountMessage"] != null)
+                        {
+                            var isSuccess = TempData["DiscountStatus"]?.ToString() == "success";
+                            <div class="mt-2">
+                                <span class="text-sm @(isSuccess ? "text-[#16A34A]" : "text-[#DC2626]")">
+                                    <i class="fas @(isSuccess ? "fa-check-circle" : "fa-exclamation-circle") ml-1"></i>
+                                    @TempData["DiscountMessage"]
+                                </span>
+                            </div>
+                        }
+                    </div>
+
+                    <!-- دکمه ثبت سفارش -->
+                    <div class="mt-6">
+                        <button type="submit" form="checkoutForm" class="btn-hs-primary w-full py-3 text-sm">
+                            <i class="fas fa-check ml-2"></i> ثبت سفارش
+                        </button>
+                    </div>
+
+                    <div class="mt-4 text-center">
+                        <a asp-action="Index" asp-controller="Cart" class="hs-sans text-sm text-[#5C625C] hover:text-[#1F3D2E] hs-transition">
+                            <i class="fas fa-arrow-right ml-1"></i> بازگشت به کلکسیون
+                        </a>
+                    </div>
+                </div>
             </div>
         </div>
     </div>
 </div>
+
+@section Scripts {
+    @await Html.PartialAsync("_ValidationScriptsPartial")
+}

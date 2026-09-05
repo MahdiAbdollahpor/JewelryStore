@@ -1,5 +1,8 @@
-﻿using JewelryStore.Services.DTOs.Cart;
+﻿using JewelryStore.Domain.Enums;
+using JewelryStore.Services.DTOs.Cart;
+using JewelryStore.Services.DTOs.Order;
 using JewelryStore.Services.Interfaces;
+using JewelryStore.Services.Services;
 using Microsoft.AspNetCore.Mvc;
 using System.Security.Claims;
 
@@ -10,15 +13,21 @@ namespace JewelryStore.Web.Controllers
         private readonly ICartService _cartService;
         private readonly IProductService _productService;
         private readonly ILogger<CartController> _logger;
+        private readonly IUserService _userService;
+        private readonly IDiscountService _discountService;
 
         public CartController(
             ICartService cartService,
             IProductService productService,
-            ILogger<CartController> logger)
+            ILogger<CartController> logger,
+            IUserService userService,
+            IDiscountService discountService)
         {
             _cartService = cartService;
             _productService = productService;
             _logger = logger;
+            _userService = userService;
+            _discountService = discountService;
         }
 
         // 1️⃣ نمایش سبد خرید
@@ -195,7 +204,7 @@ namespace JewelryStore.Web.Controllers
 
         // 8️⃣ تسویه حساب (هدایت به صفحه سفارش)
         [HttpGet]
-        public IActionResult Checkout()
+        public async Task<IActionResult> Checkout()
         {
             var userId = GetUserId();
             if (!userId.HasValue)
@@ -204,8 +213,113 @@ namespace JewelryStore.Web.Controllers
                 return RedirectToAction("Login", "Account");
             }
 
-            // می‌توانیم یک ViewModel برای تسویه حساب بسازیم
-            return View();
+            var cart = await _cartService.GetCartAsync(userId, null);
+            if (cart == null || !cart.Items.Any())
+            {
+                TempData["Error"] = "کلکسیون شما خالی است.";
+                return RedirectToAction("Index", "Cart");
+            }
+
+            var isValid = await _cartService.ValidateCartAsync(userId.Value);
+            if (!isValid)
+            {
+                TempData["Warning"] = "برخی از آثار موجودی کافی ندارند. لطفاً کلکسیون خود را بررسی کنید.";
+                return RedirectToAction("Index", "Cart");
+            }
+
+            var user = await _userService.GetProfileAsync(userId.Value);
+            ViewBag.Cart = cart;
+
+            // خواندن تخفیف از TempData
+            ViewBag.DiscountCode = TempData["DiscountCode"] as string;
+
+            var discountAmountString = TempData["DiscountAmount"] as string;
+            if (!string.IsNullOrEmpty(discountAmountString) && decimal.TryParse(discountAmountString, out decimal discountAmount))
+            {
+                ViewBag.DiscountAmount = discountAmount;
+            }
+            else
+            {
+                ViewBag.DiscountAmount = 0;
+            }
+
+            // ✅ اگر خطایی وجود دارد، آن را نمایش بده
+            if (TempData["Error"] != null)
+            {
+                ViewBag.Error = TempData["Error"].ToString();
+            }
+
+            var model = new CreateOrderDto
+            {
+                UserId = userId.Value,
+                RecipientName = user?.FullName ?? "",
+                RecipientPhone = user?.PhoneNumber ?? "",
+                ShippingAddress = user?.Address ?? "",
+                PaymentMethod = PaymentMethod.Online,
+                DiscountCode = ViewBag.DiscountCode
+            };
+
+            return View(model);
+        }
+
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> ApplyDiscount(string discountCode)
+        {
+            if (string.IsNullOrWhiteSpace(discountCode))
+            {
+                TempData["DiscountMessage"] = "لطفاً کد تخفیف را وارد کنید.";
+                TempData["DiscountStatus"] = "error";
+                return RedirectToAction("Checkout");
+            }
+
+            try
+            {
+                var userId = GetUserId();
+                if (!userId.HasValue)
+                {
+                    TempData["DiscountMessage"] = "لطفاً وارد حساب کاربری خود شوید.";
+                    TempData["DiscountStatus"] = "error";
+                    return RedirectToAction("Checkout");
+                }
+
+                var cart = await _cartService.GetCartAsync(userId, null);
+                if (cart == null || !cart.Items.Any())
+                {
+                    TempData["DiscountMessage"] = "سبد خرید شما خالی است.";
+                    TempData["DiscountStatus"] = "error";
+                    return RedirectToAction("Checkout");
+                }
+
+                var totalAmount = cart.TotalPrice;
+                var discountResult = await _discountService.ValidateAndApplyDiscountAsync(
+                    discountCode,
+                    userId.Value,
+                    totalAmount
+                );
+
+                if (!discountResult.IsValid)
+                {
+                    TempData["DiscountMessage"] = discountResult.Message;
+                    TempData["DiscountStatus"] = "error";
+                    return RedirectToAction("Checkout");
+                }
+
+                // ✅ تبدیل decimal به string قبل از ذخیره در TempData
+                TempData["DiscountCode"] = discountCode;
+                TempData["DiscountAmount"] = discountResult.DiscountAmount.ToString(); // ✅ تبدیل به string
+                TempData["DiscountMessage"] = "کد تخفیف با موفقیت اعمال شد.";
+                TempData["DiscountStatus"] = "success";
+
+                return RedirectToAction("Checkout");
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "خطا در اعمال کد تخفیف");
+                TempData["DiscountMessage"] = $"خطا: {ex.Message}";
+                TempData["DiscountStatus"] = "error";
+                return RedirectToAction("Checkout");
+            }
         }
 
         // 🔧 متدهای کمکی

@@ -22,6 +22,9 @@ namespace JewelryStore.Services.DTOs.Order
         public string? TrackingCode { get; set; }
         public List<OrderItemDetailDto> Items { get; set; }
 
+        public PaymentMethod PaymentMethod { get; set; }
+        public string? PaymentReference { get; set; }
+
         public decimal SubTotal { get; set; }
         public decimal DiscountTotal { get; set; }
         public decimal ShippingCost { get; set; }

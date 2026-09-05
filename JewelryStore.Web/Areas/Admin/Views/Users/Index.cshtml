@@ -4,8 +4,72 @@
     ViewData["Title"] = "مدیریت کاربران";
 }
 
-<!-- ✅ کد کامل مدیریت کاربران (همان کد قبلی) -->
+<style>
+    :root {
+        --es-primary: #C2410C;
+        --es-surface: #F5F5F4;
+        --es-surface-raised: #E7E5E4;
+        --es-border: #D6D3D1;
+        --es-text-primary: #1C1917;
+        --es-text-secondary: #57534E;
+    }
+
+    .table-container {
+        background: var(--es-surface);
+        border: 1px solid var(--es-border);
+        border-radius: 12px;
+        overflow: hidden;
+    }
+
+        .table-container th {
+            background: var(--es-surface-raised);
+            font-size: 11px;
+            text-transform: uppercase;
+            letter-spacing: 0.08em;
+            color: var(--es-text-secondary);
+            padding: 12px 16px;
+            text-align: right;
+            font-weight: 600;
+        }
+
+        .table-container td {
+            padding: 12px 16px;
+            border-bottom: 1px solid var(--es-border);
+            font-size: 14px;
+        }
+
+    .status-badge {
+        padding: 4px 12px;
+        border-radius: 9999px;
+        font-size: 11px;
+        font-weight: 600;
+        text-transform: uppercase;
+        letter-spacing: 0.04em;
+    }
+
+    .status-active {
+        background: rgba(22, 163, 74, 0.1);
+        color: #16A34A;
+    }
+
+    .status-inactive {
+        background: rgba(220, 38, 38, 0.1);
+        color: #DC2626;
+    }
+
+    .status-verified {
+        background: rgba(22, 163, 74, 0.1);
+        color: #16A34A;
+    }
+
+    .status-unverified {
+        background: rgba(245, 158, 11, 0.1);
+        color: #D97706;
+    }
+</style>
+
 <div class="space-y-6">
+    <!-- هدر -->
     <div class="flex items-center justify-between">
         <div>
             <h1 class="font-['Playfair_Display'] text-3xl font-bold text-[#1C1917]">مدیریت کاربران</h1>
@@ -15,8 +79,6 @@
             <i class="fas fa-user-plus"></i> کاربر جدید
         </a>
     </div>
-
-   
 
     <!-- فیلتر -->
     <div class="bg-[#F5F5F4] border border-[#D6D3D1] rounded-xl p-4">
@@ -35,39 +97,68 @@
                     <option value="Admin" selected="@(ViewBag.CurrentFilter?.Role == "Admin")">ادمین</option>
                 </select>
             </div>
+            <div>
+                <label class="text-xs font-semibold text-[#57534E] block mb-1">وضعیت</label>
+                <select name="IsActive" class="px-3 py-2 border border-[#D6D3D1] rounded-lg bg-white text-sm focus:outline-none focus:ring-2 focus:ring-[#C2410C]/20 focus:border-[#C2410C]">
+                    <option value="">همه</option>
+                    <option value="true" selected="@(ViewBag.CurrentFilter?.IsActive == true)">فعال</option>
+                    <option value="false" selected="@(ViewBag.CurrentFilter?.IsActive == false)">غیرفعال</option>
+                </select>
+            </div>
+            <div>
+                <label class="text-xs font-semibold text-[#57534E] block mb-1">تایید شماره</label>
+                <select name="IsPhoneVerified" class="px-3 py-2 border border-[#D6D3D1] rounded-lg bg-white text-sm focus:outline-none focus:ring-2 focus:ring-[#C2410C]/20 focus:border-[#C2410C]">
+                    <option value="">همه</option>
+                    <option value="true" selected="@(ViewBag.CurrentFilter?.IsPhoneVerified == true)">تایید شده</option>
+                    <option value="false" selected="@(ViewBag.CurrentFilter?.IsPhoneVerified == false)">تایید نشده</option>
+                </select>
+            </div>
             <button type="submit" class="px-4 py-2 bg-[#C2410C] text-white rounded-lg text-sm font-semibold hover:bg-[#9A3412] transition">
-                <i class="fas fa-search ml-1"></i> جستجو
+                <i class="fas fa-search ml-1"></i> فیلتر
             </button>
         </form>
     </div>
 
     <!-- جدول -->
-    <div class="bg-[#F5F5F4] border border-[#D6D3D1] rounded-xl overflow-hidden">
+    <div class="table-container">
         <table class="w-full">
             <thead>
                 <tr>
-                    <th class="bg-[#E7E5E4] text-right px-4 py-3 text-xs uppercase tracking-wider text-[#57534E]">نام کاربری</th>
-                    <th class="bg-[#E7E5E4] text-right px-4 py-3 text-xs uppercase tracking-wider text-[#57534E]">شماره تماس</th>
-                    <th class="bg-[#E7E5E4] text-right px-4 py-3 text-xs uppercase tracking-wider text-[#57534E]">نقش</th>
-                    <th class="bg-[#E7E5E4] text-right px-4 py-3 text-xs uppercase tracking-wider text-[#57534E]">وضعیت</th>
-                    <th class="bg-[#E7E5E4] text-right px-4 py-3 text-xs uppercase tracking-wider text-[#57534E]">عملیات</th>
+                    <th>نام کاربری</th>
+                    <th>شماره تماس</th>
+                    <th>نقش</th>
+                    <th>وضعیت</th>
+                    <th>تایید</th>
+                    <th>تاریخ ثبت</th>
+                    <th>عملیات</th>
                 </tr>
             </thead>
             <tbody>
                 @foreach (var user in Model)
                 {
-                    <tr class="hover:bg-[#E7E5E4]/50 transition border-b border-[#D6D3D1]">
-                        <td class="px-4 py-3 font-medium text-[#1C1917]"> @user.Username @user.FullName </td>
-                        <td class="px-4 py-3 text-[#57534E]">@user.PhoneNumber</td>
-                        <td class="px-4 py-3"><span class="text-xs font-semibold">@user.Role</span></td>
-                        <td class="px-4 py-3">
-                            <span class="inline-block px-3 py-1 rounded-full text-xs font-semibold @(user.IsActive ? "bg-green-100 text-green-700" : "bg-red-100 text-red-700")">
+                    <tr class="hover:bg-[#E7E5E4]/50 transition">
+                        <td class="font-medium text-[#1C1917]">
+                            @(user.FullName ?? user.Username)
+                        </td>
+                        <td class="text-[#57534E]">@user.PhoneNumber</td>
+                        <td>
+                            <span class="text-xs font-semibold">@user.Role</span>
+                        </td>
+                        <td>
+                            <span class="status-badge @(user.IsActive ? "status-active" : "status-inactive")">
                                 @(user.IsActive ? "فعال" : "غیرفعال")
                             </span>
                         </td>
-                        <td class="px-4 py-3">
+                        <td>
+                            <span class="status-badge @(user.IsPhoneVerified ? "status-verified" : "status-unverified")">
+                                @(user.IsPhoneVerified ? "تایید شده" : "تایید نشده")
+                            </span>
+                        </td>
+                        <td class="text-[#57534E] text-sm">@user.CreatedAt.ToString("yyyy/MM/dd")</td>
+                        <td>
                             <div class="flex items-center gap-2">
-                                <a asp-action="Detail" asp-route-id="@user.Id" class="px-3 py-1 text-sm border border-[#D6D3D1] rounded-lg hover:bg-[#E7E5E4] transition">
+                                <a asp-action="Detail" asp-route-id="@user.Id"
+                                   class="px-3 py-1 text-sm border border-[#D6D3D1] rounded-lg hover:bg-[#E7E5E4] transition">
                                     <i class="fas fa-eye"></i>
                                 </a>
                                 <form asp-action="ToggleStatus" asp-route-id="@user.Id" method="post" class="inline">
@@ -80,9 +171,19 @@
                         </td>
                     </tr>
                 }
+                @if (!Model.Any())
+                {
+                    <tr>
+                        <td colspan="7" class="text-center text-[#57534E] py-12">
+                            <i class="fas fa-users text-2xl block mb-2 opacity-30"></i>
+                            هیچ کاربری یافت نشد
+                        </td>
+                    </tr>
+                }
             </tbody>
         </table>
     </div>
+
     <!-- ✅ صفحه‌بندی -->
     @if (ViewBag.TotalPages > 1)
     {
@@ -93,9 +194,9 @@
                 <a asp-action="Index"
                    asp-route-page="@(ViewBag.CurrentPage - 1)"
                    asp-route-SearchTerm="@ViewBag.CurrentFilter?.SearchTerm"
-                   asp-route-CategoryId="@ViewBag.CurrentFilter?.CategoryId"
+                   asp-route-Role="@ViewBag.CurrentFilter?.Role"
                    asp-route-IsActive="@ViewBag.CurrentFilter?.IsActive"
-                   asp-route-IsInStock="@ViewBag.CurrentFilter?.IsInStock"
+                   asp-route-IsPhoneVerified="@ViewBag.CurrentFilter?.IsPhoneVerified"
                    class="px-3 py-1 border border-[#D6D3D1] rounded-lg text-sm hover:bg-[#E7E5E4] transition">
                     قبلی
                 </a>
@@ -115,9 +216,9 @@
                     <a asp-action="Index"
                        asp-route-page="1"
                        asp-route-SearchTerm="@ViewBag.CurrentFilter?.SearchTerm"
-                       asp-route-CategoryId="@ViewBag.CurrentFilter?.CategoryId"
+                       asp-route-Role="@ViewBag.CurrentFilter?.Role"
                        asp-route-IsActive="@ViewBag.CurrentFilter?.IsActive"
-                       asp-route-IsInStock="@ViewBag.CurrentFilter?.IsInStock"
+                       asp-route-IsPhoneVerified="@ViewBag.CurrentFilter?.IsPhoneVerified"
                        class="px-3 py-1 border border-[#D6D3D1] rounded-lg text-sm hover:bg-[#E7E5E4] transition">
                         1
                     </a>
@@ -133,9 +234,9 @@
                     <a asp-action="Index"
                        asp-route-page="@i"
                        asp-route-SearchTerm="@ViewBag.CurrentFilter?.SearchTerm"
-                       asp-route-CategoryId="@ViewBag.CurrentFilter?.CategoryId"
+                       asp-route-Role="@ViewBag.CurrentFilter?.Role"
                        asp-route-IsActive="@ViewBag.CurrentFilter?.IsActive"
-                       asp-route-IsInStock="@ViewBag.CurrentFilter?.IsInStock"
+                       asp-route-IsPhoneVerified="@ViewBag.CurrentFilter?.IsPhoneVerified"
                        class="px-3 py-1 border border-[#D6D3D1] rounded-lg text-sm transition @(isActive ? "bg-[#C2410C] text-white border-[#C2410C]" : "hover:bg-[#E7E5E4]")">
                         @i
                     </a>
@@ -150,9 +251,9 @@
                     <a asp-action="Index"
                        asp-route-page="@ViewBag.TotalPages"
                        asp-route-SearchTerm="@ViewBag.CurrentFilter?.SearchTerm"
-                       asp-route-CategoryId="@ViewBag.CurrentFilter?.CategoryId"
+                       asp-route-Role="@ViewBag.CurrentFilter?.Role"
                        asp-route-IsActive="@ViewBag.CurrentFilter?.IsActive"
-                       asp-route-IsInStock="@ViewBag.CurrentFilter?.IsInStock"
+                       asp-route-IsPhoneVerified="@ViewBag.CurrentFilter?.IsPhoneVerified"
                        class="px-3 py-1 border border-[#D6D3D1] rounded-lg text-sm hover:bg-[#E7E5E4] transition">
                         @ViewBag.TotalPages
                     </a>
@@ -165,9 +266,9 @@
                 <a asp-action="Index"
                    asp-route-page="@(ViewBag.CurrentPage + 1)"
                    asp-route-SearchTerm="@ViewBag.CurrentFilter?.SearchTerm"
-                   asp-route-CategoryId="@ViewBag.CurrentFilter?.CategoryId"
+                   asp-route-Role="@ViewBag.CurrentFilter?.Role"
                    asp-route-IsActive="@ViewBag.CurrentFilter?.IsActive"
-                   asp-route-IsInStock="@ViewBag.CurrentFilter?.IsInStock"
+                   asp-route-IsPhoneVerified="@ViewBag.CurrentFilter?.IsPhoneVerified"
                    class="px-3 py-1 border border-[#D6D3D1] rounded-lg text-sm hover:bg-[#E7E5E4] transition">
                     بعدی
                 </a>

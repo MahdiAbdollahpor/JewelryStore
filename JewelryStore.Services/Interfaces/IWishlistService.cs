@@ -33,5 +33,7 @@ namespace JewelryStore.Services.Interfaces
         /// خالی کردن لیست علاقه‌مندی‌های کاربر
         /// </summary>
         Task<bool> ClearWishlistAsync(int userId);
+
+     
     }
 }

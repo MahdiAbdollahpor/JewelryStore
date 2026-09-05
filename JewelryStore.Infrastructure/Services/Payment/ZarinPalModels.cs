@@ -30,7 +30,6 @@ namespace JewelryStore.Infrastructure.Services.Payment
         public string Email { get; set; }
     }
 
-    // 2️⃣ پاسخ درخواست پرداخت
     public class ZarinPalRequestResponse
     {
         [JsonProperty("data")]
@@ -58,7 +57,6 @@ namespace JewelryStore.Infrastructure.Services.Payment
         public int Fee { get; set; }
     }
 
-    // 3️⃣ درخواست تایید پرداخت
     public class ZarinPalVerifyRequest
     {
         [JsonProperty("merchant_id")]
@@ -71,7 +69,6 @@ namespace JewelryStore.Infrastructure.Services.Payment
         public string Authority { get; set; }
     }
 
-    // 4️⃣ پاسخ تایید پرداخت
     public class ZarinPalVerifyResponse
     {
         [JsonProperty("data")]
@@ -99,15 +96,23 @@ namespace JewelryStore.Infrastructure.Services.Payment
         public int Fee { get; set; }
     }
 
-    // 5️⃣ نتیجه نهایی برای استفاده در سرویس
-    public class PaymentResult
+    // ==================== مدل پاسخ برگشت وجه (Reverse) ====================
+    public class ZarinPalReverseResponse
     {
-        public bool IsSuccess { get; set; }
+        [JsonProperty("data")]
+        public ZarinPalReverseData Data { get; set; }
+
+        [JsonProperty("errors")]
+        public object Errors { get; set; }
+    }
+
+    public class ZarinPalReverseData
+    {
+        [JsonProperty("code")]
+        public int Code { get; set; }
+
+        [JsonProperty("message")]
         public string Message { get; set; }
-        public string Authority { get; set; }
-        public string PaymentUrl { get; set; }
-        public long? RefId { get; set; }
-        public string ErrorCode { get; set; }
     }
 }
 

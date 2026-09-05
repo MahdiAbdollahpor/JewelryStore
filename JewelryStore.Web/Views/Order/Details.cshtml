@@ -206,16 +206,7 @@
 
                     <!-- عملیات -->
                     <div class="mt-8 space-y-3">
-                        @if (Model.OrderStatus == OrderStatus.Pending || Model.OrderStatus == OrderStatus.Paid)
-                        {
-                            <form asp-action="CancelOrder" asp-route-orderId="@Model.Id" method="post">
-                                @Html.AntiForgeryToken()
-                                <button type="submit" class="w-full py-2.5 border border-[#8C3A36] text-[#8C3A36] rounded-[2px] text-xs uppercase tracking-[0.12em] hover:bg-[#8C3A36] hover:text-white transition-all"
-                                        onclick="return confirm('آیا از لغو این سفارش اطمینان دارید؟')">
-                                    لغو سفارش
-                                </button>
-                            </form>
-                        }
+                       
                         <a asp-action="History" class="btn-hs-outline w-full py-2.5 text-xs block text-center">
                             بازگشت به تاریخچه
                         </a>

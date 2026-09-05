@@ -175,16 +175,7 @@
                                    class="px-4 py-2 border border-[#1F3D2E] text-[#1F3D2E] rounded-[2px] text-xs uppercase tracking-[0.12em] hover:bg-[#1F3D2E] hover:text-[#FBF7F0] transition-all">
                                     <i class="fas fa-eye ml-1"></i> مشاهده جزئیات
                                 </a>
-                                @if (order.OrderStatus == OrderStatus.Pending || order.OrderStatus == OrderStatus.Paid)
-                                {
-                                    <form asp-action="CancelOrder" asp-route-orderId="@order.Id" method="post" class="inline">
-                                        @Html.AntiForgeryToken()
-                                        <button type="submit" class="px-4 py-2 text-[#8C3A36] hover:text-[#991B1B] text-xs uppercase tracking-[0.12em] transition-all"
-                                                onclick="return confirm('آیا از لغو این سفارش اطمینان دارید؟')">
-                                            <i class="fas fa-times ml-1"></i> لغو سفارش
-                                        </button>
-                                    </form>
-                                }
+                               
                                 @if (order.OrderStatus == OrderStatus.Shipped && !string.IsNullOrEmpty(order.TrackingCode))
                                 {
                                     <a asp-action="Tracking" asp-route-orderId="@order.Id"

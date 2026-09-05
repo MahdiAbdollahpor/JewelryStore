@@ -19,6 +19,7 @@ namespace JewelryStore.Services.Services
         private readonly ITaxService _taxService;
         private readonly IDiscountService _discountService;
         private readonly ISmsSender _smsSender;
+        private readonly IPaymentService _paymentService;
 
         public OrderService(
             ApplicationDbContext context,
@@ -27,7 +28,8 @@ namespace JewelryStore.Services.Services
             IShippingService shippingService,
             ITaxService taxService,
             IDiscountService discountService,
-            ISmsSender smsSender)
+            ISmsSender smsSender,
+            IPaymentService paymentService)
         {
             _context = context;
             _mapper = mapper;
@@ -36,6 +38,7 @@ namespace JewelryStore.Services.Services
             _taxService = taxService;
             _discountService = discountService;
             _smsSender = smsSender;
+            _paymentService = paymentService;
         }
 
         // 1️⃣ ایجاد سفارش جدید از سبد خرید
@@ -61,18 +64,21 @@ namespace JewelryStore.Services.Services
             decimal discountCodeAmount = 0;
             DiscountCode? discountCode = null;
 
-            // اعمال کد تخفیف
+            // ✅ اگر کد تخفیف در DTO وجود دارد
             if (!string.IsNullOrEmpty(createDto.DiscountCode))
             {
                 var discountResult = await _discountService.ValidateAndApplyDiscountAsync(
-                    createDto.DiscountCode, createDto.UserId, subTotal);
+                    createDto.DiscountCode,
+                    createDto.UserId,
+                    cartDto.TotalPrice
+                );
 
-                if (!discountResult.IsValid)
-                    throw new InvalidOperationException(discountResult.Message);
-
-                discountCode = discountResult.DiscountCode;
-                discountCodeAmount = discountResult.DiscountAmount;
-                discountTotal += discountCodeAmount;
+                if (discountResult.IsValid)
+                {
+                    discountCode = discountResult.DiscountCode;
+                    discountCodeAmount = discountResult.DiscountAmount;
+                    discountTotal += discountCodeAmount;
+                }
             }
 
             // محاسبه هزینه ارسال
@@ -297,6 +303,69 @@ namespace JewelryStore.Services.Services
             order.UpdatedAt = DateTime.Now;
 
             await _context.SaveChangesAsync();
+            return true;
+        }
+
+        /// برگشت وجه سفارش (فقط برای سفارشات پرداخت‌شده)
+        public async Task<bool> RefundOrderAsync(int orderId, string reason)
+        {
+            var order = await _context.Orders
+                .Include(o => o.User)
+                .FirstOrDefaultAsync(o => o.Id == orderId);
+
+            if (order == null)
+                throw new KeyNotFoundException("سفارش یافت نشد.");
+
+            // بررسی اینکه سفارش پرداخت شده باشد
+            if (order.PaymentStatus != PaymentStatus.Paid)
+                throw new InvalidOperationException("این سفارش پرداخت نشده است.");
+
+            // فقط سفارشات با روش پرداخت آنلاین قابل برگشت هستند
+            if (order.PaymentMethod != PaymentMethod.Online)
+                throw new InvalidOperationException("برگشت وجه فقط برای پرداخت‌های آنلاین امکان‌پذیر است.");
+
+            // درخواست برگشت وجه به درگاه
+            var refundResult = await _paymentService.RefundPaymentAsync(
+                order.PaymentReference,
+                (int)order.TotalAmount
+            );
+
+            if (!refundResult.IsSuccess)
+                throw new InvalidOperationException($"خطا در برگشت وجه: {refundResult.Message}");
+
+            // تغییر وضعیت سفارش
+            order.OrderStatus = OrderStatus.Cancelled;
+            order.PaymentStatus = PaymentStatus.Refunded;
+            order.AdminNote = $"برگشت وجه به دلیل: {reason}";
+            order.UpdatedAt = DateTime.Now;
+
+            // ثبت تاریخچه
+            var history = new OrderStatusHistory
+            {
+                OrderId = order.Id,
+                Status = OrderStatus.Cancelled,
+                Note = $"برگشت وجه انجام شد. دلیل: {reason}",
+                CreatedAt = DateTime.Now
+            };
+            await _context.OrderStatusHistories.AddAsync(history);
+
+            await _context.SaveChangesAsync();
+            return true;
+        }
+
+        /// تغییر وضعیت پرداخت سفارش
+        public async Task<bool> UpdatePaymentStatusAsync(int orderId, PaymentStatus newStatus)
+        {
+            var order = await _context.Orders
+                .FirstOrDefaultAsync(o => o.Id == orderId);
+
+            if (order == null)
+                throw new KeyNotFoundException("سفارش یافت نشد.");
+
+            order.PaymentStatus = newStatus;
+            order.UpdatedAt = DateTime.Now;
+            await _context.SaveChangesAsync();
+
             return true;
         }
 

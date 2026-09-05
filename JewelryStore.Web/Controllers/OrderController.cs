@@ -15,59 +15,40 @@ namespace JewelryStore.Web.Controllers
         private readonly ICartService _cartService;
         private readonly IPaymentService _paymentService;
         private readonly ILogger<OrderController> _logger;
+        private readonly IDiscountService _discountService;
 
         public OrderController(
             IOrderService orderService,
             ICartService cartService,
             IPaymentService paymentService,
-            ILogger<OrderController> logger)
+            ILogger<OrderController> logger,
+            IDiscountService discountService)
         {
             _orderService = orderService;
             _cartService = cartService;
             _paymentService = paymentService;
             _logger = logger;
+            _discountService = discountService;
         }
 
-        // 1️⃣ صفحه تسویه حساب
-        [HttpGet]
-        public async Task<IActionResult> Checkout()
-        {
-            var userId = GetUserId();
-            if (!userId.HasValue)
-            {
-                TempData["Error"] = "لطفاً برای تکمیل سفارش وارد حساب کاربری خود شوید.";
-                return RedirectToAction("Login", "Account");
-            }
 
-            // دریافت اطلاعات کاربر از سشن یا دیتابیس
-            var cart = await _cartService.GetCartAsync(userId, null);
-            if (cart == null || !cart.Items.Any())
-            {
-                TempData["Error"] = "کلکسیون شما خالی است.";
-                return RedirectToAction("Index", "Cart");
-            }
-
-            // بررسی موجودی قبل از تسویه
-            var isValid = await _cartService.ValidateCartAsync(userId.Value);
-            if (!isValid)
-            {
-                TempData["Warning"] = "برخی از آثار موجودی کافی ندارند. لطفاً کلکسیون خود را بررسی کنید.";
-                return RedirectToAction("Index", "Cart");
-            }
-
-            ViewBag.Cart = cart;
-            return View(new CreateOrderDto
-            {
-                UserId = userId.Value,
-                // اطلاعات کاربر را از سشن پر کنید
-            });
-        }
 
         // 2️⃣ ثبت سفارش و هدایت به درگاه پرداخت
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public async Task<IActionResult> CreateOrder(CreateOrderDto createOrderDto)
+        public async Task<IActionResult> CreateOrder(CreateOrderDto createDto)
         {
+            // ✅ اگر مدل نامعتبر است (آدرس خالی و ...)
+            if (!ModelState.IsValid)
+            {
+                // ✅ خطاها را به TempData اضافه کن (اختیاری)
+                var errors = ModelState.Values.SelectMany(v => v.Errors).Select(e => e.ErrorMessage);
+                TempData["Error"] = string.Join(" - ", errors);
+
+                // ✅ به صفحه Checkout در کنترلر Cart برگرد
+                return RedirectToAction("Checkout", "Cart");
+            }
+
             try
             {
                 var userId = GetUserId();
@@ -77,25 +58,29 @@ namespace JewelryStore.Web.Controllers
                     return RedirectToAction("Login", "Account");
                 }
 
-                createOrderDto.UserId = userId.Value;
+                createDto.UserId = userId.Value;
 
-                // ثبت سفارش
-                var result = await _orderService.CreateOrderAsync(createOrderDto);
+                // دریافت کد تخفیف از TempData
+                if (TempData["DiscountCode"] != null)
+                {
+                    createDto.DiscountCode = TempData["DiscountCode"].ToString();
+                }
+
+                var result = await _orderService.CreateOrderAsync(createDto);
 
                 if (result != null && result.OrderId > 0)
                 {
-                    // هدایت به صفحه پرداخت
                     return RedirectToAction("Pay", new { orderId = result.OrderId });
                 }
 
-                TempData["Error"] = "خطا در ثبت سفارش. لطفاً مجدداً تلاش کنید.";
-                return RedirectToAction("Checkout");
+                TempData["Error"] = "خطا در ثبت سفارش.";
+                return RedirectToAction("Checkout", "Cart");
             }
             catch (Exception ex)
             {
                 _logger.LogError(ex, "خطا در ثبت سفارش");
                 TempData["Error"] = $"خطا در ثبت سفارش: {ex.Message}";
-                return RedirectToAction("Checkout");
+                return RedirectToAction("Checkout", "Cart");
             }
         }
 
@@ -223,42 +208,44 @@ namespace JewelryStore.Web.Controllers
             }
         }
 
-        // 7️⃣ لغو سفارش (فقط قبل از پرداخت)
-        [HttpPost]
-        [ValidateAntiForgeryToken]
-        public async Task<IActionResult> CancelOrder(int orderId)
-        {
-            try
-            {
-                var userId = GetUserId();
-                if (!userId.HasValue)
-                    return RedirectToAction("Login", "Account");
+       
 
-                var order = await _orderService.GetOrderByIdAsync(orderId);
-                if (order == null)
-                    return NotFound("سفارش یافت نشد.");
 
-                // فقط کاربر صاحب سفارش یا ادمین می‌تواند لغو کند
-                // TODO: اضافه کردن چک ادمین
 
-                // بررسی اینکه سفارش قابل لغو است
-                if (order.OrderStatus != OrderStatus.Pending && order.OrderStatus != OrderStatus.Paid)
-                {
-                    TempData["Error"] = "این سفارش قابل لغو نیست.";
-                    return RedirectToAction("Details", new { orderId });
-                }
 
-                await _orderService.UpdateOrderStatusAsync(orderId, OrderStatus.Cancelled, "لغو توسط کاربر");
-                TempData["Success"] = "سفارش با موفقیت لغو شد.";
-                return RedirectToAction("History");
-            }
-            catch (Exception ex)
-            {
-                _logger.LogError(ex, "خطا در لغو سفارش");
-                TempData["Error"] = "خطا در لغو سفارش.";
-                return RedirectToAction("Details", new { orderId });
-            }
-        }
+        //// 7️⃣ لغو سفارش (فقط قبل از پرداخت)
+        //[HttpPost]
+        //[ValidateAntiForgeryToken]
+        //public async Task<IActionResult> CancelOrder(int orderId)
+        //{
+        //    try
+        //    {
+        //        var userId = GetUserId();
+        //        if (!userId.HasValue)
+        //            return RedirectToAction("Login", "Account");
+
+        //        var order = await _orderService.GetOrderByIdAsync(orderId);
+        //        if (order == null)
+        //            return NotFound("سفارش یافت نشد.");
+
+        //        // ✅ کاربر فقط می‌تواند سفارش‌های در انتظار پرداخت را لغو کند
+        //        if (order.OrderStatus != OrderStatus.Pending)
+        //        {
+        //            TempData["Error"] = "امکان لغو این سفارش وجود ندارد. سفارشات پرداخت‌شده قابل لغو نیستند.";
+        //            return RedirectToAction("Details", new { orderId });
+        //        }
+
+        //        await _orderService.UpdateOrderStatusAsync(orderId, OrderStatus.Cancelled, "لغو توسط کاربر");
+        //        TempData["Success"] = "سفارش با موفقیت لغو شد.";
+        //        return RedirectToAction("History");
+        //    }
+        //    catch (Exception ex)
+        //    {
+        //        _logger.LogError(ex, "خطا در لغو سفارش");
+        //        TempData["Error"] = "خطا در لغو سفارش.";
+        //        return RedirectToAction("Details", new { orderId });
+        //    }
+        //}
 
         // 8️⃣ دریافت کد رهگیری (برای کاربر)
         [HttpGet]
@@ -291,6 +278,7 @@ namespace JewelryStore.Web.Controllers
         }
 
         // 🔧 متدهای کمکی
+
 
         private int? GetUserId()
         {
